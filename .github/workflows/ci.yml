@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax
+        run: |
+          node --check index.js
+          node --check client.js
+
+      - name: Component / locale / contract / identity
+        run: node scripts/check.cjs
+
+# render-smoke.cjs renders the real client against a synced dataset, so it needs
+# a user's data.json and stays a local check:
+#   node scripts/render-smoke.cjs            (uses ~/.dsh/weread-gather/data.json)
+#   WEREAD_DATA=/path/to/data.json node scripts/render-smoke.cjs
