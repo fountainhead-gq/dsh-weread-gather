@@ -7,6 +7,16 @@
 - 宿主侧持有 API Key 与全部数据，页面只读自己的同源 JSON 接口
 - 不写回微读，不做任何上报；数据只落在本机 `$DSH_HOME/weread-gather/`
 
+## 界面
+
+书架：10 个大类、每行 10 本，按年份与关键词筛选。
+
+![书架](assets/screenshot-1-shelf.png)
+
+总览：置顶的年度阅读热力图，KPI、月度分布与表盘都跟着右上角的年份切。
+
+![总览](assets/screenshot-2-overview.png)
+
 ## 安装
 
 要求 **DSH >= 0.2.2-rc.1**（Web 端），插件是纯 JS、无构建步骤，装完重启即生效。
