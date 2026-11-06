@@ -1,0 +1,62 @@
+{
+  "name": "dsh-weread-gather",
+  "version": "1.0.0",
+  "description": "书房 — a private WeRead study in the DSH sidebar: shelf, categories, highlights, thoughts, reading dashboard and heatmap, with search everywhere.",
+  "type": "module",
+  "license": "MIT",
+  "author": "fountainhead-gq",
+  "icon": "icon.svg",
+  "homepage": "https://github.com/fountainhead-gq/dsh-weread-gather#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fountainhead-gq/dsh-weread-gather.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fountainhead-gq/dsh-weread-gather/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "weread",
+    "reading",
+    "highlights"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/en.json": "./locale/en.json",
+    "./locale/zh.json": "./locale/zh.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.2.2-rc.1"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "check": "node scripts/check.cjs",
+    "smoke": "node scripts/render-smoke.cjs"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+*.tgz
+
+# 本地同步下来的数据（含微读 API Key，绝不入库）
+data.json
+config.json
+meta.json
+heat.json
+*.local.json
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

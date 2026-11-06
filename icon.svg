@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="书房">
+  <defs>
+    <linearGradient id="wr-paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F7EAD1"/>
+      <stop offset="1" stop-color="#E6CDA3"/>
+    </linearGradient>
+    <linearGradient id="wr-ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#33507A"/>
+      <stop offset="1" stop-color="#223A5C"/>
+    </linearGradient>
+    <linearGradient id="wr-clay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C4694B"/>
+      <stop offset="1" stop-color="#A44F35"/>
+    </linearGradient>
+    <radialGradient id="wr-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFC96B" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFC96B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="3" y="3" width="58" height="58" rx="15" fill="url(#wr-paper)"/>
+  <rect x="3.75" y="3.75" width="56.5" height="56.5" rx="14.25" fill="none" stroke="#B08A57" stroke-opacity="0.45" stroke-width="1.5"/>
+
+  <circle cx="46" cy="17" r="13" fill="url(#wr-glow)"/>
+  <path d="M46 10.5v3.2" stroke="#8A6134" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M40.6 20.2c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4z" fill="#8A6134" fill-opacity="0.85"/>
+  <circle cx="46" cy="14.4" r="1.7" fill="#FFD27A" stroke="#8A6134" stroke-width="1.2"/>
+
+  <g>
+    <rect x="11" y="26" width="6.4" height="21" rx="1.6" fill="url(#wr-ink)"/>
+    <rect x="18.4" y="30" width="5.2" height="17" rx="1.4" fill="url(#wr-clay)"/>
+    <rect x="24.6" y="24.5" width="6.8" height="22.5" rx="1.6" fill="#3E6B5A"/>
+    <path d="M32.6 27.1l6.1-1.6 4.8 19.9-6.1 1.6z" fill="#8A6BA8"/>
+    <rect x="41" y="31" width="5.4" height="16" rx="1.4" fill="url(#wr-clay)"/>
+    <rect x="47.4" y="27.6" width="6" height="19.4" rx="1.6" fill="url(#wr-ink)"/>
+  </g>
+  <rect x="10" y="47" width="44" height="3.2" rx="1.6" fill="#7A5B37"/>
+  <rect x="10" y="50.2" width="44" height="5.6" rx="2" fill="url(#wr-ink)" opacity="0.92"/>
+  <path d="M10.8 50.9h42.4" stroke="#F7EAD1" stroke-opacity="0.25" stroke-width="1.2"/>
+
+  <g fill="#F7EAD1" fill-opacity="0.85">
+    <rect x="12.6" y="32.4" width="3" height="1.4" rx="0.7"/>
+    <rect x="26.3" y="31.6" width="3.1" height="1.4" rx="0.7"/>
+  </g>
+</svg>
