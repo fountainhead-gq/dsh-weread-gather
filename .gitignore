@@ -8,6 +8,12 @@ meta.json
 heat.json
 *.local.json
 
+# 内部文档（PRD / backlog / 开发记录）只留本地，不入库
+docs/
+
+# 导出产物
+exports/
+
 # 编辑器 / 系统
 .DS_Store
 Thumbs.db

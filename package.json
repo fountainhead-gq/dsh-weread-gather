@@ -1,7 +1,7 @@
 {
   "name": "dsh-weread-gather",
-  "version": "1.0.0",
-  "description": "书房 — a private WeRead study in the DSH sidebar: shelf, categories, highlights, thoughts, reading dashboard and heatmap, with search everywhere.",
+  "version": "1.1.0",
+  "description": "数字书房 — a private WeRead study in the DSH sidebar: shelf, categories, highlights, thoughts, reading dashboard and heatmap, Markdown export and backup, with search everywhere.",
   "type": "module",
   "license": "MIT",
   "author": "fountainhead-gq",
@@ -20,7 +20,8 @@
     "deepseek-harness",
     "weread",
     "reading",
-    "highlights"
+    "highlights",
+    "markdown"
   ],
   "exports": {
     ".": "./index.js",
@@ -54,7 +55,8 @@
   },
   "scripts": {
     "check": "node scripts/check.cjs",
-    "smoke": "node scripts/render-smoke.cjs"
+    "smoke": "node scripts/render-smoke.cjs",
+    "test:export": "node scripts/export-selftest.cjs"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"

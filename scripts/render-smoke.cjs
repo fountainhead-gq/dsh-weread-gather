@@ -133,6 +133,40 @@ const statePayload = {
 
 let loaded = null
 let loadedModule = null
+const exportPreview = {
+  ok: true,
+  markdown: [
+    '---',
+    'title: "示例书"',
+    'author: "示例作者"',
+    'source: "weread"',
+    'exportedAt: "2026-11-08T19:00:00+08:00"',
+    'excerptCount: 1',
+    'thoughtCount: 1',
+    'containsAI: false',
+    '---',
+    '',
+    '# 示例书',
+    '',
+    '*示例作者*',
+    '',
+    '## 第一章',
+    '',
+    '> 原文只有一行。',
+    '> — 2026-07-28 12:52',
+    '',
+    '**想法**（2026-07-28 12:55）',
+    '',
+    '这里是我的想法。',
+  ].join('\n'),
+  filename: '示例书 - 示例作者.md',
+  exportId: 'weread:book/1',
+  contentHash: 'sha256:0000',
+  excerpts: 1,
+  thoughts: 1,
+  books: 1,
+  bytes: 512,
+}
 const sandbox = {
   console,
   setTimeout,
@@ -141,7 +175,10 @@ const sandbox = {
   clearInterval,
   fetch: async (url) => {
     const text = String(url)
-    const body = text.includes('/state') ? statePayload : payload
+    let body = payload
+    if (text.includes('/state')) body = statePayload
+    else if (text.includes('/export/dir')) body = { ok: true, dir: 'D:/tmp/exports', exists: true }
+    else if (text.includes('/export')) body = exportPreview
     return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }
   },
   location: { href: 'http://127.0.0.1:6622/', origin: 'http://127.0.0.1:6622' },
@@ -296,6 +333,36 @@ renderPanel('empty(no data)', seeds({ state: Object.assign({}, statePayload, { h
 renderPanel('error-banner', seeds({ error: '网络开小差了' }))
 renderPanel('sync-running', seeds({ state: Object.assign({}, statePayload, { sync: { running: true, phase: 'meta', label: '补全书籍信息', done: 120, total: 400, message: '已补全 120/400 本' } }) }))
 
+// 导出面板只在点击之后才出现，所以直接拿模块里的组件挂载一次。
+function renderStandalone(label, component, props, hookSeeds) {
+  resetHooks(hookSeeds)
+  const out = { text: '', tags: {}, components: new Set() }
+  try {
+    const tree = component(props)
+    renderNode(tree, 0, out)
+    drawCalls.push({ label, ok: true, text: out.text, tags: Object.keys(out.tags).length, nodes: Object.values(out.tags).reduce((a, b) => a + b, 0), textLength: out.text.length, components: [...out.components].join(',') })
+    console.log('[render] %s ok tags=%d nodes=%d text=%d components=%s', label, Object.keys(out.tags).length, Object.values(out.tags).reduce((a, b) => a + b, 0), out.text.length, [...out.components].join(','))
+  } catch (error) {
+    drawCalls.push({ label, ok: false, error: String(error && error.stack ? error.stack.split('\n').slice(0, 4).join(' | ') : error) })
+    console.error('[render] %s FAILED %s', label, error && error.stack ? error.stack.split('\n').slice(0, 6).join('\n') : error)
+  }
+}
+
+const smoke = loadedModule.__smoke || {}
+if (typeof smoke.ExportPanel !== 'function') {
+  console.error('FAIL: client module did not expose __smoke.ExportPanel')
+  process.exit(1)
+}
+// ExportPanel 的 useState 顺序：options, preview, busy, saving, message, dir
+renderStandalone('export-panel', smoke.ExportPanel, { selector: { noteIds: [dataset.notes[0].id] }, onClose() {} }, [
+  { excerpts: true, thoughts: true, meta: true, chapter: true, star: true, sourceUrl: true },
+  exportPreview,
+  false,
+  false,
+  '',
+  'D:/tmp/exports',
+])
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -311,6 +378,16 @@ for (const label of ['notes', 'thoughts']) {
 }
 const bookDraw = byLabel('book')
 if (bookDraw && !bookDraw.text.includes('action.copy')) guards.push('book: 缺复制按钮')
+const exportDraw = byLabel('export-panel')
+if (!exportDraw) guards.push('export-panel: 未渲染')
+else {
+  if (process.env.SMOKE_DUMP) console.log('[export-panel text]', exportDraw.text)
+  // 预览容器里的长文本会被渲染桩截断，所以断言前 120 字里一定出现的东西。
+  for (const needle of ['export.opt.excerpts', 'export.previewLabel', 'export.save', 'export.download', 'title:', 'exportedAt'])
+    if (!exportDraw.text.includes(needle)) guards.push(`export-panel: 缺 ${needle}`)
+}
+const searchDraw = byLabel('search')
+if (searchDraw && !searchDraw.text.includes('search.typeAll')) guards.push('search: 缺类型筛选')
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)

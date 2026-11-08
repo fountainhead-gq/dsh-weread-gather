@@ -10,7 +10,8 @@
  * so the Client half calls document-relative paths and this half registers the
  * root-absolute prefix.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
@@ -278,6 +279,301 @@ function normalizeThought(item, bookId) {
 }
 
 /** Owns the on-disk dataset plus the in-memory sync job. */
+// ---------------------------------------------------- Markdown export & backup
+
+const BACKUP_FORMAT = 'dsh-weread-gather-backup'
+const BACKUP_VERSION = 1
+/** One export is a user-facing file; past a few thousand entries it is a mistake. */
+const EXPORT_ENTRY_LIMIT = 5000
+
+/** Version reported by `/state` and recorded in every backup bundle. */
+function pluginVersion() {
+  try {
+    const parsed = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+    return typeof parsed.version === 'string' ? parsed.version : '0.0.0'
+  } catch {
+    return '0.0.0'
+  }
+}
+
+function pad2(value) {
+  return String(value).padStart(2, '0')
+}
+
+/** `YYYY-MM-DD HH:mm` in the host's local time; `''` when the stamp is unusable. */
+function formatStamp(seconds) {
+  const stamp = Number(seconds)
+  if (!Number.isFinite(stamp) || stamp <= 0) return ''
+  const date = new Date(stamp * 1000)
+  if (Number.isNaN(date.getTime())) return ''
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+}
+
+function formatDay(seconds) {
+  const full = formatStamp(seconds)
+  return full === '' ? '' : full.slice(0, 10)
+}
+
+function formatNowIso() {
+  const date = new Date()
+  const offset = -date.getTimezoneOffset()
+  const sign = offset >= 0 ? '+' : '-'
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}${sign}${pad2(Math.floor(Math.abs(offset) / 60))}:${pad2(Math.abs(offset) % 60)}`
+}
+
+function sha256Hex(text) {
+  return createHash('sha256').update(text, 'utf8').digest('hex')
+}
+
+/** Double-quoted YAML scalar; JSON escaping is valid YAML. */
+function yamlText(value) {
+  const text = value === null || value === undefined ? '' : String(value).trim()
+  return text === '' ? '""' : JSON.stringify(text)
+}
+
+function yamlList(values) {
+  const list = values.map((value) => String(value || '').trim()).filter((value) => value !== '')
+  return list.length === 0 ? '[]' : `[${list.map((value) => JSON.stringify(value)).join(', ')}]`
+}
+
+/** One file-name-safe segment; falls back rather than producing an empty name. */
+function safeSegment(text, fallback) {
+  const cleaned = String(text || '')
+    .replace(/[\\/:*?"<>|\r\n\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const cut = cleaned.length > 80 ? cleaned.slice(0, 80).trim() : cleaned
+  return cut === '' ? fallback : cut
+}
+
+const EXPORT_OPTION_KEYS = ['excerpts', 'thoughts', 'meta', 'chapter', 'star', 'sourceUrl']
+
+function exportOptions(input) {
+  const source = isObject(input) ? input : {}
+  const options = {}
+  for (const key of EXPORT_OPTION_KEYS) options[key] = typeof source[key] === 'boolean' ? source[key] : true
+  return options
+}
+
+/** The two entry kinds disagree on the chapter field name; never guess beyond that. */
+function chapterOf(entry) {
+  return String(entry.chapterTitle || entry.chapterName || '').trim()
+}
+
+/** Entries of one book, grouped by chapter, both kinds interleaved by time. */
+function chapterGroups(notes, thoughts, options) {
+  const buckets = new Map()
+  const push = (chapter, type, entry) => {
+    if (!buckets.has(chapter)) buckets.set(chapter, [])
+    buckets.get(chapter).push({ type, entry, at: Number(entry.createTime) || 0 })
+  }
+  if (options.excerpts) for (const note of notes) push(chapterOf(note), 'note', note)
+  if (options.thoughts) for (const thought of thoughts) push(chapterOf(thought), 'thought', thought)
+  return Array.from(buckets.entries())
+    .map(([chapter, items]) => ({ chapter, items: items.sort((a, b) => a.at - b.at) }))
+    .sort((a, b) => (a.items[0]?.at || 0) - (b.items[0]?.at || 0) || a.chapter.localeCompare(b.chapter, 'zh'))
+}
+
+/** A highlight is always a block quote; the trailing line names place and time. */
+function renderNote(note, chapter, options, showChapter) {
+  const body = String(note.text || '').trim()
+  if (body === '') return ''
+  const quoted = body
+    .split(/\r?\n/)
+    .map((line) => (line.trim() === '' ? '>' : `> ${line}`))
+    .join('\n')
+  const tail = []
+  if (showChapter && options.chapter && chapter !== '') tail.push(chapter)
+  const stamp = formatStamp(note.createTime)
+  if (stamp !== '') tail.push(stamp)
+  return tail.length === 0 ? quoted : `${quoted}\n> — ${tail.join(' · ')}`
+}
+
+/** A thought is plain prose so it can never be mistaken for the book's own words. */
+function renderThought(thought, options) {
+  const body = String(thought.content || '').trim()
+  if (body === '') return ''
+  const mark = []
+  const star = Number(thought.star)
+  if (options.star && Number.isFinite(star) && star > 0) mark.push(`★${star}`)
+  const stamp = formatStamp(thought.createTime)
+  if (stamp !== '') mark.push(stamp)
+  const head = mark.length === 0 ? '**想法**' : `**想法**（${mark.join(' · ')}）`
+  return `${head}\n\n${body}`
+}
+
+function renderBook(book, notes, thoughts, options, level, wrapTitle) {
+  const title = String(book.title || '').trim()
+  const heading = title === '' ? '' : wrapTitle ? `《${title}》` : title
+  const lines = [`${'#'.repeat(level)} ${heading}`.trimEnd()]
+  const author = String(book.author || '').trim()
+  // Italic, not a quote: a block quote means "the book's own words" everywhere else.
+  if (author !== '') lines.push('', `*${author}*`)
+  for (const group of chapterGroups(notes, thoughts, options)) {
+    const headingEmitted = options.chapter && group.chapter !== ''
+    const blocks = []
+    for (const item of group.items) {
+      const rendered =
+        item.type === 'note'
+          ? renderNote(item.entry, group.chapter, options, !headingEmitted)
+          : renderThought(item.entry, options)
+      if (rendered !== '') blocks.push(rendered)
+    }
+    if (blocks.length === 0) continue
+    lines.push('')
+    if (headingEmitted) lines.push(`## ${group.chapter}`, '')
+    lines.push(blocks.join('\n\n'))
+  }
+  return lines.join('\n')
+}
+
+function frontMatterLines(fields) {
+  return ['---', ...fields.map(([key, value]) => `${key}: ${value}`), '---']
+}
+
+function bookFrontMatter(book, stats, options, nowIso) {
+  const fields = []
+  const push = (key, value) => fields.push([key, yamlText(value)])
+  /** Counts and flags stay real numbers/booleans so other tools can read them. */
+  const pushRaw = (key, value) => fields.push([key, String(value)])
+  push('title', book.title)
+  push('author', book.author)
+  push('bookId', book.bookId)
+  push('source', 'weread')
+  if (options.sourceUrl) {
+    push('sourceUrl', String(book.bookId || '') === '' ? '' : `weread://reading?bId=${book.bookId}`)
+  }
+  if (options.meta) {
+    push('category', book.category)
+    push('group', book.group)
+    push('publisher', book.publisher)
+    push('publishYear', book.publishYear)
+    push('rating', book.rating)
+    push('ratingCount', book.ratingCount)
+    push('readingProgress', book.readingProgress)
+    push(
+      'isFinished',
+      book.finishReading === undefined || book.finishReading === null
+        ? ''
+        : String(Number(book.finishReading) === 1 || book.finishReading === true),
+    )
+    push('lastReadTime', formatDay(book.readUpdateTime))
+    push('lastNoteTime', formatDay(book.lastNoteTime))
+  }
+  push('exportedAt', nowIso)
+  pushRaw('excerptCount', stats.excerpts)
+  pushRaw('thoughtCount', stats.thoughts)
+  pushRaw('containsAI', false)
+  push('exportId', stats.exportId)
+  push('contentHash', stats.contentHash)
+  fields.push(['tags', yamlList(['微信读书', book.group || ''])])
+  return fields
+}
+
+function hashOf(fields, body) {
+  const stable = fields
+    .filter(([key]) => key !== 'exportedAt' && key !== 'contentHash')
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n')
+  return `sha256:${sha256Hex(`${stable}\n\n${body}`)}`
+}
+
+function exportFileName(books, total) {
+  if (books.length === 1) {
+    const book = books[0]
+    const title = safeSegment(book.title, `书 ${book.bookId || ''}`.trim())
+    const author = safeSegment(book.author, '')
+    return author === '' ? `${title}.md` : `${title} - ${author}.md`
+  }
+  return `数字书房 · 摘录 ${total} 条.md`
+}
+
+/**
+ * The one exporter. `picked` is `{ books, notes, thoughts }` already narrowed to
+ * the selection, so an unselected book can never leak into the file.
+ */
+function buildExportDocument(picked, optionsInput, nowIso) {
+  const options = exportOptions(optionsInput)
+  const books = Array.isArray(picked.books) ? picked.books : []
+  if (books.length === 0) throw new Error('没有选中任何书籍')
+
+  const notesByBook = new Map()
+  for (const note of picked.notes || []) {
+    const key = String(note.bookId || '')
+    if (!notesByBook.has(key)) notesByBook.set(key, [])
+    notesByBook.get(key).push(note)
+  }
+  const thoughtsByBook = new Map()
+  for (const thought of picked.thoughts || []) {
+    const key = String(thought.bookId || '')
+    if (!thoughtsByBook.has(key)) thoughtsByBook.set(key, [])
+    thoughtsByBook.get(key).push(thought)
+  }
+
+  const single = books.length === 1
+  const chunks = []
+  let excerpts = 0
+  let thoughts = 0
+  for (const book of books) {
+    const key = String(book.bookId || '')
+    const bookNotes = notesByBook.get(key) || []
+    const bookThoughts = thoughtsByBook.get(key) || []
+    if (options.excerpts) excerpts += bookNotes.length
+    if (options.thoughts) thoughts += bookThoughts.length
+    chunks.push(renderBook(book, bookNotes, bookThoughts, options, single ? 1 : 1, !single))
+  }
+  const body = chunks.filter((chunk) => chunk.trim() !== '').join('\n\n---\n\n')
+  if (body.trim() === '') throw new Error('选中的内容里没有可导出的划线或想法')
+
+  if (single) {
+    const book = books[0]
+    const stats = { excerpts, thoughts, exportId: `weread:book/${book.bookId}`, contentHash: '' }
+    const fields = bookFrontMatter(book, stats, options, nowIso)
+    stats.contentHash = hashOf(fields, body)
+    const finalFields = bookFrontMatter(book, stats, options, nowIso)
+    return {
+      markdown: `${frontMatterLines(finalFields).join('\n')}\n\n${body}\n`,
+      filename: exportFileName(books, excerpts + thoughts),
+      exportId: stats.exportId,
+      contentHash: stats.contentHash,
+      excerpts,
+      thoughts,
+      books: 1,
+    }
+  }
+
+  const stats = { exportId: 'weread:selection/pending', contentHash: '' }
+  const fields = [
+    ['title', yamlText('数字书房 · 摘录导出')],
+    ['source', yamlText('weread')],
+    ['bookCount', String(books.length)],
+    ['excerptCount', String(excerpts)],
+    ['thoughtCount', String(thoughts)],
+    ['exportedAt', yamlText(nowIso)],
+    ['containsAI', 'false'],
+    ['exportId', yamlText(stats.exportId)],
+    ['contentHash', yamlText(stats.contentHash)],
+    ['tags', yamlList(['微信读书', '摘录'])],
+  ]
+  const hash = hashOf(fields, body)
+  stats.contentHash = hash
+  stats.exportId = `weread:selection/${hash.replace('sha256:', '').slice(0, 8)}`
+  const finalFields = fields.map(([key, value]) => {
+    if (key === 'exportId') return [key, yamlText(stats.exportId)]
+    if (key === 'contentHash') return [key, yamlText(stats.contentHash)]
+    return [key, value]
+  })
+  return {
+    markdown: `${frontMatterLines(finalFields).join('\n')}\n\n${body}\n`,
+    filename: exportFileName(books, excerpts + thoughts),
+    exportId: stats.exportId,
+    contentHash: stats.contentHash,
+    excerpts,
+    thoughts,
+    books: books.length,
+  }
+}
+
 function createHost(options) {
   const dir = join(dshHome(), 'weread-gather')
   const configPath = join(dir, 'config.json')
@@ -350,6 +646,185 @@ function createHost(options) {
     } catch {
       // Same trade-off as meta.json: the cache only saves gateway calls.
     }
+  }
+
+  // ------------------------------------------------------------------ exports
+
+  const defaultExportDir = join(dir, 'exports')
+
+  function exportDirPath() {
+    const custom = typeof config.exportDir === 'string' ? config.exportDir.trim() : ''
+    return custom === '' ? defaultExportDir : custom
+  }
+
+  function exportDirectory() {
+    const target = exportDirPath()
+    return { dir: target, exists: existsSync(target) }
+  }
+
+  /** Point exports elsewhere, and prove the folder is writable before saving it. */
+  function setExportDir(value) {
+    const text = String(value ?? '').trim()
+    if (text === '') {
+      saveConfig({ exportDir: '' })
+      return exportDirectory()
+    }
+    mkdirSync(text, { recursive: true })
+    const probe = join(text, `.weread-gather-${Date.now()}.tmp`)
+    try {
+      writeFileSync(probe, 'ok', 'utf8')
+    } finally {
+      try {
+        unlinkSync(probe)
+      } catch {
+        // A leftover probe file is harmless; the write above already proved access.
+      }
+    }
+    saveConfig({ exportDir: text })
+    return exportDirectory()
+  }
+
+  /** Selection -> exactly the books and entries an export is allowed to see. */
+  function selectEntries(selector = {}) {
+    const current = dataset
+    if (current === null) throw new Error('还没有同步数据')
+    const books = Array.isArray(current.books) ? current.books : []
+    const allNotes = Array.isArray(current.notes) ? current.notes : []
+    const allThoughts = Array.isArray(current.thoughts) ? current.thoughts : []
+
+    const bookIds = Array.isArray(selector.bookIds) ? selector.bookIds.map(String).filter((id) => id !== '') : []
+    const noteIds = Array.isArray(selector.noteIds) ? selector.noteIds.map(String) : []
+    const thoughtIds = Array.isArray(selector.thoughtIds) ? selector.thoughtIds.map(String) : []
+    const bookScope = new Set(bookIds)
+    // An empty selector must never mean "everything": a mis-wired button would then
+    // dump the whole library into one file.
+    if (bookScope.size === 0 && noteIds.length === 0 && thoughtIds.length === 0) {
+      throw new Error('没有选择任何内容，先勾选要导出的书或条目')
+    }
+
+    const pick = (list, ids) => {
+      if (ids.length > 0) {
+        const wanted = new Set(ids)
+        return list.filter((entry) => wanted.has(String(entry.id)))
+      }
+      if (bookScope.size > 0) return list.filter((entry) => bookScope.has(String(entry.bookId)))
+      return list
+    }
+    const notes = pick(allNotes, noteIds)
+    const thoughts = pick(allThoughts, thoughtIds)
+
+    const ids = new Set(bookScope)
+    for (const entry of notes) ids.add(String(entry.bookId))
+    for (const entry of thoughts) ids.add(String(entry.bookId))
+
+    const picked = books.filter((book) => ids.has(String(book.bookId)))
+    const known = new Set(picked.map((book) => String(book.bookId)))
+    // A book can leave the shelf while its highlights stay behind: keep the export
+    // usable with only the fields the entry itself carries, and invent nothing.
+    for (const id of ids) {
+      if (known.has(id)) continue
+      const sample =
+        notes.find((entry) => String(entry.bookId) === id) || thoughts.find((entry) => String(entry.bookId) === id)
+      if (sample) picked.push({ bookId: id, title: sample.bookTitle || '', author: sample.author || '' })
+    }
+    return { books: picked, notes, thoughts }
+  }
+
+  function runExport(selector, options, mode) {
+    const picked = selectEntries(isObject(selector) ? selector : {})
+    if (picked.notes.length + picked.thoughts.length > EXPORT_ENTRY_LIMIT) {
+      throw new Error(`一次最多导出 ${EXPORT_ENTRY_LIMIT} 条，请先缩小范围`)
+    }
+    const document = buildExportDocument(picked, options, formatNowIso())
+    const base = { ...document, bytes: Buffer.byteLength(document.markdown, 'utf8'), saved: false, dir: exportDirPath() }
+    if (mode !== 'file') return base
+
+    const target = exportDirPath()
+    mkdirSync(target, { recursive: true })
+    const stem = document.filename.replace(/\.md$/i, '')
+    let path = join(target, `${stem}.md`)
+    for (let index = 2; existsSync(path); index += 1) {
+      if (index > 999) throw new Error('导出目录里同名文件太多，请换一个目录')
+      path = join(target, `${stem}-${index}.md`)
+    }
+    writeFileSync(path, document.markdown, 'utf8')
+    return { ...base, saved: true, path }
+  }
+
+  // ------------------------------------------------------------------- backup
+
+  function pluginBackup() {
+    const safeConfig = { ...config }
+    delete safeConfig.apiKey
+    return {
+      format: BACKUP_FORMAT,
+      formatVersion: BACKUP_VERSION,
+      schemaVersion: SCHEMA_VERSION,
+      pluginVersion: pluginVersion(),
+      exportedAt: formatNowIso(),
+      apiKeyOmitted: true,
+      counts: counts(),
+      files: {
+        'config.json': safeConfig,
+        'data.json': dataset,
+        'meta.json': meta,
+        'heat.json': heatCache,
+      },
+    }
+  }
+
+  /** Restoring never touches the live key: a backup must not be able to erase it. */
+  function restoreBackup(input) {
+    const bundle = isObject(input) ? input : {}
+    if (bundle.format !== BACKUP_FORMAT) throw new Error('不是数字书房导出的备份包')
+    const files = isObject(bundle.files) ? bundle.files : {}
+    const incoming = files['data.json']
+    if (!isObject(incoming) || !Array.isArray(incoming.books)) throw new Error('备份包里缺少合法的 data.json')
+
+    const stamp = new Date()
+    const folder = join(
+      dir,
+      'backups',
+      `${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}${pad2(stamp.getSeconds())}`,
+    )
+    mkdirSync(folder, { recursive: true })
+    const keptFiles = []
+    for (const [name, path] of [
+      ['config.json', configPath],
+      ['data.json', dataPath],
+      ['meta.json', metaPath],
+      ['heat.json', heatPath],
+    ]) {
+      if (existsSync(path)) {
+        copyFileSync(path, join(folder, name))
+        keptFiles.push(name)
+      }
+    }
+
+    const restored = []
+    dataset = decorateDataset({ ...incoming })
+    writeJsonFile(dataPath, dataset)
+    restored.push('data.json')
+
+    if (isObject(files['config.json'])) {
+      const next = { ...files['config.json'] }
+      delete next.apiKey
+      if (typeof config.apiKey === 'string' && config.apiKey !== '') next.apiKey = config.apiKey
+      config = next
+      writeJsonFile(configPath, config)
+      restored.push('config.json')
+    }
+    if (isObject(files['meta.json'])) {
+      meta = files['meta.json']
+      writeJsonFile(metaPath, meta)
+      restored.push('meta.json')
+    }
+    if (isObject(files['heat.json'])) {
+      heatCache = files['heat.json']
+      saveHeat()
+      restored.push('heat.json')
+    }
+    return { restored, keptBackup: folder, keptFiles, counts: counts() }
   }
 
   /** Years that carry reading time, newest first: `[{ year, total }]`. */
@@ -470,6 +945,7 @@ function createHost(options) {
     const current = settings()
     return {
       ok: true,
+      version: pluginVersion(),
       configured: current.apiKey !== '',
       fromEnv: current.fromEnv,
       maskedKey: maskKey(current.apiKey),
@@ -480,6 +956,7 @@ function createHost(options) {
       notesPerBook: current.notesPerBook,
       metaLimit: current.metaLimit,
       dir,
+      exportDir: exportDirPath(),
       sync: job === null ? { running: false } : { ...job, apiKey: undefined },
     }
   }
@@ -764,7 +1241,25 @@ function createHost(options) {
     }
   }
 
-  return { dir, settings, saveConfig, status, sync, loadHeat, readingYears, get dataset() { return dataset }, counts, maskKey }
+  return {
+    dir,
+    settings,
+    saveConfig,
+    status,
+    sync,
+    loadHeat,
+    readingYears,
+    runExport,
+    exportDirectory,
+    setExportDir,
+    pluginBackup,
+    restoreBackup,
+    get dataset() {
+      return dataset
+    },
+    counts,
+    maskKey,
+  }
 }
 
 function readBody(req) {
@@ -773,7 +1268,8 @@ function readBody(req) {
     let size = 0
     req.on('data', (chunk) => {
       size += chunk.length
-      if (size > 1_000_000) {
+      // A restore bundle carries data.json (a few MB), hence the generous cap.
+      if (size > 32_000_000) {
         reject(new Error('请求体过大'))
         req.destroy()
         return
@@ -850,6 +1346,40 @@ function makeRoutes(host) {
         return true
       }
 
+      if (route === '/export' && method === 'POST') {
+        const body = await readBody(req)
+        const mode = body.mode === 'preview' ? 'preview' : 'file'
+        try {
+          sendJson(res, 200, { ok: true, ...host.runExport(body.selector, body.options, mode) })
+        } catch (error) {
+          // Bad selectors and over-limit batches are caller mistakes, not server faults.
+          fail(res, 400, error instanceof Error ? error.message : String(error))
+        }
+        return true
+      }
+
+      if (route === '/export/dir' && method === 'GET') {
+        sendJson(res, 200, { ok: true, ...host.exportDirectory() })
+        return true
+      }
+
+      if (route === '/export/dir' && method === 'POST') {
+        const body = await readBody(req)
+        sendJson(res, 200, { ok: true, ...host.setExportDir(body.dir) })
+        return true
+      }
+
+      if (route === '/backup' && method === 'GET') {
+        sendJson(res, 200, { ok: true, bundle: host.pluginBackup() })
+        return true
+      }
+
+      if (route === '/restore' && method === 'POST') {
+        const body = await readBody(req)
+        sendJson(res, 200, { ok: true, ...host.restoreBackup(body.bundle) })
+        return true
+      }
+
       if (route === '/sync' && method === 'POST') {
         const body = await readBody(req)
         const before = host.status()
@@ -901,6 +1431,12 @@ function makeRoutes(host) {
 }
 
 export const inject = ['webServer']
+
+/**
+ * Pure helpers exposed for `scripts/export-selftest.cjs`. Nothing here touches
+ * the filesystem or the gateway, so importing the module stays side-effect free.
+ */
+export const __internals = { buildExportDocument, exportOptions, chapterGroups, formatStamp, safeSegment }
 
 export function apply(ctx) {
   const host = createHost({})
