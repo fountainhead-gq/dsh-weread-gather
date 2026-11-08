@@ -21,8 +21,8 @@ window.__ModuleLoader__.load({
 
     // ------------------------------------------------------------------ copy
     const zh = {
-      'entry.label': '书房',
-      'page.title': '书房',
+      'entry.label': '数字书房',
+      'page.title': '数字书房',
       'page.subtitle': '私人阅读档案',
       'nav.overview': '总览',
       'nav.shelf': '书架',
@@ -47,11 +47,11 @@ window.__ModuleLoader__.load({
       'pager.next': '下一页',
       'pager.page': '第 {page} / {total} 页',
       'action.refresh': '刷新',
-      'state.loading': '正在打开书房…',
-      'state.loadFailed': '书房数据加载失败',
+      'state.loading': '正在打开数字书房…',
+      'state.loadFailed': '数字书房数据加载失败',
       'state.notConfigured': '还没有连接微信读书',
       'setup.title': '连接你的微信读书',
-      'setup.desc': '书房通过微信读书 Agent 网关读取你的书架、笔记与阅读统计。填写一次 API Key，之后可以随时自行同步。',
+      'setup.desc': '数字书房通过微信读书 Agent 网关读取你的书架、笔记与阅读统计。填写一次 API Key，之后可以随时自行同步。',
       'setup.keyLabel': 'API Key',
       'setup.keyPlaceholder': 'wrk-…',
       'setup.hint': 'Key 只保存在本机 DSH 数据目录，不会出现在页面里。',
@@ -75,8 +75,8 @@ window.__ModuleLoader__.load({
       'dash.avg': '自然日均',
       'dash.hour': '阅读时段',
       'dash.hourHint': '从 6 点开始，按小时统计阅读时长',
-      'dash.heat': '阅读日历',
-      'dash.heatHint': '近一年的每日阅读时长',
+      'dash.heat': '阅读热力图',
+      'dash.heatHint': '那一年的每日阅读时长',
       'dash.heat.active': '活跃 {days} 天',
       'dash.heat.streak': '最长连续 {days} 天',
       'dash.heat.total': '全年 {time}',
@@ -145,7 +145,7 @@ window.__ModuleLoader__.load({
       'search.notes': '划线',
       'search.thoughts': '想法',
       'search.more': '还有 {count} 条结果，继续输入可缩小范围',
-      'settings.title': '书房设置',
+      'settings.title': '数字书房设置',
       'settings.key': 'API Key',
       'settings.keyMasked': '当前 Key：{key}',
       'settings.keyNone': '当前未配置 Key',
@@ -155,12 +155,54 @@ window.__ModuleLoader__.load({
       'settings.saved': '已保存',
       'settings.dir': '数据目录：{dir}',
       'settings.resync': '重新同步',
+      'export.title': '导出为 Markdown',
+      'export.summary': '{entries} 条内容 · {books} 本书',
+      'export.select': '选择这条',
+      'export.selected': '已选 {count} 条',
+      'export.selectPage': '全选本页',
+      'export.exportSelected': '导出所选',
+      'export.exportAll': '导出全部',
+      'export.clear': '清空',
+      'export.none': '还没有选择内容，点卡片左上角的小圆圈即可勾选。',
+      'export.options': '包含内容',
+      'export.opt.excerpts': '原文划线',
+      'export.opt.thoughts': '我的想法',
+      'export.opt.meta': '书籍信息',
+      'export.opt.chapter': '章节标题',
+      'export.opt.star': '星级',
+      'export.opt.sourceUrl': '微读链接',
+      'export.previewLabel': '预览',
+      'export.previewHint': '前 {lines} 行，共 {total} 行 · {bytes}',
+      'export.copyAll': '复制全文',
+      'export.download': '下载 .md',
+      'export.save': '保存到导出目录',
+      'export.saving': '正在保存…',
+      'export.saved': '已保存：{files}',
+      'export.failed': '导出失败：{error}',
+      'export.close': '关闭',
+      'export.book': '导出这本书',
+      'export.emptySelection': '没有可导出的内容',
+      'settings.dataTitle': '数据与导出',
+      'settings.exportDir': 'Markdown 导出目录',
+      'settings.exportDirHint': '默认保存到这里；也可以只改这一次的目标目录。',
+      'settings.dirSave': '保存目录',
+      'settings.dirSaved': '已更新导出目录',
+      'settings.backup': '下载备份',
+      'settings.backupHint': '包含书架、划线、想法、统计缓存与本机设置，不含 API Key。',
+      'settings.restore': '导入备份',
+      'settings.restorePick': '选择备份文件',
+      'settings.restoreConfirm': '将用备份覆盖本机数据，会先把当前数据另存一份。确定恢复吗？',
+      'settings.restoreYes': '确定恢复',
+      'settings.restored': '已恢复 {files} 个文件',
+      'settings.version': '版本 {version}',
+      'search.typeAll': '全部',
+      'search.typeBooks': '书籍',
       'count.notes': '{count} 条',
       'error.prefix': '出错了：',
     }
     const en = {
-      'entry.label': 'Study',
-      'page.title': 'Study',
+      'entry.label': 'Digital Study',
+      'page.title': 'Digital Study',
       'page.subtitle': 'A private reading archive',
       'nav.overview': 'Overview',
       'nav.shelf': 'Shelf',
@@ -293,6 +335,48 @@ window.__ModuleLoader__.load({
       'settings.saved': 'Saved',
       'settings.dir': 'Data directory: {dir}',
       'settings.resync': 'Sync again',
+      'export.title': 'Export as Markdown',
+      'export.summary': '{entries} entries · {books} books',
+      'export.select': 'Select this',
+      'export.selected': '{count} selected',
+      'export.selectPage': 'Select page',
+      'export.exportSelected': 'Export selected',
+      'export.exportAll': 'Export all',
+      'export.clear': 'Clear',
+      'export.none': 'Nothing selected yet — click the circle at the top-left of a card.',
+      'export.options': 'Include',
+      'export.opt.excerpts': 'Highlights',
+      'export.opt.thoughts': 'My thoughts',
+      'export.opt.meta': 'Book details',
+      'export.opt.chapter': 'Chapter headings',
+      'export.opt.star': 'Star rating',
+      'export.opt.sourceUrl': 'WeRead link',
+      'export.previewLabel': 'Preview',
+      'export.previewHint': 'First {lines} of {total} lines · {bytes}',
+      'export.copyAll': 'Copy all',
+      'export.download': 'Download .md',
+      'export.save': 'Save to folder',
+      'export.saving': 'Saving…',
+      'export.saved': 'Saved: {files}',
+      'export.failed': 'Export failed: {error}',
+      'export.close': 'Close',
+      'export.book': 'Export this book',
+      'export.emptySelection': 'Nothing to export',
+      'settings.dataTitle': 'Data & export',
+      'settings.exportDir': 'Markdown export folder',
+      'settings.exportDirHint': 'Markdown goes here by default; you can change it for one export.',
+      'settings.dirSave': 'Save folder',
+      'settings.dirSaved': 'Export folder updated',
+      'settings.backup': 'Download backup',
+      'settings.backupHint': 'Shelf, highlights, thoughts, statistics cache and local settings — API key excluded.',
+      'settings.restore': 'Import backup',
+      'settings.restorePick': 'Choose a backup file',
+      'settings.restoreConfirm': 'This overwrites local data (the current copy is saved first). Restore now?',
+      'settings.restoreYes': 'Restore',
+      'settings.restored': 'Restored {files} files',
+      'settings.version': 'Version {version}',
+      'search.typeAll': 'All',
+      'search.typeBooks': 'Books',
       'count.notes': '{count}',
       'error.prefix': 'Something went wrong: ',
     }
@@ -327,6 +411,13 @@ window.__ModuleLoader__.load({
     const apiSync = () => request('/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
     const apiConfig = (patch) => request('/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch) })
     const apiReset = () => request('/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+    const jsonPost = (path, body) => request(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body === undefined ? {} : body) })
+    /** mode 'preview' returns the markdown only; 'file' also writes it into the export folder. */
+    const apiExport = (selector, options, mode) => jsonPost('/export', { selector, options, mode })
+    const apiExportDir = () => request('/export/dir')
+    const apiSetExportDir = (dir) => jsonPost('/export/dir', { dir })
+    const apiBackup = () => request('/backup')
+    const apiRestore = (bundle) => jsonPost('/restore', { bundle })
 
     // --------------------------------------------------------------- helpers
     function pad(value) {
@@ -493,6 +584,17 @@ window.__ModuleLoader__.load({
 .wr-copy:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .wr-copy[data-done=true]{color:var(--dsw-alias-state-success-primary);border-color:var(--dsw-alias-state-success-primary)}
 .wr-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;font-size:12px;flex-wrap:wrap}
+.wr-pick{position:absolute;right:8px;top:8px;width:16px;height:16px;border-radius:50%;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);color:transparent;font-size:10px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;opacity:0;transition:opacity .12s ease;z-index:1}
+.wr-quote:hover .wr-pick,.wr-thought:hover .wr-pick,.wr-pick[data-on=true]{opacity:1}
+.wr-pick[data-on=true]{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-bg-base)}
+.wr-quote[data-picked=true],.wr-thought[data-picked=true]{border-color:var(--dsw-alias-brand-primary)}
+.wr-mark{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 30%, transparent);color:inherit;border-radius:3px;padding:0 1px}
+.wr-export{width:min(760px,94vw);max-height:88vh;display:flex;flex-direction:column}
+.wr-export-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.wr-export-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
+.wr-export-body{flex:1 1 auto;min-height:120px;max-height:46vh;overflow:auto;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:10px 12px;background:var(--dsw-alias-bg-layer-1)}
+.wr-export-label{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--dsw-alias-label-secondary);margin-bottom:6px}
+.wr-export-preview{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .wr-stars{color:var(--dsw-alias-state-warn-primary);font-size:10.5px;letter-spacing:1px}
 .wr-detail-head{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
 .wr-detail-cover{width:120px;flex:none;border-radius:10px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.22)}
@@ -1284,13 +1386,56 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** Text with every case-insensitive hit of `needle` wrapped in <mark>. */
+    function MarkedText(props) {
+      const text = String(props.text || '')
+      const needle = String(props.needle || '').toLowerCase()
+      const className = props.className
+      if (needle === '') return h('p', { className }, text)
+      const lower = text.toLowerCase()
+      const parts = []
+      let at = 0
+      let index = lower.indexOf(needle)
+      let key = 0
+      while (index >= 0) {
+        if (index > at) parts.push(text.slice(at, index))
+        parts.push(h('mark', { key: `hit${key}`, className: 'wr-mark' }, text.slice(index, index + needle.length)))
+        key += 1
+        at = index + needle.length
+        index = lower.indexOf(needle, at)
+      }
+      if (at < text.length) parts.push(text.slice(at))
+      return h('p', { className }, parts)
+    }
+
+    /** The small circle that puts a card into a batch export. */
+    function PickButton(props) {
+      return h(
+        'button',
+        {
+          className: 'wr-pick',
+          type: 'button',
+          'data-on': props.on ? 'true' : 'false',
+          'aria-label': t('export.select'),
+          title: t('export.select'),
+          onClick: (event) => {
+            if (event && event.stopPropagation) event.stopPropagation()
+            if (typeof props.onChange === 'function') props.onChange()
+          },
+        },
+        props.on ? '✓' : '',
+      )
+    }
+
     function NoteRow(props) {
       const note = props.note
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
+      const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
       return h(
         'div',
-        { className: 'wr-quote', 'data-clickable': open ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
-        h('p', { className: 'wr-quote-text' }, note.text),
+        { className: 'wr-quote', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        pick,
+        h(MarkedText, { className: 'wr-quote-text', text: note.text, needle: props.needle }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -1309,10 +1454,12 @@ window.__ModuleLoader__.load({
     function ThoughtRow(props) {
       const thought = props.thought
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
+      const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
       return h(
         'div',
-        { className: 'wr-thought', 'data-clickable': open ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
-        h('p', { className: 'wr-quote-text' }, thought.content),
+        { className: 'wr-thought', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        pick,
+        h(MarkedText, { className: 'wr-quote-text', text: thought.content, needle: props.needle }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -1329,6 +1476,175 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ---------------------------------------------------------------- export
+    function fmtBytes(bytes) {
+      const value = Number(bytes) || 0
+      if (value < 1024) return `${value} B`
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+      return `${(value / 1024 / 1024).toFixed(1)} MB`
+    }
+
+    function saveBlob(filename, text, type) {
+      try {
+        const blob = new Blob([text], { type: type || 'text/markdown;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = filename
+        document.body.appendChild(anchor)
+        anchor.click()
+        document.body.removeChild(anchor)
+        setTimeout(() => URL.revokeObjectURL(url), 4000)
+        return true
+      } catch {
+        return false
+      }
+    }
+
+    const EXPORT_OPTIONS = [
+      ['excerpts', 'export.opt.excerpts'],
+      ['thoughts', 'export.opt.thoughts'],
+      ['meta', 'export.opt.meta'],
+      ['chapter', 'export.opt.chapter'],
+      ['star', 'export.opt.star'],
+      ['sourceUrl', 'export.opt.sourceUrl'],
+    ]
+
+    /** Preview / copy / download / save-to-folder for one selection. */
+    function ExportPanel(props) {
+      const selector = props.selector || {}
+      const [options, setOptions] = useState({ excerpts: true, thoughts: true, meta: true, chapter: true, star: true, sourceUrl: true })
+      const [preview, setPreview] = useState(null)
+      const [busy, setBusy] = useState(true)
+      const [saving, setSaving] = useState(false)
+      const [message, setMessage] = useState('')
+      const [dir, setDir] = useState('')
+      const selectorKey = JSON.stringify(selector)
+
+      useEffect(() => {
+        let cancelled = false
+        void (async () => {
+          try {
+            const info = await apiExportDir()
+            if (!cancelled) setDir(info.dir || '')
+          } catch {
+            // the directory is informational only
+          }
+        })()
+        return () => {
+          cancelled = true
+        }
+      }, [])
+
+      useEffect(() => {
+        let cancelled = false
+        setBusy(true)
+        void (async () => {
+          try {
+            const result = await apiExport(JSON.parse(selectorKey), options, 'preview')
+            if (cancelled) return
+            setPreview(result)
+            setMessage('')
+          } catch (error) {
+            if (!cancelled) setMessage(t('export.failed', { error: String(error.message || error) }))
+          } finally {
+            if (!cancelled) setBusy(false)
+          }
+        })()
+        return () => {
+          cancelled = true
+        }
+      }, [selectorKey, options])
+
+      const toggleOption = (key) => setOptions((prev) => ({ ...prev, [key]: !prev[key] }))
+
+      const lines = preview ? String(preview.markdown || '').split('\n') : []
+      const shown = lines.slice(0, 30)
+
+      const onSave = async () => {
+        setSaving(true)
+        setMessage('')
+        try {
+          const result = await apiExport(JSON.parse(selectorKey), options, 'file')
+          setMessage(t('export.saved', { files: result.path || '' }))
+        } catch (error) {
+          setMessage(t('export.failed', { error: String(error.message || error) }))
+        } finally {
+          setSaving(false)
+        }
+      }
+
+      const summary =
+        preview === null
+          ? busy
+            ? t('state.loading')
+            : ''
+          : t('export.summary', { entries: fmtCount((preview.excerpts || 0) + (preview.thoughts || 0)), books: fmtCount(preview.books || 0) })
+
+      return h(
+        'div',
+        { className: 'wr-modal-mask', onMouseDown: (event) => { if (event.target === event.currentTarget) props.onClose() } },
+        h(
+          'div',
+          {
+            className: 'wr-modal wr-export',
+            role: 'dialog',
+            'aria-modal': 'true',
+            onKeyDown: (event) => {
+              if (event.key === 'Escape') props.onClose()
+            },
+          },
+          h('div', { className: 'wr-export-head' },
+            h('h3', null, t('export.title')),
+            h('span', { className: 'wr-muted' }, summary),
+          ),
+          h(
+            'div',
+            { className: 'wr-export-opts' },
+            h('span', { className: 'wr-muted' }, t('export.options')),
+            EXPORT_OPTIONS.map(([key, label]) =>
+              h(
+                'button',
+                { key, className: 'wr-chip', type: 'button', 'data-active': options[key] ? 'true' : 'false', onClick: () => toggleOption(key) },
+                t(label),
+              ),
+            ),
+          ),
+          h(
+            'div',
+            { className: 'wr-export-body' },
+            busy
+              ? h('div', { className: 'wr-empty' }, h('span', { className: 'wr-spinner' }), h('div', { style: { marginTop: '10px' } }, t('state.loading')))
+              : preview === null || lines.length === 0
+                ? h('div', { className: 'wr-empty' }, h('strong', null, t('export.emptySelection')))
+                : h(
+                    'div',
+                    null,
+                    h('div', { className: 'wr-export-label' },
+                      h('span', null, t('export.previewLabel')),
+                      h('span', { className: 'wr-muted' }, t('export.previewHint', { lines: String(shown.length), total: String(lines.length), bytes: fmtBytes(preview.bytes) })),
+                    ),
+                    h('pre', { className: 'wr-export-preview' }, shown.join('\n')),
+                  ),
+          ),
+          message ? h('p', { className: 'wr-notice', style: { marginTop: '12px' } }, message) : null,
+          dir ? h('p', { className: 'wr-muted', style: { marginTop: '10px', wordBreak: 'break-all' } }, t('settings.exportDir') + `：${dir}`) : null,
+          h(
+            'div',
+            { className: 'wr-modal-foot' },
+            h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: props.onClose }, t('export.close')),
+            preview && lines.length > 0
+              ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => void copyText(preview.markdown) }, t('export.copyAll'))
+              : null,
+            preview && lines.length > 0
+              ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => saveBlob(preview.filename || 'export.md', preview.markdown) }, t('export.download'))
+              : null,
+            h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: saving || busy || !preview || lines.length === 0, onClick: () => void onSave() }, saving ? t('export.saving') : t('export.save')),
+          ),
+        ),
+      )
+    }
+
     function StreamView(props) {
       const data = props.data || {}
       const kind = props.kind === 'thought' ? 'thought' : 'note'
@@ -1337,6 +1653,8 @@ window.__ModuleLoader__.load({
       const [bookFilter, setBookFilter] = useState('all')
       const [mode, setMode] = useState('wall')
       const [page, setPage] = useState(0)
+      const [selected, setSelected] = useState(new Set())
+      const [exporting, setExporting] = useState(null)
 
       const bookOptions = useMemo(() => {
         const seen = new Map()
@@ -1359,6 +1677,7 @@ window.__ModuleLoader__.load({
 
       useEffect(() => {
         setPage(0)
+        setSelected(new Set())
       }, [query, bookFilter, kind, mode])
 
       const pageSize = kind === 'note' ? 24 : 20
@@ -1386,6 +1705,43 @@ window.__ModuleLoader__.load({
             bookOptions.map(([id, title]) => h('option', { key: id, value: id }, title)),
           ),
           h('div', { className: 'wr-toolbar-fill' }),
+          selected.size > 0 ? h('span', { className: 'wr-chip-stat' }, t('export.selected', { count: String(selected.size) })) : null,
+          h(
+            'button',
+            {
+              className: 'wr-btn wr-btn-ghost',
+              type: 'button',
+              disabled: visible.length === 0,
+              onClick: () => {
+                const next = new Set(selected)
+                const drop = visible.every((item) => next.has(item.id))
+                for (const item of visible) {
+                  if (drop) next.delete(item.id)
+                  else next.add(item.id)
+                }
+                setSelected(next)
+              },
+            },
+            t('export.selectPage'),
+          ),
+          selected.size > 0
+            ? h(
+                'button',
+                { className: 'wr-btn', type: 'button', onClick: () => setExporting(kind === 'note' ? { noteIds: Array.from(selected) } : { thoughtIds: Array.from(selected) }) },
+                t('export.exportSelected'),
+              )
+            : null,
+          selected.size > 0 ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => setSelected(new Set()) }, t('export.clear')) : null,
+          h(
+            'button',
+            {
+              className: 'wr-btn wr-btn-ghost',
+              type: 'button',
+              disabled: filtered.length === 0,
+              onClick: () => setExporting(kind === 'note' ? { noteIds: filtered.map((item) => item.id) } : { thoughtIds: filtered.map((item) => item.id) }),
+            },
+            t('export.exportAll'),
+          ),
           h('span', { className: 'wr-muted' }, `${filtered.length}`),
           h(
             'div',
@@ -1404,11 +1760,18 @@ window.__ModuleLoader__.load({
           : h(
               'div',
               { className: mode === 'wall' ? 'wr-cols' : 'wr-list' },
-              visible.map((item) =>
-                kind === 'note'
-                  ? h(NoteRow, { key: item.id, note: item, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
-                  : h(ThoughtRow, { key: item.id, thought: item, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null }),
-              ),
+              visible.map((item) => {
+                const pick = () =>
+                  setSelected((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(item.id)) next.delete(item.id)
+                    else next.add(item.id)
+                    return next
+                  })
+                return kind === 'note'
+                  ? h(NoteRow, { key: item.id, note: item, needle: query.trim(), selected: selected.has(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
+                  : h(ThoughtRow, { key: item.id, thought: item, needle: query.trim(), selected: selected.has(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
+              }),
             ),
         filtered.length > pageSize
           ? h(
@@ -1419,6 +1782,7 @@ window.__ModuleLoader__.load({
               h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: current >= pageCount - 1, onClick: () => setPage(Math.min(pageCount - 1, current + 1)) }, `${t('pager.next')} →`),
             )
           : null,
+        exporting ? h(ExportPanel, { selector: exporting, onClose: () => setExporting(null) }) : null,
       )
     }
 
@@ -1428,6 +1792,7 @@ window.__ModuleLoader__.load({
       const [tab, setTab] = useState(props.initialTab === 'thoughts' ? 'thoughts' : 'notes')
       const [query, setQuery] = useState('')
       const [page, setPage] = useState(0)
+      const [exporting, setExporting] = useState(false)
 
       const notes = useMemo(() => (data.notes || []).filter((note) => note.bookId === book.bookId), [data.notes, book.bookId])
       const thoughts = useMemo(() => (data.thoughts || []).filter((thought) => thought.bookId === book.bookId), [data.thoughts, book.bookId])
@@ -1495,6 +1860,8 @@ window.__ModuleLoader__.load({
             h('button', { className: 'wr-tab', type: 'button', 'data-active': tab === 'thoughts', onClick: () => setTab('thoughts') }, `${t('nav.thoughts')} ${thoughts.length}`),
           ),
           h('input', { className: 'wr-input', style: { width: '240px' }, placeholder: t('book.searchNotes'), value: query, onChange: (event) => setQuery(event.target.value) }),
+          h('div', { className: 'wr-toolbar-fill' }),
+          h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: notes.length + thoughts.length === 0, onClick: () => setExporting(true) }, t('export.book')),
         ),
         activeList.length === 0
           ? h('div', { className: 'wr-empty' }, h('strong', null, t('book.empty')))
@@ -1502,7 +1869,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'wr-cols' },
               pageItems.map((item) =>
-                tab === 'notes' ? h(NoteRow, { key: item.id, note: item }) : h(ThoughtRow, { key: item.id, thought: item }),
+                tab === 'notes' ? h(NoteRow, { key: item.id, note: item, needle: needle }) : h(ThoughtRow, { key: item.id, thought: item, needle: needle }),
               ),
             ),
         activeList.length > pageSize
@@ -1514,6 +1881,7 @@ window.__ModuleLoader__.load({
               h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: current >= pageCount - 1, onClick: () => setPage(Math.min(pageCount - 1, current + 1)) }, `${t('pager.next')} →`),
             )
           : null,
+        exporting ? h(ExportPanel, { selector: { bookIds: [book.bookId] }, onClose: () => setExporting(false) }) : null,
       )
     }
 
@@ -1521,6 +1889,7 @@ window.__ModuleLoader__.load({
       const query = props.query.trim()
       const needle = query.toLowerCase()
       const data = props.data || {}
+      const [type, setType] = useState('all')
       const groups = useMemo(() => {
         if (needle === '') return { books: [], notes: [], thoughts: [] }
         return {
@@ -1543,10 +1912,30 @@ window.__ModuleLoader__.load({
       const total = groups.books.length + groups.notes.length + groups.thoughts.length
       if (total === 0) return h('div', { className: 'wr-empty' }, h('strong', null, t('search.empty', { query })))
 
+      const show = (key) => type === 'all' || type === key
+      const chips = [
+        ['all', t('search.typeAll'), total],
+        ['books', t('search.typeBooks'), groups.books.length],
+        ['notes', t('search.notes'), groups.notes.length],
+        ['thoughts', t('search.thoughts'), groups.thoughts.length],
+      ]
+
       return h(
         'div',
         null,
-        groups.books.length > 0
+        h(
+          'div',
+          { className: 'wr-toolbar' },
+          h(
+            'div',
+            { className: 'wr-chips' },
+            chips.map(([key, label, count]) =>
+              h('button', { key, className: 'wr-chip', type: 'button', 'data-active': type === key, onClick: () => setType(key) }, `${label} ${count}`),
+            ),
+          ),
+          h('div', { className: 'wr-toolbar-fill' }),
+        ),
+        show('books') && groups.books.length > 0
           ? h(
               'div',
               { className: 'wr-section' },
@@ -1554,20 +1943,20 @@ window.__ModuleLoader__.load({
               h('div', { className: 'wr-grid' }, groups.books.map((book) => h(BookCard, { key: book.bookId, book, onOpen: props.onOpenBook }))),
             )
           : null,
-        groups.notes.length > 0
+        show('notes') && groups.notes.length > 0
           ? h(
               'div',
               { className: 'wr-section' },
               h('h3', { className: 'wr-section-title' }, t('search.notes'), h('span', { className: 'wr-section-hint' }, String(groups.notes.length))),
-              h('div', { className: 'wr-cols' }, groups.notes.map((note) => h(NoteRow, { key: note.id, note, onOpen: () => openBookOf(note.bookId, 'notes') }))),
+              h('div', { className: 'wr-cols' }, groups.notes.map((note) => h(NoteRow, { key: note.id, note, needle, onOpen: () => openBookOf(note.bookId, 'notes') }))),
             )
           : null,
-        groups.thoughts.length > 0
+        show('thoughts') && groups.thoughts.length > 0
           ? h(
               'div',
               { className: 'wr-section' },
               h('h3', { className: 'wr-section-title' }, t('search.thoughts'), h('span', { className: 'wr-section-hint' }, String(groups.thoughts.length))),
-              h('div', { className: 'wr-cols' }, groups.thoughts.map((thought) => h(ThoughtRow, { key: thought.id, thought, onOpen: () => openBookOf(thought.bookId, 'thoughts') }))),
+              h('div', { className: 'wr-cols' }, groups.thoughts.map((thought) => h(ThoughtRow, { key: thought.id, thought, needle, onOpen: () => openBookOf(thought.bookId, 'thoughts') }))),
             )
           : null,
       )
@@ -1580,6 +1969,76 @@ window.__ModuleLoader__.load({
       const [notesPerBook, setNotesPerBook] = useState(String(state.notesPerBook || 200))
       const [busy, setBusy] = useState(false)
       const [message, setMessage] = useState('')
+      const [dir, setDir] = useState(state.exportDir || '')
+      const [dataMessage, setDataMessage] = useState('')
+      const [pending, setPending] = useState(null)
+      const [busyData, setBusyData] = useState(false)
+      const fileRef = useRef(null)
+
+      const saveDir = async () => {
+        setBusyData(true)
+        setDataMessage('')
+        try {
+          const next = await apiSetExportDir(dir.trim())
+          if (next && next.dir) setDir(next.dir)
+          props.onChanged(next)
+          setDataMessage(t('settings.dirSaved'))
+        } catch (error) {
+          setDataMessage(String(error.message || error))
+        } finally {
+          setBusyData(false)
+        }
+      }
+
+      const downloadBackup = async () => {
+        setBusyData(true)
+        setDataMessage('')
+        try {
+          const payload = await apiBackup()
+          const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16)
+          saveBlob(`weread-gather-backup-${stamp}.json`, JSON.stringify(payload.bundle, null, 2), 'application/json;charset=utf-8')
+          setDataMessage(`${t('settings.backup')} ✓`)
+        } catch (error) {
+          setDataMessage(String(error.message || error))
+        } finally {
+          setBusyData(false)
+        }
+      }
+
+      const pickFile = () => {
+        if (fileRef.current) fileRef.current.click()
+      }
+
+      const onFile = async (event) => {
+        const file = event.target.files && event.target.files[0]
+        event.target.value = ''
+        if (!file) return
+        try {
+          const bundle = JSON.parse(await file.text())
+          if (!bundle || typeof bundle !== 'object' || !bundle.files) throw new Error(t('export.failed', { error: 'bundle' }))
+          setPending(bundle)
+          setDataMessage('')
+        } catch (error) {
+          setPending(null)
+          setDataMessage(String(error.message || error))
+        }
+      }
+
+      const doRestore = async () => {
+        if (!pending) return
+        setBusyData(true)
+        setDataMessage('')
+        try {
+          const result = await apiRestore(pending)
+          setPending(null)
+          setDataMessage(t('settings.restored', { files: String((result.restored || []).length) }))
+          if (typeof props.onDataChanged === 'function') props.onDataChanged()
+        } catch (error) {
+          setDataMessage(String(error.message || error))
+        } finally {
+          setBusyData(false)
+        }
+      }
 
       const save = async (patch, closeAfter) => {
         setBusy(true)
@@ -1625,6 +2084,47 @@ window.__ModuleLoader__.load({
             h('input', { className: 'wr-input', type: 'number', min: '20', max: '2000', value: notesPerBook, onChange: (event) => setNotesPerBook(event.target.value) }),
           ),
           state.dir ? h('p', { className: 'wr-muted', style: { marginTop: '14px', wordBreak: 'break-all' } }, t('settings.dir', { dir: state.dir })) : null,
+          h(
+            'div',
+            { className: 'wr-field' },
+            h('label', null, t('settings.dataTitle')),
+            h(
+              'div',
+              { className: 'wr-flex' },
+              h('input', {
+                className: 'wr-input',
+                style: { flex: '1 1 auto' },
+                value: dir,
+                placeholder: t('settings.exportDir'),
+                onChange: (event) => setDir(event.target.value),
+              }),
+              h('button', { className: 'wr-btn', type: 'button', disabled: busyData || dir.trim() === '', onClick: () => void saveDir() }, t('settings.dirSave')),
+            ),
+            h('p', { className: 'wr-muted', style: { margin: '6px 0 0' } }, t('settings.exportDirHint')),
+            h(
+              'div',
+              { className: 'wr-flex', style: { marginTop: '10px' } },
+              h('button', { className: 'wr-btn', type: 'button', disabled: busyData, onClick: () => void downloadBackup() }, t('settings.backup')),
+              h('button', { className: 'wr-btn', type: 'button', disabled: busyData, onClick: pickFile }, t('settings.restore')),
+              h('input', { ref: fileRef, type: 'file', accept: 'application/json,.json', style: { display: 'none' }, onChange: (event) => void onFile(event) }),
+            ),
+            h('p', { className: 'wr-muted', style: { margin: '6px 0 0' } }, t('settings.backupHint')),
+            pending
+              ? h(
+                  'div',
+                  { className: 'wr-notice', style: { marginTop: '10px' } },
+                  h('div', null, t('settings.restoreConfirm')),
+                  h(
+                    'div',
+                    { className: 'wr-flex', style: { marginTop: '8px' } },
+                    h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busyData, onClick: () => void doRestore() }, t('settings.restoreYes')),
+                    h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busyData, onClick: () => setPending(null) }, t('action.cancel')),
+                  ),
+                )
+              : null,
+            dataMessage ? h('p', { className: 'wr-muted', style: { margin: '8px 0 0' } }, dataMessage) : null,
+            state.version ? h('p', { className: 'wr-muted', style: { margin: '8px 0 0' } }, t('settings.version', { version: state.version })) : null,
+          ),
           message ? h('p', { className: 'wr-notice', style: { color: 'var(--dsw-alias-state-error-primary)' } }, message) : null,
           h(
             'div',
@@ -1708,6 +2208,22 @@ window.__ModuleLoader__.load({
       const [showSettings, setShowSettings] = useState(false)
       const [booting, setBooting] = useState(true)
       const mounted = useRef(true)
+      const searchRef = useRef(null)
+
+      useEffect(() => {
+        const onKey = (event) => {
+          if (!(event.metaKey || event.ctrlKey)) return
+          if (String(event.key || '').toLowerCase() !== 'k') return
+          event.preventDefault()
+          const node = searchRef.current
+          if (node && typeof node.focus === 'function') {
+            node.focus()
+            if (typeof node.select === 'function') node.select()
+          }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+      }, [])
 
       useEffect(() => {
         mounted.current = true
@@ -1820,6 +2336,7 @@ window.__ModuleLoader__.load({
           { className: 'wr-head-right' },
           h('div', { className: 'wr-search' },
             h('input', {
+              ref: searchRef,
               placeholder: t('action.searchGlobal'),
               value: query,
               'aria-label': t('action.search'),
@@ -1902,6 +2419,7 @@ window.__ModuleLoader__.load({
               state: state || {},
               onClose: () => setShowSettings(false),
               onChanged: (next) => { setState(next); void loadData() },
+              onDataChanged: () => { void loadData(); void refreshState() },
             })
           : null,
       )
@@ -1977,6 +2495,9 @@ window.__ModuleLoader__.load({
           }
         }, 'weread-gather: panel seats')
       },
+      // Test-only handles: the render smoke test mounts these directly, because
+      // the export panel normally only appears after a click. Nothing else reads it.
+      __smoke: { ExportPanel, MarkedText, PickButton },
     }
   },
 })
