@@ -136,6 +136,10 @@ window.__ModuleLoader__.load({
       'note.search': '搜索划线原文、书名、章节…',
       'thought.title': '想法墙',
       'thought.search': '搜索想法内容、书名…',
+      'thought.expand': '展开全文（还有 {count} 字）',
+      'thought.collapse': '收起',
+      'thought.contextToggle': '同章划线 {count}',
+      'thought.contextTitle': '同章的划线（供参考）',
       'view.list': '列表',
       'view.wall': '墙',
       'filter.allBooks': '全部书籍',
@@ -321,6 +325,10 @@ window.__ModuleLoader__.load({
       'note.search': 'Search highlight text, book, chapter…',
       'thought.title': 'Thoughts',
       'thought.search': 'Search thoughts and books…',
+      'thought.expand': 'Show all ({count} more characters)',
+      'thought.collapse': 'Collapse',
+      'thought.contextToggle': '{count} highlight(s) in the same chapter',
+      'thought.contextTitle': 'Highlights in the same chapter (for context)',
       'view.list': 'List',
       'view.wall': 'Wall',
       'filter.allBooks': 'All books',
@@ -469,7 +477,7 @@ window.__ModuleLoader__.load({
 
     // ----------------------------------------------------------------- styles
     const CSS = `
-.wr-root{--wr-paper:#F6F8F7;--wr-paper-soft:#FFFFFF;--wr-wash:#F0F4F1;--wr-ink:#263C34;--wr-ink-soft:#6B7F74;--wr-ink-mute:#93A49B;--wr-sage:#A6CCB5;--wr-moss:#4F9274;--wr-clay:#A57F5B;--wr-progress:#73AD8A;--wr-track:#F0F4F1;--wr-line:#E7EEEA;--wr-line-2:#DCE6E0;--wr-heat-0:#EDF2EF;--wr-heat-1:#D5E9DD;--wr-heat-2:#A9D3BA;--wr-heat-3:#74B28E;--wr-heat-4:#438765;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(900px 420px at 50% -18%,#FFFFFF 0%,transparent 70%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
+.wr-root{--wr-paper:#F6F8F7;--wr-paper-soft:#FFFFFF;--wr-wash:#F0F4F1;--wr-ink:#263C34;--wr-ink-soft:#6B7F74;--wr-ink-mute:#93A49B;--wr-sage:#A6CCB5;--wr-moss:#4F9274;--wr-clay:#A57F5B;--wr-progress:#73AD8A;--wr-track:#F0F4F1;--wr-line:#E7EEEA;--wr-line-2:#DCE6E0;--wr-card-line:#EDF1EE;--wr-divider:#EEF3F0;--wr-surface:#FBFCFB;--wr-heat-0:#F1F4F1;--wr-heat-1:#D5E9DD;--wr-heat-2:#A9D3BA;--wr-heat-3:#74B28E;--wr-heat-4:#438765;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(900px 420px at 50% -18%,#FFFFFF 0%,transparent 70%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
 .wr-head{flex:none;display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--dsw-alias-border-l1);background:rgba(255,255,255,.86);backdrop-filter:blur(10px);flex-wrap:wrap}
 .wr-brand{display:flex;flex-direction:column;gap:1px;min-width:0}
 .wr-brand-title{font-size:15.5px;font-weight:700;letter-spacing:.07em;color:var(--wr-ink)}
@@ -494,7 +502,7 @@ window.__ModuleLoader__.load({
 .wr-btn-ghost:hover{background:var(--wr-wash);border-color:var(--wr-sage)}
 .wr-body{flex:1;min-height:0;overflow:auto;padding:26px 30px 64px;scrollbar-width:thin;scrollbar-color:#CFD8C6 transparent}
 .wr-body-inner{max-width:1240px;margin:0 auto}
-.wr-card{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
+.wr-card{background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:16px;padding:20px 22px}
 .wr-section{margin-top:22px}
 .wr-section:first-child{margin-top:0}
 .wr-section-title{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;font-size:13.5px;font-weight:700;letter-spacing:.03em}
@@ -503,7 +511,7 @@ window.__ModuleLoader__.load({
 .wr-empty{padding:36px 10px;text-align:center;color:var(--dsw-alias-label-secondary);font-size:13px}
 .wr-empty strong{display:block;color:var(--dsw-alias-label-primary);font-size:14px;margin-bottom:6px}
 .wr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.wr-stat{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(38,60,52,.03)}
+.wr-stat{background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:16px;padding:16px 18px}
 .wr-stat-label{font-size:11.5px;color:var(--dsw-alias-label-secondary);letter-spacing:.04em}
 .wr-stat-value{font-size:22px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.15}
 .wr-stat-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
@@ -526,10 +534,9 @@ window.__ModuleLoader__.load({
 @media (max-width:1240px){.wr-grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 @media (max-width:920px){.wr-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media (max-width:640px){.wr-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.wr-book{appearance:none;border:0;background:transparent;padding:0;margin:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit}
-.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(38,60,52,.10),0 14px 26px -18px rgba(38,60,52,.5);transition:transform .2s ease,box-shadow .2s ease}
-.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(38,60,52,.10),0 14px 26px -18px rgba(38,60,52,.5);transition:transform .2s ease,box-shadow .2s ease}
-.wr-book:hover .wr-book-cover-wrap{transform:translateY(-3px);box-shadow:0 8px 16px rgba(38,60,52,.14),0 22px 34px -20px rgba(38,60,52,.55)}
+.wr-book{appearance:none;border:0;background:transparent;padding:0;margin:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;content-visibility:auto;contain-intrinsic-size:0 220px}
+.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(38,60,52,.08);transition:transform .2s ease,box-shadow .2s ease}
+.wr-book:hover .wr-book-cover-wrap{transform:translateY(-3px);box-shadow:0 6px 14px rgba(38,60,52,.12)}
 .wr-cover{aspect-ratio:3/4;width:100%;background:var(--dsw-alias-bg-layer-2);display:block;overflow:hidden;position:relative}
 .wr-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .wr-cover-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:rgba(255,255,255,.94);background:linear-gradient(150deg,#A8B9A3,#5F7562)}
@@ -543,8 +550,10 @@ window.__ModuleLoader__.load({
 .wr-progress span{display:block;height:100%;background:var(--dsw-alias-brand-primary);border-radius:2px}
 .wr-hour{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:3px;align-items:end;height:120px}
 .wr-hour-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
-.wr-hour-bar{width:100%;border-radius:3px 3px 0 0;background:var(--wr-sage);min-height:2px}
+.wr-hour-bar{width:100%;border-radius:4px 4px 0 0;background:var(--wr-sage);min-height:2px}
+.wr-hour-bar[data-future=true]{background:var(--wr-track)}
 .wr-hour-col:hover .wr-hour-bar,.wr-hour-bar[data-active=true]{background:var(--wr-moss)}
+.wr-hour-bar[data-future=true],.wr-hour-col:hover .wr-hour-bar[data-future=true]{background:var(--wr-track)}
 .wr-hour-label[data-active=true]{color:var(--wr-ink);font-weight:600}
 .wr-hour-label{font-size:9px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
 .wr-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end;height:132px}
@@ -558,13 +567,13 @@ window.__ModuleLoader__.load({
 .wr-yearbar button:disabled{opacity:.35;cursor:default}
 .wr-yearbar strong{font-size:12.5px;font-variant-numeric:tabular-nums;padding:0 4px;min-width:42px;text-align:center}
 .wr-heat-wrap{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-.wr-heat-days{display:grid;grid-template-rows:repeat(7,13px);gap:3px;flex:none;font-size:9.5px;color:var(--dsw-alias-label-secondary);align-items:center}
-.wr-heat-months{display:grid;grid-auto-flow:column;grid-auto-columns:13px;gap:3px;font-size:9.5px;color:var(--dsw-alias-label-secondary);overflow:hidden;margin:0 0 4px 0}
+.wr-heat-days{display:grid;grid-template-rows:repeat(7,12px);gap:3px;flex:none;font-size:9.5px;color:var(--dsw-alias-label-secondary);align-items:center}
+.wr-heat-months{display:grid;grid-auto-flow:column;grid-auto-columns:12px;gap:3px;font-size:9.5px;color:var(--dsw-alias-label-secondary);overflow:hidden;margin:0 0 4px 0}
 .wr-heat-months span{white-space:nowrap;overflow:visible}
-.wr-heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);gap:3px;flex:none}
-.wr-heat-cell{width:13px;height:13px;border-radius:3px;background:var(--wr-heat-0);transition:transform .12s ease}
+.wr-heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;flex:none}
+.wr-heat-cell{width:12px;height:12px;border-radius:2.5px;background:var(--wr-heat-0);transition:transform .12s ease}
 .wr-heat-cell[data-on=true]:hover{transform:scale(1.3)}
-.wr-heat-cell[data-future=true]{background:transparent;box-shadow:inset 0 0 0 1px var(--wr-line-2);opacity:.7}
+.wr-heat-cell[data-future=true]{background:transparent;box-shadow:inset 0 0 0 2px var(--wr-line-2);opacity:.45}
 .wr-banner-close{border:none;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.55;flex:none;margin-left:auto}
 .wr-banner-close:hover{opacity:1;background:var(--wr-wash)}
 .wr-banner-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -592,13 +601,29 @@ window.__ModuleLoader__.load({
 .wr-cols{column-count:2;column-gap:14px}
 @media (min-width:900px){.wr-cols{column-count:3}}
 @media (min-width:1300px){.wr-cols{column-count:4}}
-.wr-quote{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:14px;padding:14px 16px;position:relative;box-shadow:0 1px 2px rgba(38,60,52,.04)}
+.wr-quote{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:14px;padding:14px 16px;position:relative}
 .wr-quote:before{content:'“';position:absolute;left:9px;top:3px;font-size:26px;color:#C3D2BC;font-family:Georgia,serif;line-height:1}
 .wr-quote-text{font-size:12.8px;line-height:1.62;white-space:pre-wrap;word-break:break-word;padding-left:12px;margin:0}
 .wr-quote-foot{display:flex;align-items:center;gap:6px;margin-top:9px;padding-left:12px;font-size:11px;color:var(--dsw-alias-label-secondary);min-width:0}
 .wr-quote-book{font-weight:600;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .wr-quote-tail{margin-left:auto;flex:none;display:flex;gap:6px;align-items:center}
-.wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-left:3px solid var(--wr-progress);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
+.wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-left:2px solid color-mix(in srgb, var(--wr-sage) 70%, transparent);border-radius:14px;padding:15px 17px}
+.wr-cols .wr-thought{margin-bottom:20px;background:color-mix(in srgb, var(--wr-wash) 55%, var(--wr-paper-soft));border-color:transparent;border-left-color:transparent}
+.wr-cols .wr-thought[data-clickable=true]:hover{background:color-mix(in srgb, var(--wr-wash) 78%, var(--wr-paper-soft));border-color:transparent}
+.wr-cols .wr-thought[data-picked=true]{border-color:var(--dsw-alias-brand-primary)}
+.wr-thought .wr-quote-text{font-size:13.5px;line-height:1.75;text-wrap:pretty}
+.wr-thought .wr-quote-foot{flex-wrap:wrap;gap:4px 8px;margin-top:12px;padding-top:9px;border-top:1px solid var(--wr-divider)}
+.wr-thought .wr-quote-book{white-space:normal;overflow:visible;max-width:none;text-overflow:clip}
+.wr-clamp{display:-webkit-box;-webkit-line-clamp:9;-webkit-box-orient:vertical;overflow:hidden}
+.wr-more{appearance:none;border:0;background:transparent;color:var(--wr-moss);font:inherit;font-size:11.5px;line-height:1.5;padding:6px 0 0;cursor:pointer;text-align:left}
+.wr-more:hover{text-decoration:underline}
+.wr-thread-toggle{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;line-height:1.5;padding:8px 0 0;cursor:pointer}
+.wr-thread-toggle:hover{color:var(--wr-ink)}
+.wr-thread{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--wr-surface);border:1px solid var(--wr-divider)}
+.wr-thread-title{font-size:11px;color:var(--wr-ink-mute);letter-spacing:.03em;margin-bottom:4px}
+.wr-thread-item{font-size:12.5px;line-height:1.7;padding:6px 0;border-top:1px dashed var(--wr-divider)}
+.wr-thread-item:first-of-type{border-top:0;padding-top:0}
+.wr-thread-date{display:block;font-size:10.5px;color:var(--wr-ink-mute);margin-top:2px}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
 .wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;opacity:0;transition:opacity .14s ease,color .14s ease,border-color .14s ease}
@@ -618,7 +643,7 @@ window.__ModuleLoader__.load({
 .wr-export-body{flex:1 1 auto;min-height:120px;max-height:46vh;overflow:auto;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:10px 12px;background:var(--dsw-alias-bg-layer-1)}
 .wr-export-label{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--dsw-alias-label-secondary);margin-bottom:6px}
 .wr-export-preview{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.wr-stars{color:var(--dsw-alias-state-warn-primary);font-size:10.5px;letter-spacing:1px}
+.wr-stars{color:var(--wr-clay);font-size:10.5px;letter-spacing:1px}
 .wr-detail-head{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
 .wr-detail-cover{width:120px;flex:none;border-radius:12px;overflow:hidden;box-shadow:0 10px 24px -12px rgba(38,60,52,.55)}
 .wr-detail-main{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
@@ -662,7 +687,7 @@ window.__ModuleLoader__.load({
         'div',
         { className: 'wr-cover' },
         book.cover && !failed
-          ? h('img', { src: book.cover, alt: book.title || '', loading: 'lazy', referrerPolicy: 'no-referrer', onError: () => setFailed(true) })
+          ? h('img', { src: book.cover, alt: book.title || '', loading: 'lazy', decoding: 'async', referrerPolicy: 'no-referrer', onError: () => setFailed(true) })
           : h('div', { className: 'wr-cover-fallback' }, String(book.title || '书').slice(0, 1)),
       )
     }
@@ -860,9 +885,12 @@ window.__ModuleLoader__.load({
         }
         return 0
       }
+      // Monthly ticks would crowd the ~53 columns, so only quarter starts get a
+      // label — enough to orient without turning the axis into a wall of text.
+      const labelledMonths = [1, 4, 7, 10]
       const ticks = model.columns.map((column, index) => {
         const month = monthOf(column)
-        if (month === 0) return ''
+        if (month === 0 || !labelledMonths.includes(month)) return ''
         for (let back = index - 1; back >= 0; back -= 1) {
           const previous = monthOf(model.columns[back])
           if (previous > 0) return previous === month ? '' : monthLabel(month - 1)
@@ -987,16 +1015,22 @@ window.__ModuleLoader__.load({
     function MonthChart(props) {
       const values = Array.isArray(props.values) ? props.values : []
       const activeIndex = Number.isInteger(props.activeIndex) ? props.activeIndex : -1
+      const year = Number(props.year) || new Date().getFullYear()
+      const now = new Date()
+      // Months that have not happened yet are drawn in the track colour instead
+      // of vanishing, so a partial year reads as "not yet" rather than "no data".
+      const futureFrom = year === now.getFullYear() ? now.getMonth() + 1 : year > now.getFullYear() ? 0 : 13
       const max = Math.max.apply(null, values.concat([1]))
       const cells = []
       for (let index = 0; index < 12; index += 1) {
         const value = values[index] || 0
-        const height = max <= 0 ? 0 : Math.max(value > 0 ? 4 : 0, Math.round((value / max) * 100))
+        const future = index >= futureFrom
+        const height = max <= 0 || future ? 0 : Math.max(value > 0 ? 4 : 0, Math.round((value / max) * 100))
         cells.push(
           h(
             'div',
-            { className: 'wr-hour-col', key: index, title: `${index + 1} · ${fmtDuration(value)}` },
-            h('div', { className: 'wr-hour-bar', 'data-active': index === activeIndex ? 'true' : 'false', style: { height: `${height}%` } }),
+            { className: 'wr-hour-col', key: index, title: future ? `${index + 1} · ${t('dash.heat.future')}` : `${index + 1} · ${fmtDuration(value)}` },
+            h('div', { className: 'wr-hour-bar', 'data-active': index === activeIndex ? 'true' : 'false', 'data-future': future ? 'true' : 'false', style: { height: future ? '6%' : `${height}%` } }),
             h('div', { className: 'wr-hour-label', 'data-active': index === activeIndex ? 'true' : 'false' }, String(index + 1)),
           ),
         )
@@ -1196,7 +1230,7 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'wr-split wr-section' },
-          h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.month')), h(MonthChart, { values: monthly, activeIndex: isCurrent ? new Date().getMonth() : -1 })),
+          h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.month')), h(MonthChart, { values: monthly, year, activeIndex: isCurrent ? new Date().getMonth() : -1 })),
           h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.category')), h(BarList, { items: categories })),
         ),
         h(
@@ -1487,15 +1521,42 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // A thought is the reader's own voice, so the card gives the text room:
+    // wider line height, no clamped source label, and the left rail is a quiet
+    // sage hairline instead of an accent bar. In the wall view the card has no
+    // border at all and relies on spacing.
+    const THOUGHT_CLAMP_CHARS = 220
+
     function ThoughtRow(props) {
       const thought = props.thought
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
       const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
+      const content = String(thought.content || '')
+      const clampable = Boolean(props.wall) && content.length > THOUGHT_CLAMP_CHARS
+      const [expanded, setExpanded] = useState(false)
+      const [threadOpen, setThreadOpen] = useState(false)
+      const context = Array.isArray(props.context) ? props.context : []
+      const slice = context.slice(0, 6)
+      const showClamped = clampable && !expanded
       return h(
         'div',
         { className: 'wr-thought', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
-        h(MarkedText, { className: 'wr-quote-text', text: thought.content, needle: props.needle }),
+        h(MarkedText, { className: showClamped ? 'wr-quote-text wr-clamp' : 'wr-quote-text', text: content, needle: props.needle }),
+        clampable
+          ? h(
+              'button',
+              {
+                className: 'wr-more',
+                type: 'button',
+                onClick: (event) => {
+                  if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                  setExpanded(!expanded)
+                },
+              },
+              expanded ? t('thought.collapse') : t('thought.expand', { count: String(content.length - THOUGHT_CLAMP_CHARS) }),
+            )
+          : null,
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -1506,9 +1567,38 @@ window.__ModuleLoader__.load({
             { className: 'wr-quote-tail' },
             thought.star >= 0 ? h('span', { className: 'wr-stars' }, '★'.repeat(Math.min(5, Math.max(0, thought.star)))) : null,
             h('span', null, fmtDate(thought.createTime)),
-            h(CopyButton, { text: thought.content }),
+            h(CopyButton, { text: content }),
           ),
         ),
+        // WeRead does not link a thought to the exact highlight it answers, so
+        // this is chapter-level context only, labelled as such.
+        slice.length === 0
+          ? null
+          : threadOpen
+            ? h(
+                'div',
+                { className: 'wr-thread' },
+                h('div', { className: 'wr-thread-title' }, t('thought.contextTitle')),
+                slice.map((note) =>
+                  h(
+                    'div',
+                    { className: 'wr-thread-item', key: note.id },
+                    `> ${String(note.text || '').slice(0, 300)}`,
+                    h('span', { className: 'wr-thread-date' }, fmtDate(note.createTime)),
+                  )),
+              )
+            : h(
+                'button',
+                {
+                  className: 'wr-thread-toggle',
+                  type: 'button',
+                  onClick: (event) => {
+                    if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                    setThreadOpen(true)
+                  },
+                },
+                t('thought.contextToggle', { count: String(context.length) }),
+              ),
       )
     }
 
@@ -1711,6 +1801,20 @@ window.__ModuleLoader__.load({
         })
       }, [source, query, bookFilter, kind])
 
+      // Thoughts carry a chapter name, highlights a chapter title, and WeRead
+      // does not link them; chapter-level context is the only honest pairing.
+      const chapterIndex = useMemo(() => {
+        const map = new Map()
+        for (const note of data.notes || []) {
+          const key = `${note.bookId}|${note.chapterTitle || ''}`
+          const bucket = map.get(key)
+          if (bucket) bucket.push(note)
+          else map.set(key, [note])
+        }
+        return map
+      }, [data.notes])
+      const contextOf = (thought) => (thought.chapterName ? chapterIndex.get(`${thought.bookId}|${thought.chapterName}`) || [] : [])
+
       useEffect(() => {
         setPage(0)
         setSelected(new Set())
@@ -1814,7 +1918,16 @@ window.__ModuleLoader__.load({
                   })
                 return kind === 'note'
                   ? h(NoteRow, { key: item.id, note: item, needle: query.trim(), selected: selected.has(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
-                  : h(ThoughtRow, { key: item.id, thought: item, needle: query.trim(), selected: selected.has(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
+                  : h(ThoughtRow, {
+                      key: item.id,
+                      thought: item,
+                      needle: query.trim(),
+                      wall: mode === 'wall',
+                      context: contextOf(item),
+                      selected: selected.has(item.id),
+                      onToggle: pick,
+                      onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null,
+                    })
               }),
             ),
         filtered.length > pageSize
@@ -1840,6 +1953,19 @@ window.__ModuleLoader__.load({
 
       const notes = useMemo(() => (data.notes || []).filter((note) => note.bookId === book.bookId), [data.notes, book.bookId])
       const thoughts = useMemo(() => (data.thoughts || []).filter((thought) => thought.bookId === book.bookId), [data.thoughts, book.bookId])
+      // Highlights grouped by chapter: the only honest context a thought can
+      // show, because WeRead never links a thought to one specific highlight.
+      const chapterIndex = useMemo(() => {
+        const map = new Map()
+        for (const note of notes) {
+          const key = note.chapterTitle || ''
+          if (key === '') continue
+          const bucket = map.get(key)
+          if (bucket) bucket.push(note)
+          else map.set(key, [note])
+        }
+        return map
+      }, [notes])
       const needle = query.trim().toLowerCase()
       const visibleNotes = needle === '' ? notes : notes.filter((note) => contains(note.text, needle) || contains(note.chapterTitle, needle))
       const visibleThoughts = needle === '' ? thoughts : thoughts.filter((thought) => contains(thought.content, needle) || contains(thought.chapterName, needle))
@@ -1911,7 +2037,9 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'wr-cols' },
               pageItems.map((item) =>
-                tab === 'notes' ? h(NoteRow, { key: item.id, note: item, needle: needle }) : h(ThoughtRow, { key: item.id, thought: item, needle: needle }),
+                tab === 'notes'
+                  ? h(NoteRow, { key: item.id, note: item, needle: needle })
+                  : h(ThoughtRow, { key: item.id, thought: item, needle: needle, wall: true, context: chapterIndex.get(item.chapterName || '') || [] }),
               ),
             ),
         activeList.length > pageSize
@@ -1998,7 +2126,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'wr-section' },
               h('h3', { className: 'wr-section-title' }, t('search.thoughts'), h('span', { className: 'wr-section-hint' }, String(groups.thoughts.length))),
-              h('div', { className: 'wr-cols' }, groups.thoughts.map((thought) => h(ThoughtRow, { key: thought.id, thought, needle, onOpen: () => openBookOf(thought.bookId, 'thoughts') }))),
+              h('div', { className: 'wr-cols' }, groups.thoughts.map((thought) => h(ThoughtRow, { key: thought.id, thought, needle, wall: true, onOpen: () => openBookOf(thought.bookId, 'thoughts') }))),
             )
           : null,
       )
@@ -2595,7 +2723,7 @@ window.__ModuleLoader__.load({
       },
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
-      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner, clip },
+      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner, clip, ThoughtRow, THOUGHT_CLAMP_CHARS },
     }
   },
 })

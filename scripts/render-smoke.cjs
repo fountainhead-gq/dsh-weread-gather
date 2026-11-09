@@ -384,6 +384,43 @@ if (byLabel0('banner-done') && !byLabel0('banner-done').text.includes('sync.done
 const dismissedDraw = byLabel0('banner-dismissed')
 if (dismissedDraw && dismissedDraw.text.length > 0) bannerGuards.push('banner-dismissed: 关闭后仍然有内容')
 
+// 想法卡：墙视图长文折叠、来源完整、同章上下文按钮。
+// ThoughtRow 的 useState 顺序：expanded, threadOpen
+const thoughtGuards = []
+if (typeof smoke.ThoughtRow !== 'function') thoughtGuards.push('client module 未暴露 ThoughtRow')
+const longText = '关于这本书的这一段，我想了很久：' .repeat(20)
+const thoughtBase = {
+  id: 't1',
+  bookId: 'b1',
+  bookTitle: '一本名字很长很长的书，长到足以验证来源不会被截断',
+  chapterName: '第一章',
+  content: longText,
+  createTime: 1794193279,
+  star: -1,
+}
+const shortThought = { ...thoughtBase, id: 't2', content: '短想法' }
+const contextNotes = [1, 2, 3].map((i) => ({ id: `n${i}`, text: `同章划线 ${i}`, createTime: 1794193279 }))
+renderStandalone('thought-wall-long', smoke.ThoughtRow, { thought: thoughtBase, wall: true }, [false, false])
+renderStandalone('thought-wall-expanded', smoke.ThoughtRow, { thought: thoughtBase, wall: true }, [true, false])
+renderStandalone('thought-wall-short', smoke.ThoughtRow, { thought: shortThought, wall: true }, [false, false])
+renderStandalone('thought-context-toggle', smoke.ThoughtRow, { thought: thoughtBase, wall: true, context: contextNotes }, [false, false])
+renderStandalone('thought-context-open', smoke.ThoughtRow, { thought: thoughtBase, wall: true, context: contextNotes }, [false, true])
+const longDraw = byLabel0('thought-wall-long')
+if (!longDraw) thoughtGuards.push('thought-wall-long: 未渲染')
+else {
+  if (!longDraw.text.includes('thought.expand')) thoughtGuards.push('thought-wall-long: 长想法缺展开按钮')
+  if (!longDraw.text.includes('一本名字很长很长的书')) thoughtGuards.push('thought-wall-long: 来源书名没有完整渲染')
+}
+const expandedDraw = byLabel0('thought-wall-expanded')
+if (!expandedDraw) thoughtGuards.push('thought-wall-expanded: 未渲染')
+else if (!expandedDraw.text.includes('thought.collapse')) thoughtGuards.push('thought-wall-expanded: 展开态缺收起按钮')
+// 渲染桩会把超过 120 字的字符串截断，所以只能断言「展开按钮消失」，不能比长度。
+else if (expandedDraw.text.includes('thought.expand')) thoughtGuards.push('thought-wall-expanded: 展开后仍显示展开按钮')
+const shortDraw = byLabel0('thought-wall-short')
+if (shortDraw && shortDraw.text.includes('thought.expand')) thoughtGuards.push('thought-wall-short: 短想法不该出现展开按钮')
+if (byLabel0('thought-context-toggle') && !byLabel0('thought-context-toggle').text.includes('thought.contextToggle')) thoughtGuards.push('thought-context-toggle: 缺同章上下文按钮')
+if (byLabel0('thought-context-open') && !byLabel0('thought-context-open').text.includes('thought.contextTitle')) thoughtGuards.push('thought-context-open: 展开后缺上下文标题')
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -421,6 +458,7 @@ else {
 const overviewDraw = byLabel('overview')
 if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
 for (const item of bannerGuards) guards.push(item)
+for (const item of thoughtGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)
