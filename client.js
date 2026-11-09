@@ -18,6 +18,8 @@ window.__ModuleLoader__.load({
     const API = 'dsh-weread/api'
     /** Sidebar entry id; also the key of the center-column panel. */
     const PANEL_ID = 'weread'
+    /** A finished sync message clears itself after this long (ms). */
+    const AUTO_HIDE_MS = 8000
 
     // ------------------------------------------------------------------ copy
     const zh = {
@@ -35,6 +37,7 @@ window.__ModuleLoader__.load({
       'action.searchGlobal': '搜索书架、笔记、想法…',
       'action.save': '保存',
       'action.cancel': '取消',
+      'action.dismiss': '关闭提示',
       'action.clearKey': '清除 Key',
       'action.back': '返回',
       'action.retry': '重试',
@@ -98,6 +101,8 @@ window.__ModuleLoader__.load({
       'dash.readRate': '文字 / 听书',
       'dash.text': '文字阅读',
       'dash.audio': '有声听书',
+      'dash.heat.none': '无阅读',
+      'dash.heat.future': '还没到',
       'dash.less': '少',
       'dash.more': '多',
       'dash.empty': '还没有阅读统计，先同步一次。',
@@ -218,6 +223,7 @@ window.__ModuleLoader__.load({
       'action.searchGlobal': 'Search shelf, notes, thoughts…',
       'action.save': 'Save',
       'action.cancel': 'Cancel',
+      'action.dismiss': 'Dismiss the message',
       'action.clearKey': 'Clear key',
       'action.back': 'Back',
       'action.retry': 'Retry',
@@ -281,6 +287,8 @@ window.__ModuleLoader__.load({
       'dash.readRate': 'Text / audio',
       'dash.text': 'E-books read',
       'dash.audio': 'Audiobooks heard',
+      'dash.heat.none': 'No reading',
+      'dash.heat.future': 'Not yet',
       'dash.less': 'Less',
       'dash.more': 'More',
       'dash.empty': 'No reading stats yet — sync once.',
@@ -461,31 +469,31 @@ window.__ModuleLoader__.load({
 
     // ----------------------------------------------------------------- styles
     const CSS = `
-.wr-root{--wr-paper:#F7F6F0;--wr-paper-soft:#FCFAF4;--wr-wash:#DCE5D5;--wr-ink:#354A3C;--wr-ink-soft:#6F816F;--wr-ink-mute:#93A08E;--wr-sage:#A8B9A3;--wr-moss:#6F8A74;--wr-clay:#A57F5B;--wr-line:#E6E2D6;--wr-line-2:#D5D1C1;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(1200px 620px at 12% -12%,#EFF2E7 0%,transparent 62%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
-.wr-head{flex:none;display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--dsw-alias-border-l1);background:rgba(252,250,244,.82);backdrop-filter:blur(10px);flex-wrap:wrap}
+.wr-root{--wr-paper:#F6F8F7;--wr-paper-soft:#FFFFFF;--wr-wash:#F0F4F1;--wr-ink:#263C34;--wr-ink-soft:#6B7F74;--wr-ink-mute:#93A49B;--wr-sage:#A6CCB5;--wr-moss:#4F9274;--wr-clay:#A57F5B;--wr-progress:#73AD8A;--wr-track:#F0F4F1;--wr-line:#E7EEEA;--wr-line-2:#DCE6E0;--wr-heat-0:#EDF2EF;--wr-heat-1:#D5E9DD;--wr-heat-2:#A9D3BA;--wr-heat-3:#74B28E;--wr-heat-4:#438765;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(900px 420px at 50% -18%,#FFFFFF 0%,transparent 70%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
+.wr-head{flex:none;display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--dsw-alias-border-l1);background:rgba(255,255,255,.86);backdrop-filter:blur(10px);flex-wrap:wrap}
 .wr-brand{display:flex;flex-direction:column;gap:1px;min-width:0}
 .wr-brand-title{font-size:15.5px;font-weight:700;letter-spacing:.07em;color:var(--wr-ink)}
 .wr-brand-sub{font-size:11px;color:var(--wr-ink-mute);letter-spacing:.05em}
 .wr-tabs{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--wr-wash);border:1px solid transparent}
 .wr-tab{appearance:none;border:0;background:transparent;color:var(--wr-ink-soft);font:inherit;font-size:12.5px;padding:6px 15px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .16s ease,color .16s ease}
 .wr-tab:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1)}
-.wr-tab[data-active=true]{color:var(--wr-ink);background:var(--wr-paper-soft);font-weight:600;box-shadow:0 1px 2px rgba(53,74,60,.12)}
+.wr-tab[data-active=true]{color:var(--wr-ink);background:var(--wr-paper-soft);font-weight:600;box-shadow:0 1px 2px rgba(38,60,52,.08)}
 .wr-head-right{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .wr-search{position:relative;display:flex;align-items:center}
 .wr-search input{box-sizing:border-box;height:32px;width:232px;max-width:44vw;border-radius:999px;border:1px solid var(--wr-line-2);background:var(--wr-paper-soft);color:var(--wr-ink);font:inherit;font-size:12.5px;padding:0 28px 0 13px;outline:none;transition:border-color .16s ease,box-shadow .16s ease}
-.wr-search input:focus{border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(111,138,116,.16)}
+.wr-search input:focus{border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(79,146,116,.14)}
 .wr-search input::placeholder{color:var(--dsw-alias-label-secondary)}
 .wr-search-clear{position:absolute;right:4px;width:20px;height:20px;border:0;border-radius:50%;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
 .wr-search-clear:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .wr-btn{appearance:none;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 14px;border-radius:999px;border:1px solid var(--wr-line-2);background:var(--wr-paper-soft);color:var(--wr-ink);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .16s ease,border-color .16s ease,transform .16s ease}
-.wr-btn:hover{background:var(--wr-wash);border-color:#C2CDB8}
+.wr-btn:hover{background:var(--wr-wash);border-color:var(--wr-sage)}
 .wr-btn:disabled{opacity:.55;cursor:default}
 .wr-btn-primary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:#fff}
 .wr-btn-primary:hover{background:var(--dsw-alias-brand-primary);filter:brightness(1.06)}
 .wr-btn-ghost{border-color:transparent;background:transparent}
 .wr-body{flex:1;min-height:0;overflow:auto;padding:26px 30px 64px;scrollbar-width:thin;scrollbar-color:#CFD8C6 transparent}
 .wr-body-inner{max-width:1240px;margin:0 auto}
-.wr-card{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(53,74,60,.05),0 16px 36px -26px rgba(53,74,60,.55)}
+.wr-card{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
 .wr-section{margin-top:22px}
 .wr-section:first-child{margin-top:0}
 .wr-section-title{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;font-size:13.5px;font-weight:700;letter-spacing:.03em}
@@ -494,7 +502,7 @@ window.__ModuleLoader__.load({
 .wr-empty{padding:36px 10px;text-align:center;color:var(--dsw-alias-label-secondary);font-size:13px}
 .wr-empty strong{display:block;color:var(--dsw-alias-label-primary);font-size:14px;margin-bottom:6px}
 .wr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.wr-stat{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(53,74,60,.04),0 14px 30px -24px rgba(53,74,60,.5)}
+.wr-stat{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(38,60,52,.03)}
 .wr-stat-label{font-size:11.5px;color:var(--dsw-alias-label-secondary);letter-spacing:.04em}
 .wr-stat-value{font-size:22px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.15}
 .wr-stat-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
@@ -511,21 +519,21 @@ window.__ModuleLoader__.load({
 .wr-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .wr-toolbar-fill{flex:1;min-width:0}
 .wr-input{box-sizing:border-box;height:32px;border-radius:10px;border:1px solid var(--wr-line-2);background:var(--wr-paper-soft);color:var(--wr-ink);font:inherit;font-size:12.5px;padding:0 11px;outline:none;transition:border-color .16s ease,box-shadow .16s ease}
-.wr-input:focus{border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(111,138,116,.16)}
+.wr-input:focus{border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(79,146,116,.14)}
 .wr-select{box-sizing:border-box;height:32px;border-radius:10px;border:1px solid var(--wr-line-2);background:var(--wr-paper-soft);color:var(--wr-ink);font:inherit;font-size:12.5px;padding:0 9px;outline:none;max-width:220px;cursor:pointer}
 .wr-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:12px}
 @media (max-width:1240px){.wr-grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
 @media (max-width:920px){.wr-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media (max-width:640px){.wr-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .wr-book{appearance:none;border:0;background:transparent;padding:0;margin:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit}
-.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(53,74,60,.10),0 14px 26px -18px rgba(53,74,60,.5);transition:transform .2s ease,box-shadow .2s ease}
-.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(53,74,60,.10),0 14px 26px -18px rgba(53,74,60,.5);transition:transform .2s ease,box-shadow .2s ease}
-.wr-book:hover .wr-book-cover-wrap{transform:translateY(-3px);box-shadow:0 8px 16px rgba(53,74,60,.14),0 22px 34px -20px rgba(53,74,60,.55)}
+.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(38,60,52,.10),0 14px 26px -18px rgba(38,60,52,.5);transition:transform .2s ease,box-shadow .2s ease}
+.wr-book-cover-wrap{position:relative;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(38,60,52,.10),0 14px 26px -18px rgba(38,60,52,.5);transition:transform .2s ease,box-shadow .2s ease}
+.wr-book:hover .wr-book-cover-wrap{transform:translateY(-3px);box-shadow:0 8px 16px rgba(38,60,52,.14),0 22px 34px -20px rgba(38,60,52,.55)}
 .wr-cover{aspect-ratio:3/4;width:100%;background:var(--dsw-alias-bg-layer-2);display:block;overflow:hidden;position:relative}
 .wr-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .wr-cover-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:rgba(255,255,255,.94);background:linear-gradient(150deg,#A8B9A3,#5F7562)}
 .wr-cover-badges{position:absolute;left:4px;top:4px;display:flex;gap:3px;flex-wrap:wrap;max-width:calc(100% - 8px)}
-.wr-badge{font-size:9px;line-height:1.5;padding:0 5px;border-radius:999px;background:rgba(53,74,60,.62);color:#FCFAF4;backdrop-filter:blur(3px)}
+.wr-badge{font-size:9px;line-height:1.5;padding:0 5px;border-radius:999px;background:rgba(38,60,52,.62);color:#FCFAF4;backdrop-filter:blur(3px)}
 .wr-badge[data-tone=brand]{background:rgba(111,138,116,.92)}
 .wr-book-title{font-size:11px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .wr-book-author{font-size:10px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -534,7 +542,9 @@ window.__ModuleLoader__.load({
 .wr-progress span{display:block;height:100%;background:var(--dsw-alias-brand-primary);border-radius:2px}
 .wr-hour{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:3px;align-items:end;height:120px}
 .wr-hour-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
-.wr-hour-bar{width:100%;border-radius:3px 3px 0 0;background:var(--dsw-alias-brand-primary);min-height:2px;opacity:.85}
+.wr-hour-bar{width:100%;border-radius:3px 3px 0 0;background:var(--wr-sage);min-height:2px}
+.wr-hour-col:hover .wr-hour-bar,.wr-hour-bar[data-active=true]{background:var(--wr-moss)}
+.wr-hour-label[data-active=true]{color:var(--wr-ink);font-weight:600}
 .wr-hour-label{font-size:9px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
 .wr-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end;height:132px}
 .wr-months .wr-hour-label{font-size:10px}
@@ -551,13 +561,17 @@ window.__ModuleLoader__.load({
 .wr-heat-months{display:grid;grid-auto-flow:column;grid-auto-columns:13px;gap:3px;font-size:9.5px;color:var(--dsw-alias-label-secondary);overflow:hidden;margin:0 0 4px 0}
 .wr-heat-months span{white-space:nowrap;overflow:visible}
 .wr-heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);gap:3px;flex:none}
-.wr-heat-cell{width:13px;height:13px;border-radius:3px;background:#E9EDE1;transition:transform .12s ease}
+.wr-heat-cell{width:13px;height:13px;border-radius:3px;background:var(--wr-heat-0);transition:transform .12s ease}
 .wr-heat-cell[data-on=true]:hover{transform:scale(1.3)}
+.wr-heat-cell[data-future=true]{background:transparent;box-shadow:inset 0 0 0 1px var(--wr-line-2);opacity:.7}
+.wr-banner-close{border:none;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.55;flex:none}
+.wr-banner-close:hover{opacity:1;background:var(--wr-wash)}
+.wr-banner-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wr-heat-legend{display:flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;color:var(--dsw-alias-label-secondary)}
 .wr-bars{display:flex;flex-direction:column;gap:8px}
 .wr-bar-row{display:grid;grid-template-columns:104px 1fr 54px;gap:10px;align-items:center;font-size:12px}
-.wr-bar-track{height:8px;border-radius:999px;background:#E9EDE1;overflow:hidden}
-.wr-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-brand-primary)}
+.wr-bar-track{height:6px;border-radius:999px;background:var(--wr-track);overflow:hidden}
+.wr-bar-fill{height:100%;border-radius:999px;background:var(--wr-progress)}
 .wr-bar-value{text-align:right;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;font-size:11.5px}
 .wr-list{display:flex;flex-direction:column;gap:2px}
 .wr-row{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px;text-align:left;border:0;background:transparent;font:inherit;color:inherit;width:100%;cursor:default}
@@ -577,13 +591,13 @@ window.__ModuleLoader__.load({
 .wr-cols{column-count:2;column-gap:14px}
 @media (min-width:900px){.wr-cols{column-count:3}}
 @media (min-width:1300px){.wr-cols{column-count:4}}
-.wr-quote{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:14px;padding:14px 16px;position:relative;box-shadow:0 1px 2px rgba(53,74,60,.04),0 14px 30px -26px rgba(53,74,60,.5)}
+.wr-quote{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:14px;padding:14px 16px;position:relative;box-shadow:0 1px 2px rgba(38,60,52,.04)}
 .wr-quote:before{content:'“';position:absolute;left:9px;top:3px;font-size:26px;color:#C3D2BC;font-family:Georgia,serif;line-height:1}
 .wr-quote-text{font-size:12.8px;line-height:1.62;white-space:pre-wrap;word-break:break-word;padding-left:12px;margin:0}
 .wr-quote-foot{display:flex;align-items:center;gap:6px;margin-top:9px;padding-left:12px;font-size:11px;color:var(--dsw-alias-label-secondary);min-width:0}
 .wr-quote-book{font-weight:600;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .wr-quote-tail{margin-left:auto;flex:none;display:flex;gap:6px;align-items:center}
-.wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-left:3px solid var(--wr-clay);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(53,74,60,.04),0 14px 30px -26px rgba(53,74,60,.5)}
+.wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-left:3px solid var(--wr-progress);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
 .wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;transition:color .14s ease,border-color .14s ease}
@@ -594,7 +608,7 @@ window.__ModuleLoader__.load({
 .wr-quote:hover .wr-pick,.wr-thought:hover .wr-pick,.wr-pick[data-on=true]{opacity:1}
 .wr-pick[data-on=true]{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-bg-base)}
 .wr-quote[data-picked=true],.wr-thought[data-picked=true]{border-color:var(--dsw-alias-brand-primary)}
-.wr-mark{background:color-mix(in srgb, var(--wr-clay) 24%, transparent);color:var(--wr-ink);border-radius:3px;padding:0 2px}
+.wr-mark{background:var(--wr-heat-1);color:var(--wr-ink);border-radius:3px;padding:0 2px}
 .wr-export{width:min(760px,94vw);max-height:88vh;display:flex;flex-direction:column}
 .wr-export-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .wr-export-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
@@ -603,7 +617,7 @@ window.__ModuleLoader__.load({
 .wr-export-preview{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .wr-stars{color:var(--dsw-alias-state-warn-primary);font-size:10.5px;letter-spacing:1px}
 .wr-detail-head{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
-.wr-detail-cover{width:120px;flex:none;border-radius:12px;overflow:hidden;box-shadow:0 10px 24px -12px rgba(53,74,60,.55)}
+.wr-detail-cover{width:120px;flex:none;border-radius:12px;overflow:hidden;box-shadow:0 10px 24px -12px rgba(38,60,52,.55)}
 .wr-detail-main{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
 .wr-detail-title{font-size:18px;font-weight:700;line-height:1.35;margin:0}
 .wr-detail-author{font-size:12.5px;color:var(--dsw-alias-label-secondary)}
@@ -633,7 +647,7 @@ window.__ModuleLoader__.load({
 .wr-body::-webkit-scrollbar-thumb{background:#CFD8C6;border-radius:999px;border:2px solid transparent;background-clip:content-box}
 .wr-body::-webkit-scrollbar-track{background:transparent}
 .wr-heat-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
-.wr-setup{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:18px;padding:26px 28px;box-shadow:0 1px 2px rgba(53,74,60,.05),0 20px 44px -30px rgba(53,74,60,.6)}
+.wr-setup{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:18px;padding:26px 28px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
 `
 
     // ------------------------------------------------------------ components
@@ -855,16 +869,20 @@ window.__ModuleLoader__.load({
         return monthLabel(month - 1)
       })
 
+      // Four discrete steps above "no reading": a fixed palette keeps the bands
+      // distinguishable, where mixing percentages blurred them into the page.
       const level = (value) => {
-        if (value <= 0) return 'var(--dsw-alias-bg-layer-2)'
+        if (value <= 0) return 'var(--wr-heat-0)'
         const low = model.thresholds[0]
         const mid = model.thresholds[1]
         const high = model.thresholds[2]
-        if (value <= low) return 'color-mix(in srgb, var(--dsw-alias-brand-primary) 26%, var(--dsw-alias-bg-layer-2))'
-        if (value <= mid) return 'color-mix(in srgb, var(--dsw-alias-brand-primary) 48%, var(--dsw-alias-bg-layer-2))'
-        if (value <= high) return 'color-mix(in srgb, var(--dsw-alias-brand-primary) 72%, var(--dsw-alias-bg-layer-2))'
-        return 'var(--dsw-alias-brand-primary)'
+        if (value <= low) return 'var(--wr-heat-1)'
+        if (value <= mid) return 'var(--wr-heat-2)'
+        if (value <= high) return 'var(--wr-heat-3)'
+        return 'var(--wr-heat-4)'
       }
+      const now = new Date()
+      const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 
       const cells = []
       model.columns.forEach((column, columnIndex) => {
@@ -874,13 +892,19 @@ window.__ModuleLoader__.load({
             cells.push(h('div', { key: `e-${columnIndex}-${row}`, className: 'wr-heat-cell', style: { background: 'transparent' } }))
             continue
           }
+          // Days after today are drawn as empty outlines, so "not yet" never
+          // reads as "read nothing".
+          const future = cell.iso > todayIso
           cells.push(
             h('div', {
               key: cell.iso,
               className: 'wr-heat-cell',
               'data-on': cell.value > 0 ? 'true' : 'false',
-              title: `${cell.iso} · ${cell.value > 0 ? fmtDuration(cell.value) : '没有阅读'}`,
-              style: { background: level(cell.value) },
+              'data-future': future ? 'true' : 'false',
+              title: future
+                ? `${cell.iso} · ${t('dash.heat.future')}`
+                : `${cell.iso} · ${cell.value > 0 ? fmtDuration(cell.value) : t('dash.heat.none')}`,
+              style: { background: future ? 'transparent' : level(cell.value) },
             }),
           )
         }
@@ -911,14 +935,11 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'wr-heat-legend' },
-          h('span', null, t('dash.less')),
-          [
-            'var(--dsw-alias-bg-layer-2)',
-            'color-mix(in srgb, var(--dsw-alias-brand-primary) 26%, var(--dsw-alias-bg-layer-2))',
-            'color-mix(in srgb, var(--dsw-alias-brand-primary) 48%, var(--dsw-alias-bg-layer-2))',
-            'color-mix(in srgb, var(--dsw-alias-brand-primary) 72%, var(--dsw-alias-bg-layer-2))',
-            'var(--dsw-alias-brand-primary)',
-          ].map((color, index) => h('span', { key: index, className: 'wr-heat-cell', style: { background: color } })),
+          h('span', null, t('dash.heat.none')),
+          h('span', { className: 'wr-heat-cell' }),
+          h('span', { style: { marginLeft: '6px' } }, t('dash.less')),
+          ['var(--wr-heat-1)', 'var(--wr-heat-2)', 'var(--wr-heat-3)', 'var(--wr-heat-4)'].map((color, index) =>
+            h('span', { key: index, className: 'wr-heat-cell', style: { background: color } })),
           h('span', null, t('dash.more')),
         ),
       )
@@ -964,6 +985,7 @@ window.__ModuleLoader__.load({
 /** Twelve monthly bars for the selected year. */
     function MonthChart(props) {
       const values = Array.isArray(props.values) ? props.values : []
+      const activeIndex = Number.isInteger(props.activeIndex) ? props.activeIndex : -1
       const max = Math.max.apply(null, values.concat([1]))
       const cells = []
       for (let index = 0; index < 12; index += 1) {
@@ -973,8 +995,8 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { className: 'wr-hour-col', key: index, title: `${index + 1} · ${fmtDuration(value)}` },
-            h('div', { className: 'wr-hour-bar', style: { height: `${height}%` } }),
-            h('div', { className: 'wr-hour-label' }, String(index + 1)),
+            h('div', { className: 'wr-hour-bar', 'data-active': index === activeIndex ? 'true' : 'false', style: { height: `${height}%` } }),
+            h('div', { className: 'wr-hour-label', 'data-active': index === activeIndex ? 'true' : 'false' }, String(index + 1)),
           ),
         )
       }
@@ -1173,7 +1195,7 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'wr-split wr-section' },
-          h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.month')), h(MonthChart, { values: monthly })),
+          h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.month')), h(MonthChart, { values: monthly, activeIndex: isCurrent ? new Date().getMonth() : -1 })),
           h('div', { className: 'wr-card' }, h('h3', { className: 'wr-section-title' }, t('dash.category')), h(BarList, { items: categories })),
         ),
         h(
@@ -2228,24 +2250,73 @@ window.__ModuleLoader__.load({
 
     // ------------------------------------------------------------------- page
     /**
-     * ⌘K / Ctrl+K belongs to the host: the palette, the composer and every other
-     * panel share that key. Only claim it when this panel is the thing the user is
-     * looking at — the root is laid out, and focus is either inside it or nowhere
-     * (the common "clicked the shelf, then pressed ⌘K" case).
+     * Sync feedback line.
+     *
+     * A running sync stays until it finishes, because it is live progress. A
+     * finished one (done or failed) clears itself after a few seconds so the
+     * reading area is not permanently occupied, and the × dismisses it right
+     * away. Any new sync resets both, so a second run always shows up again.
      */
-    function shouldHandleSearchShortcut(event, root, activeElement) {
-      if (!event || typeof event !== 'object') return false
-      if (!(event.metaKey || event.ctrlKey)) return false
-      if (event.altKey || event.shiftKey) return false
-      if (event.defaultPrevented) return false
-      if (String(event.key || '').toLowerCase() !== 'k') return false
-      if (!root || typeof root.getClientRects !== 'function') return false
-      if (root.getClientRects().length === 0) return false
-      const active = activeElement || null
-      const tag = active && active.tagName ? String(active.tagName).toUpperCase() : ''
-      if (tag === 'BODY' || tag === 'HTML') return true
-      if (active === null) return true
-      return typeof root.contains === 'function' && root.contains(active)
+    function SyncBanner(props) {
+      const sync = props && props.sync ? props.sync : null
+      const phase = sync && sync.phase ? String(sync.phase) : ''
+      const running = Boolean(sync && sync.running)
+      const signature = [
+        sync && sync.startedAt ? sync.startedAt : '',
+        phase,
+        sync && sync.message ? sync.message : '',
+        sync && sync.error ? sync.error : '',
+      ].join('|')
+      const [dismissed, setDismissed] = useState(false)
+      const [expired, setExpired] = useState(false)
+
+      useEffect(() => {
+        setDismissed(false)
+        setExpired(false)
+      }, [signature])
+
+      useEffect(() => {
+        if (!sync || running) return undefined
+        if (phase !== 'done' && phase !== 'error') return undefined
+        if (typeof setTimeout !== 'function') return undefined
+        const timer = setTimeout(() => setExpired(true), AUTO_HIDE_MS)
+        return () => clearTimeout(timer)
+      }, [signature, running, phase])
+
+      if (!sync) return null
+      if (dismissed || expired) return null
+
+      const close = h('button', {
+        className: 'wr-banner-close',
+        type: 'button',
+        'aria-label': t('action.dismiss'),
+        title: t('action.dismiss'),
+        onClick: () => setDismissed(true),
+      }, '×')
+
+      if (running) {
+        const total = sync.total || 0
+        const done = sync.done || 0
+        return h('div', { className: 'wr-banner', 'data-tone': 'run' },
+          h('span', { className: 'wr-spinner' }),
+          h('span', { className: 'wr-banner-text' }, total > 0 ? t('sync.running', { label: sync.label || '', done, total }) : (sync.label || t('action.syncing'))),
+          sync.message ? h('span', { className: 'wr-banner-text wr-muted' }, sync.message) : null,
+          close,
+        )
+      }
+      if (phase === 'done' && sync.message) {
+        return h('div', { className: 'wr-banner' },
+          h('span', { className: 'wr-banner-text' }, t('sync.done', { message: sync.message })),
+          close,
+        )
+      }
+      if (phase === 'error' && sync.error) {
+        return h('div', { className: 'wr-banner', 'data-tone': 'error' },
+          h('span', { className: 'wr-banner-text' }, t('sync.failed', { error: sync.error })),
+          close,
+        )
+      }
+      return null
     }
 
     function StudyPanel() {
@@ -2259,24 +2330,6 @@ window.__ModuleLoader__.load({
       const [showSettings, setShowSettings] = useState(false)
       const [booting, setBooting] = useState(true)
       const mounted = useRef(true)
-      const searchRef = useRef(null)
-      const rootRef = useRef(null)
-
-      // ⌘K / Ctrl+K is never captured on `window`: the host owns that key for its
-      // own palette, and an early version that listened globally ended up stealing
-      // it on every page. The key is only honoured when the event starts inside
-      // this panel (the handler below sits on the panel root), which cannot clash
-      // with anything outside it.
-      const onRootKeyDown = (event) => {
-        const current = event && event.currentTarget ? event.currentTarget : rootRef.current
-        if (!shouldHandleSearchShortcut(event, current, event ? event.target : null)) return
-        event.preventDefault()
-        const node = searchRef.current
-        if (node && typeof node.focus === 'function') {
-          node.focus()
-          if (typeof node.select === 'function') node.select()
-        }
-      }
 
       useEffect(() => {
         mounted.current = true
@@ -2389,7 +2442,6 @@ window.__ModuleLoader__.load({
           { className: 'wr-head-right' },
           h('div', { className: 'wr-search' },
             h('input', {
-              ref: searchRef,
               placeholder: t('action.searchGlobal'),
               value: query,
               'aria-label': t('action.search'),
@@ -2405,22 +2457,7 @@ window.__ModuleLoader__.load({
         ),
       )
 
-      const syncBanner = (() => {
-        if (!state || !state.sync) return null
-        const sync = state.sync
-        if (sync.running) {
-          const total = sync.total || 0
-          const done = sync.done || 0
-          return h('div', { className: 'wr-banner', 'data-tone': 'run' },
-            h('span', { className: 'wr-spinner' }),
-            h('span', null, total > 0 ? t('sync.running', { label: sync.label || '', done, total }) : (sync.label || t('action.syncing'))),
-            sync.message ? h('span', { className: 'wr-muted' }, sync.message) : null,
-          )
-        }
-        if (sync.phase === 'done' && sync.message) return h('div', { className: 'wr-banner' }, h('span', null, t('sync.done', { message: sync.message })))
-        if (sync.phase === 'error' && sync.error) return h('div', { className: 'wr-banner', 'data-tone': 'error' }, h('span', null, t('sync.failed', { error: sync.error })))
-        return null
-      })()
+      const syncBanner = h(SyncBanner, { sync: state && state.sync })
 
       let body = null
       if (booting) {
@@ -2447,7 +2484,7 @@ window.__ModuleLoader__.load({
 
       return h(
         'div',
-        { className: 'wr-root', 'data-dsh-weread-gather': '', ref: rootRef, onKeyDown: onRootKeyDown },
+        { className: 'wr-root', 'data-dsh-weread-gather': '' },
         h('style', { dangerouslySetInnerHTML: { __html: CSS } }),
         head,
         h(
@@ -2551,7 +2588,7 @@ window.__ModuleLoader__.load({
       },
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
-      __smoke: { ExportPanel, MarkedText, PickButton, shouldHandleSearchShortcut },
+      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner },
     }
   },
 })

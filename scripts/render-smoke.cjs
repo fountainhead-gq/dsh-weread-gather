@@ -363,34 +363,26 @@ renderStandalone('export-panel', smoke.ExportPanel, { selector: { noteIds: [data
   'D:/tmp/exports',
 ])
 
-// ⌘K 归宿主所有：只有书房在前台、焦点在书房里（或没有焦点）时才接管。
-const shortcutGuards = []
-if (typeof smoke.shouldHandleSearchShortcut !== 'function') {
-  shortcutGuards.push('client module 未暴露 shouldHandleSearchShortcut')
-} else {
-  const insideNode = { tagName: 'INPUT' }
-  const outsideNode = { tagName: 'TEXTAREA' }
-  const visibleRoot = { getClientRects: () => [{}], contains: (node) => node === insideNode }
-  const hiddenRoot = { getClientRects: () => [], contains: (node) => node === insideNode }
-  const key = (patch) => Object.assign({ key: 'k', metaKey: false, ctrlKey: true, altKey: false, shiftKey: false, defaultPrevented: false }, patch)
-  const cases = [
-    ['焦点不在任何控件上（body）', key({}), visibleRoot, { tagName: 'BODY' }, true],
-    ['焦点在书房内部', key({}), visibleRoot, insideNode, true],
-    ['焦点没记录（null）', key({}), visibleRoot, null, true],
-    ['焦点在宿主的输入框', key({}), visibleRoot, outsideNode, false],
-    ['面板不可见时', key({}), hiddenRoot, { tagName: 'BODY' }, false],
-    ['宿主已经处理过', key({ defaultPrevented: true }), visibleRoot, { tagName: 'BODY' }, false],
-    ['没有修饰键的 k', key({ ctrlKey: false }), visibleRoot, { tagName: 'BODY' }, false],
-    ['带 Shift 的 ⌘⇧K', key({ shiftKey: true }), visibleRoot, { tagName: 'BODY' }, false],
-    ['面板还没挂载', key({}), null, { tagName: 'BODY' }, false],
-    ['别的按键', key({ key: 'j' }), visibleRoot, { tagName: 'BODY' }, false],
-  ]
-  for (const [label, event, root, active, expected] of cases) {
-    const actual = smoke.shouldHandleSearchShortcut(event, root, active)
-    if (actual !== expected) shortcutGuards.push(`⌘K 判定错误：${label} 期望 ${expected} 实际 ${actual}`)
-  }
-  console.log('[shortcut] %d/%d 判定符合预期', cases.length - shortcutGuards.length, cases.length)
+// 同步提示条：进行中必须常驻且带关闭键；结束后同样可以手动关掉。
+// SyncBanner 的 useState 顺序：dismissed, expired
+const bannerGuards = []
+const byLabel0 = (label) => drawCalls.find((item) => item.label === label && item.ok)
+if (typeof smoke.SyncBanner !== 'function') bannerGuards.push('client module 未暴露 SyncBanner')
+const bannerDone = { phase: 'done', message: '更新 0 本 · 跳过 470 本', running: false }
+const bannerRun = { running: true, phase: 'meta', label: '补全书籍信息', done: 120, total: 400, message: '已补全 120/400 本' }
+renderStandalone('banner-running', smoke.SyncBanner, { sync: bannerRun }, [false, false])
+renderStandalone('banner-done', smoke.SyncBanner, { sync: bannerDone }, [false, false])
+renderStandalone('banner-dismissed', smoke.SyncBanner, { sync: bannerDone }, [true, false])
+for (const label of ['banner-running', 'banner-done']) {
+  const draw = byLabel0(label)
+  if (!draw) { bannerGuards.push(`${label}: 未渲染`); continue }
+  // 关闭键的文案就是 ×，aria-label 不进渲染文本，所以断言这个字符。
+  if (!draw.text.includes('×')) bannerGuards.push(`${label}: 缺关闭按钮`)
 }
+if (byLabel0('banner-running') && !byLabel0('banner-running').text.includes('sync.running')) bannerGuards.push('banner-running: 缺进度文案')
+if (byLabel0('banner-done') && !byLabel0('banner-done').text.includes('sync.done')) bannerGuards.push('banner-done: 缺完成文案')
+const dismissedDraw = byLabel0('banner-dismissed')
+if (dismissedDraw && dismissedDraw.text.length > 0) bannerGuards.push('banner-dismissed: 关闭后仍然有内容')
 
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
@@ -417,7 +409,9 @@ else {
 }
 const searchDraw = byLabel('search')
 if (searchDraw && !searchDraw.text.includes('search.typeAll')) guards.push('search: 缺类型筛选')
-for (const item of shortcutGuards) guards.push(item)
+const overviewDraw = byLabel('overview')
+if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
+for (const item of bannerGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)
