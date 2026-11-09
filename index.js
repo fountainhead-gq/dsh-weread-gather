@@ -45,6 +45,16 @@ const HEAT_TTL = 30 * 60
 const HEAT_CONCURRENCY = 4
 const HEAT_CACHE_VERSION = 2
 
+/**
+ * Incremental sync. `sync-state.json` remembers, per book, what the notebook
+ * list looked like the last time its highlights were fetched. A book is only
+ * re-read when one of those numbers moved, so a second sync in a row costs a
+ * shelf call plus one notebook page instead of ~130 requests.
+ */
+const SYNC_STATE_VERSION = 1
+/** Reading totals (annually / overall) change slowly: reuse them for a while. */
+const DASHBOARD_TTL = 6 * 60 * 60
+
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
 
 /**
@@ -574,12 +584,60 @@ function buildExportDocument(picked, optionsInput, nowIso) {
   }
 }
 
+// --------------------------------------------------------------- sync planning
+
+const notebookSorted = (a, b) => Number(b.lastNoteTime || 0) - Number(a.lastNoteTime || 0)
+
+/**
+ * Decide which notebooks need their highlights re-read.
+ *
+ * A book is re-read when we have never recorded it, when its newest note moved,
+ * or when either note counter changed. Everything else is skipped and its old
+ * entries are carried over from `data.json` instead of being downloaded again.
+ */
+function planBookRefresh(previous, notebooks, options = {}) {
+  const full = options.full === true
+  const known = isObject(previous) ? previous : {}
+  const refresh = []
+  const skipped = []
+  for (const notebook of notebooks) {
+    if (!notebook || !notebook.bookId) continue
+    const before = isObject(known[notebook.bookId]) ? known[notebook.bookId] : null
+    const changed =
+      full ||
+      before === null ||
+      Number(notebook.lastNoteTime || 0) > Number(before.lastNoteTime || 0) ||
+      Number(notebook.noteCount || 0) !== Number(before.noteCount || 0) ||
+      Number(notebook.reviewCount || 0) !== Number(before.reviewCount || 0)
+    if (changed) refresh.push(notebook)
+    else skipped.push(notebook.bookId)
+  }
+  return { refresh, skipped, full }
+}
+
+/** Carry over the entries of books we are not re-reading this round. */
+function mergeCarriedEntries(previous, keepBookIds, refreshBookIds) {
+  const keep = keepBookIds instanceof Set ? keepBookIds : new Set(keepBookIds || [])
+  const refresh = refreshBookIds instanceof Set ? refreshBookIds : new Set(refreshBookIds || [])
+  const notes = []
+  const thoughts = []
+  if (!isObject(previous)) return { notes, thoughts }
+  for (const note of Array.isArray(previous.notes) ? previous.notes : []) {
+    if (keep.has(note.bookId) && !refresh.has(note.bookId)) notes.push(note)
+  }
+  for (const thought of Array.isArray(previous.thoughts) ? previous.thoughts : []) {
+    if (keep.has(thought.bookId) && !refresh.has(thought.bookId)) thoughts.push(thought)
+  }
+  return { notes, thoughts }
+}
+
 function createHost(options) {
   const dir = join(dshHome(), 'weread-gather')
   const configPath = join(dir, 'config.json')
   const dataPath = join(dir, 'data.json')
   const metaPath = join(dir, 'meta.json')
   const heatPath = join(dir, 'heat.json')
+  const syncStatePath = join(dir, 'sync-state.json')
 
   let config = readJsonFile(configPath, {})
   if (!isObject(config)) config = {}
@@ -594,6 +652,13 @@ function createHost(options) {
   /** "2026" -> { at, days: { "2026-01-02": seconds } } */
   let heatCache = readJsonFile(heatPath, {})
   if (!isObject(heatCache)) heatCache = {}
+  /** Sync bookkeeping: what the notebook list looked like when we last read it. */
+  let syncState = readJsonFile(syncStatePath, null)
+  if (!isObject(syncState) || Number(syncState.version) !== SYNC_STATE_VERSION) {
+    syncState = { version: SYNC_STATE_VERSION, lastSyncAt: 0, lastFullAt: 0, dashboardAt: {}, books: {} }
+  }
+  if (!isObject(syncState.books)) syncState.books = {}
+  if (!isObject(syncState.dashboardAt)) syncState.dashboardAt = {}
 
   let job = null
 
@@ -645,6 +710,14 @@ function createHost(options) {
       writeJsonFile(heatPath, heatCache)
     } catch {
       // Same trade-off as meta.json: the cache only saves gateway calls.
+    }
+  }
+
+  function saveSyncState() {
+    try {
+      writeJsonFile(syncStatePath, syncState)
+    } catch {
+      // Losing the ledger only costs a slower sync next time; never fail a sync.
     }
   }
 
@@ -769,6 +842,7 @@ function createHost(options) {
         'data.json': dataset,
         'meta.json': meta,
         'heat.json': heatCache,
+        'sync-state.json': syncState,
       },
     }
   }
@@ -823,6 +897,17 @@ function createHost(options) {
       heatCache = files['heat.json']
       saveHeat()
       restored.push('heat.json')
+    }
+    // Optional: older bundles (1.0.0 / 1.1.0) have no ledger. Keep ours instead of
+    // resetting it, otherwise the next sync would silently become a full one.
+    if (isObject(files['sync-state.json'])) {
+      const incomingState = files['sync-state.json']
+      if (Number(incomingState.version) === SYNC_STATE_VERSION && isObject(incomingState.books)) {
+        syncState = incomingState
+        if (!isObject(syncState.dashboardAt)) syncState.dashboardAt = {}
+        saveSyncState()
+        restored.push('sync-state.json')
+      }
     }
     return { restored, keptBackup: folder, keptFiles, counts: counts() }
   }
@@ -984,6 +1069,13 @@ function createHost(options) {
       finishedAt: 0,
     }
     const warnings = []
+    // Incremental bookkeeping. `full` (or having no ledger at all) falls back to
+    // the 1.1.0 behaviour of reading everything.
+    const full = options.full === true
+    const previousState = syncState
+    const previousDataset = dataset
+    const lastSyncAt = Number(previousState.lastSyncAt) || 0
+    const effectiveFull = full || lastSyncAt === 0 || !isObject(previousDataset)
 
     try {
       // 1. Shelf ------------------------------------------------------------
@@ -1062,6 +1154,9 @@ function createHost(options) {
         if (!hasMore || nextSort === 0 || nextSort === lastSort) break
         lastSort = nextSort
         job.message = `已读取 ${notebooks.length} 本有笔记的书`
+        // Paging must not stop early: this list is also where books that the
+        // capped shelf slice dropped come from, so a partial list would shrink
+        // the catalogue. It is only ~5 cheap requests anyway.
       }
 
       for (const notebook of notebooks) {
@@ -1084,10 +1179,21 @@ function createHost(options) {
       job.phase = 'dashboard'
       job.label = '同步阅读统计'
       const dashboard = {}
+      const previousDashboard = previousDataset && isObject(previousDataset.dashboard) ? previousDataset.dashboard : {}
+      const now = nowSeconds()
       for (const mode of ['weekly', 'monthly', 'annually', 'overall']) {
+        const cached = previousDashboard[mode]
+        const cachedAt = Number(previousState.dashboardAt[mode]) || 0
+        const reusable = !effectiveFull && isObject(cached) && now - cachedAt < DASHBOARD_TTL
+        if (reusable) {
+          dashboard[mode] = cached
+          continue
+        }
         try {
           dashboard[mode] = trimReadData(await gateway(current.apiKey, '/readdata/detail', { mode }, signal))
+          syncState.dashboardAt[mode] = now
         } catch (error) {
+          if (isObject(cached)) dashboard[mode] = cached
           warnings.push(`阅读统计(${mode}): ${error instanceof Error ? error.message : String(error)}`)
         }
       }
@@ -1139,15 +1245,40 @@ function createHost(options) {
       // 4. Per-book highlights and thoughts ---------------------------------
       job.phase = 'notes'
       job.label = '同步笔记与想法'
-      const candidates = notebooks
-        .filter((n) => n.noteCount + n.reviewCount > 0)
-        .sort((a, b) => b.lastNoteTime - a.lastNoteTime || b.noteCount - a.noteCount)
-        .slice(0, maxBooks)
+      const withNotes = notebooks.filter((n) => n.noteCount + n.reviewCount > 0).sort(notebookSorted)
+      const plan = planBookRefresh(previousState.books, withNotes, { full: effectiveFull })
+      const candidates = plan.refresh.slice(0, maxBooks)
+      // Books beyond the per-sync cap keep their old entries; they are simply not
+      // part of the refresh set.
+      const refreshIds = new Set(candidates.map((n) => n.bookId))
+      const keepIds = new Set(books.keys())
+      // A book whose counters dropped to zero has lost its entries: dropping the
+      // old rows is the only way the next view matches WeRead.
+      const emptiedIds = new Set(notebooks.filter((n) => n.noteCount + n.reviewCount === 0).map((n) => n.bookId))
+      const carried = mergeCarriedEntries(previousDataset, keepIds, new Set([...refreshIds, ...emptiedIds]))
       job.total = candidates.length
       job.done = 0
+      job.updated = candidates.length
+      job.skipped = withNotes.length - candidates.length
+      if (job.skipped > 0) job.message = `更新 ${candidates.length} 本 · 跳过 ${job.skipped} 本`
 
-      const notes = []
-      const thoughts = []
+      const notes = carried.notes
+      const thoughts = carried.thoughts
+      // Pre-fill the ledger for every notebook so the next sync can tell
+      // "unchanged" from "never looked at". `read` remembers that a book's
+      // highlights were actually downloaded once: books the per-sync cap has
+      // never reached keep `read:false`, which is what the pending count shows
+      // (1.1.0 only ever had highlights for the newest N books anyway).
+      for (const notebook of withNotes) {
+        const previousRow = isObject(syncState.books[notebook.bookId]) ? syncState.books[notebook.bookId] : null
+        syncState.books[notebook.bookId] = {
+          lastNoteTime: Number(notebook.lastNoteTime) || 0,
+          noteCount: Number(notebook.noteCount) || 0,
+          reviewCount: Number(notebook.reviewCount) || 0,
+          syncedAt: nowSeconds(),
+          read: previousRow !== null && (previousRow.read === true || previousRow.done === true),
+        }
+      }
       const results = await mapLimit(candidates, 4, async (notebook) => {
         const collectedNotes = []
         const collectedThoughts = []
@@ -1191,11 +1322,16 @@ function createHost(options) {
         const notebook = candidates[index]
         if (result && result.error) {
           warnings.push(result.error)
+          // Drop the ledger row so the next sync retries this book instead of
+          // remembering a half-finished state.
+          delete syncState.books[notebook.bookId]
           return
         }
         if (!result) return
         for (const note of result.notes) notes.push({ ...note, bookTitle: notebook.title, author: notebook.author, cover: notebook.cover })
         for (const thought of result.thoughts) thoughts.push({ ...thought, bookTitle: notebook.title, author: notebook.author, cover: notebook.cover })
+        const entry = syncState.books[notebook.bookId]
+        if (isObject(entry)) entry.read = true
         job.done += 1
       })
 
@@ -1219,10 +1355,25 @@ function createHost(options) {
       })
       saveDataset(next)
 
+      // 6. Ledger -----------------------------------------------------------
+      // Forget books that left the shelf so the file cannot grow forever.
+      for (const bookId of Object.keys(syncState.books)) {
+        if (!keepIds.has(bookId)) delete syncState.books[bookId]
+      }
+      const pendingBooks = withNotes.filter((n) => {
+        const row = syncState.books[n.bookId]
+        return isObject(row) && row.read !== true
+      }).length
+      if (pendingBooks > 0) job.pending = pendingBooks
+      syncState.version = SYNC_STATE_VERSION
+      syncState.lastSyncAt = nowSeconds()
+      if (effectiveFull) syncState.lastFullAt = syncState.lastSyncAt
+      saveSyncState()
+
       job.running = false
       job.phase = 'done'
       job.label = '同步完成'
-      job.message = `书架 ${next.books.length} 本 · 笔记 ${next.notes.length} 条 · 想法 ${next.thoughts.length} 条`
+      job.message = `更新 ${job.updated || 0} 本 · 跳过 ${job.skipped || 0} 本 · 笔记 ${next.notes.length} 条 · 想法 ${next.thoughts.length} 条`
       job.finishedAt = nowSeconds()
       return status()
     } catch (error) {
@@ -1436,7 +1587,15 @@ export const inject = ['webServer']
  * Pure helpers exposed for `scripts/export-selftest.cjs`. Nothing here touches
  * the filesystem or the gateway, so importing the module stays side-effect free.
  */
-export const __internals = { buildExportDocument, exportOptions, chapterGroups, formatStamp, safeSegment }
+export const __internals = {
+  buildExportDocument,
+  exportOptions,
+  chapterGroups,
+  formatStamp,
+  safeSegment,
+  planBookRefresh,
+  mergeCarriedEntries,
+}
 
 export function apply(ctx) {
   const host = createHost({})

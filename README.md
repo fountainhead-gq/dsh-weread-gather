@@ -121,6 +121,17 @@ tags: ["微信读书"]
 
 这两类结果缓存在 `heat.json`：**已过年份永久缓存**，当年缓存 30 分钟后过期重取，所以切年份几乎瞬时。
 
+### 同步是增量的
+
+每次同步先读 `sync-state.json` 这本账，只处理「真的变了」的书：
+
+- 书架、分类、笔记本清单每次都读（清单约 5 个请求，且它是未在书架前 400 本里的书的主要来源，所以不能提前停）
+- 四套阅读统计 **6 小时**内直接复用，不重新请求
+- 每本书按 `lastNoteTime / noteCount / reviewCount` 三项比对：没变化的书**不重拉划线**，旧划线/想法直接沿用
+- 单次最多细读 `maxBooks` 本（默认 60）；账本会记下还有多少本从未细读过（`pending`），需要补齐时在设置里点「强制全量重建」
+
+实测：本机 779 本 / 694 条划线的库，首次全量约 8.4 秒，之后没有变化的同步 **2~3 秒**（`更新 0 本 · 跳过 470 本`）。
+
 ## 数据落点与隐私
 
 ```
@@ -129,8 +140,9 @@ $DSH_HOME/weread-gather/
   data.json     书架 + 分类 + 划线 + 想法 + 阅读统计
   meta.json     每本书的元信息缓存（bookId -> 分类/简介/出版社/出版年/评分）
   heat.json     逐年热力图与年度聚合缓存（{ "2025": { v, at, days, annual } }）
+  sync-state.json  同步账本（上次同步时间、每本书的计数与是否细读过、统计缓存时间）
   exports/      Markdown 导出（默认目录，可在设置里改）
-  backups/      导入备份前自动留存的旧数据（<时间戳>/ 四个 JSON）
+  backups/      导入备份前自动留存的旧数据（<时间戳>/ 五个 JSON）
 ```
 
 - 所有数据都在这一个目录里，插件不写别处；`data.json` 只在同步时整体重写，页面读内存副本
@@ -150,9 +162,9 @@ $DSH_HOME/weread-gather/
 | POST | `/export` | `{ selector, options, mode }`：`selector` 用 `bookIds` / `noteIds` / `thoughtIds`，`mode: 'preview'` 只回 Markdown、`'file'` 落盘；**空 selector 会报错，不会导出全部** |
 | GET | `/export/dir` | 当前导出目录与是否已存在 |
 | POST | `/export/dir` | 改导出目录（会先写探针文件确认可写，失败回滚） |
-| GET | `/backup` | 一次性备份包 `{ format, files: { config/data/meta/heat } }`，`config.json` 已剔除 apiKey |
+| GET | `/backup` | 一次性备份包 `{ format, files: { config/data/meta/heat/sync-state } }`，`config.json` 已剔除 apiKey |
 | POST | `/restore` | `{ bundle }`：校验后先复制旧数据到 `backups/<时间戳>/`，再写回；config 合并时保留本机 apiKey |
-| POST | `/sync` | 触发一次同步（异步，立刻返回进度；用 `/state` 或 `/sync` 轮询） |
+| POST | `/sync` | 触发一次同步（异步，立刻返回进度；用 `/state` 或 `/sync` 轮询）。`{ "full": true }` = 忽略账本强制全量重建 |
 | POST | `/config` | 改 apiKey / maxBooks / notesPerBook / metaLimit |
 | POST | `/reset` | 清掉手填的 Key |
 
@@ -163,8 +175,9 @@ $DSH_HOME/weread-gather/
 ```bash
 node --check index.js && node --check client.js   # 语法
 node scripts/check.cjs                            # 组件引用 / locale 键对称 / 宿主-客户端契约 / 包身份一致性
-node scripts/render-smoke.cjs                     # 用极简 hooks 运行时把 10 种视图各渲染一遍
+node scripts/render-smoke.cjs                     # 用极简 hooks 运行时把 11 种视图各渲染一遍
 node scripts/export-selftest.cjs                  # 45 项 Markdown 导出断言（front-matter、哈希、批量、隔离）
+node scripts/sync-selftest.cjs                    # 10 项增量同步断言（重拉判定、账本搬运），不联网
 ```
 
 三个脚本都不依赖浏览器：`render-smoke.cjs` 自建了极简 hooks 运行时，把 `client.js` 放进 `vm` 里逐个视图渲染，断言不会退化成加载态、笔记/想法必须带分页与复制控件；`export-selftest.cjs` 直接 `import` 宿主的 `__internals`，拿真实 `data.json` 跑导出断言。两者默认读 `~/.dsh/weread-gather/data.json`，可用 `WEREAD_DATA` 指到别的数据文件（需要一个已经同步过的数据集）。
@@ -172,7 +185,9 @@ node scripts/export-selftest.cjs                  # 45 项 Markdown 导出断言
 ## 已知限制
 
 - 「其他」桶里的书是微读自己的数据缺口：多半是 `CB_` 前缀的导入文档 / PDF，`/book/info` 也不返回分类，无法自动归类。
-- 笔记同步按「最近有笔记的 N 本书」（默认 60 本）展开，不是全量；把 `maxBooks` 调大可多抓，代价是请求数线性增长。
+- 笔记同步按「最近有笔记的 N 本书」（默认 60 本）展开，不是全量；账本会记下还有多少本从未细读过（同步结果里的 `pending`）。想补齐就在设置里点「强制全量重建」，或把 `maxBooks` 调大（代价是请求数线性增长）。
+- 增量同步依赖 `sync-state.json` 这本账；删掉它不会丢数据，但下一次同步会按全量走一遍。
+- 主题跟随宿主亮/暗主题的方式是重映射 `--dsw-alias-*` token；深色模式下纸感配色会被压暗，观感与浅色模式不同。
 - `/book/info` 实测不返回字数（文档有写、回包里没有），所以卡片上用的是出版年而不是字数。
 - 微读的 `/readdata/detail` 只在 `mode: overall` 时给 24 小时时段分布，年/月/周都返回空数组，所以「阅读时段」那张图只能展示累计值，不随年份切换（标题里有标注）。
 - 切到往年后，本周/本月两张卡会隐藏——它们本来就是「当前」的概念；往年的信息由年度 KPI 与月度分布承载。
