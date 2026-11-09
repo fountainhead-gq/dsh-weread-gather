@@ -477,7 +477,10 @@ window.__ModuleLoader__.load({
 
     // ----------------------------------------------------------------- styles
     const CSS = `
-.wr-root{--wr-paper:#F6F8F7;--wr-paper-soft:#FFFFFF;--wr-wash:#F0F4F1;--wr-ink:#263C34;--wr-ink-soft:#6B7F74;--wr-ink-mute:#93A49B;--wr-sage:#A6CCB5;--wr-moss:#4F9274;--wr-clay:#A57F5B;--wr-progress:#73AD8A;--wr-track:#F0F4F1;--wr-line:#E7EEEA;--wr-line-2:#DCE6E0;--wr-card-line:#EDF1EE;--wr-divider:#EEF3F0;--wr-surface:#FBFCFB;--wr-heat-0:#F1F4F1;--wr-heat-1:#D5E9DD;--wr-heat-2:#A9D3BA;--wr-heat-3:#74B28E;--wr-heat-4:#438765;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(900px 420px at 50% -18%,#FFFFFF 0%,transparent 70%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
+.wr-root{--wr-paper:#F6F8F7;--wr-paper-soft:#FFFFFF;--wr-wash:#F0F4F1;--wr-ink:#263C34;--wr-ink-soft:#6B7F74;--wr-ink-mute:#93A49B;--wr-sage:#A6CCB5;--wr-moss:#4F9274;--wr-clay:#A57F5B;--wr-progress:#73AD8A;--wr-track:#F0F4F1;--wr-line:#E7EEEA;--wr-line-2:#DCE6E0;--wr-card-line:#EDF1EE;--wr-divider:#EEF3F0;--wr-surface:#FBFCFB;--wr-heat-0:#F3F4F2;--wr-heat-1:#D5E9DD;--wr-heat-2:#A9D3BA;--wr-heat-3:#74B28E;--wr-heat-4:#438765;--dsw-alias-bg-base:var(--wr-paper);--dsw-alias-bg-layer-1:var(--wr-paper-soft);--dsw-alias-bg-layer-2:var(--wr-wash);--dsw-alias-label-primary:var(--wr-ink);--dsw-alias-label-secondary:var(--wr-ink-soft);--dsw-alias-border-l1:var(--wr-line);--dsw-alias-border-l2:var(--wr-line-2);--dsw-alias-brand-primary:var(--wr-moss);--dsw-alias-state-success-primary:#4F7A5B;--dsw-alias-state-warn-primary:#B98A57;--dsw-alias-state-error-primary:#A8574C;display:flex;flex-direction:column;height:100%;min-height:0;width:100%;box-sizing:border-box;background:radial-gradient(900px 420px at 50% -18%,#FFFFFF 0%,transparent 70%),var(--wr-paper);color:var(--wr-ink);font-family:inherit}
+.wr-root[data-view=shelf]{--wr-paper:#EDF2EE;--wr-paper-soft:#FFFFFF}
+.wr-root[data-view=notes]{--wr-paper:#F8FAF8;--wr-paper-soft:#FFFFFF}
+.wr-root[data-view=thoughts]{--wr-paper:#FAF7F1;--wr-paper-soft:#FFFDF8;--wr-card-line:#F0EADD;--wr-divider:#F1EBDD}
 .wr-head{flex:none;display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--dsw-alias-border-l1);background:rgba(255,255,255,.86);backdrop-filter:blur(10px);flex-wrap:wrap}
 .wr-brand{display:flex;flex-direction:column;gap:1px;min-width:0}
 .wr-brand-title{font-size:15.5px;font-weight:700;letter-spacing:.07em;color:var(--wr-ink)}
@@ -559,8 +562,6 @@ window.__ModuleLoader__.load({
 .wr-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end;height:132px}
 .wr-months .wr-hour-label{font-size:10px}
 .wr-heat-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.wr-heat-kpi{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-bottom:10px}
-.wr-heat-kpi b{color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;font-weight:600}
 .wr-yearbar{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;padding:2px;background:var(--dsw-alias-bg-layer-1)}
 .wr-yearbar button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:1;padding:4px 7px;border-radius:999px;cursor:pointer}
 .wr-yearbar button:hover:not(:disabled){background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
@@ -573,11 +574,13 @@ window.__ModuleLoader__.load({
 .wr-heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;flex:none}
 .wr-heat-cell{width:12px;height:12px;border-radius:2.5px;background:var(--wr-heat-0);transition:transform .12s ease}
 .wr-heat-cell[data-on=true]:hover{transform:scale(1.3)}
-.wr-heat-cell[data-future=true]{background:transparent;box-shadow:inset 0 0 0 2px var(--wr-line-2);opacity:.45}
+.wr-heat-cell[data-future=true]{background:transparent}
+.wr-heat-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.wr-heat-foot-stats{margin-left:auto;font-size:11px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
 .wr-banner-close{border:none;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.55;flex:none;margin-left:auto}
 .wr-banner-close:hover{opacity:1;background:var(--wr-wash)}
 .wr-banner-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wr-heat-legend{display:flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;color:var(--dsw-alias-label-secondary)}
+.wr-heat-legend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dsw-alias-label-secondary)}
 .wr-bars{display:flex;flex-direction:column;gap:8px}
 .wr-bar-row{display:grid;grid-template-columns:104px 1fr 54px;gap:10px;align-items:center;font-size:12px}
 .wr-bar-track{height:6px;border-radius:999px;background:var(--wr-track);overflow:hidden}
@@ -921,8 +924,8 @@ window.__ModuleLoader__.load({
             cells.push(h('div', { key: `e-${columnIndex}-${row}`, className: 'wr-heat-cell', style: { background: 'transparent' } }))
             continue
           }
-          // Days after today are drawn as empty outlines, so "not yet" never
-          // reads as "read nothing".
+          // Days after today are left blank: an outline still reads as a row of
+          // dots, and "not yet" needs no decoration at all.
           const future = cell.iso > todayIso
           cells.push(
             h('div', {
@@ -931,7 +934,7 @@ window.__ModuleLoader__.load({
               'data-on': cell.value > 0 ? 'true' : 'false',
               'data-future': future ? 'true' : 'false',
               title: future
-                ? `${cell.iso} · ${t('dash.heat.future')}`
+                ? null
                 : `${cell.iso} · ${cell.value > 0 ? fmtDuration(cell.value) : t('dash.heat.none')}`,
               style: { background: future ? 'transparent' : level(cell.value) },
             }),
@@ -944,32 +947,42 @@ window.__ModuleLoader__.load({
         null,
         h(
           'div',
-          { className: 'wr-heat-kpi' },
-          h('span', null, t('dash.heat.active', { days: model.active })),
-          h('span', null, t('dash.heat.streak', { days: model.streak })),
-          h('span', null, t('dash.heat.total', { time: fmtDuration(model.total) })),
-          model.bestDate === '' ? null : h('span', null, t('dash.heat.best', { date: model.bestDate, time: fmtDuration(model.best) })),
-        ),
-        h(
-          'div',
           { className: 'wr-heat-wrap' },
           h('div', { className: 'wr-heat-days' }, [0, 1, 2, 3, 4, 5, 6].map((row) => h('span', { key: row }, row % 2 === 0 ? weekdayLabel(row) : ''))),
           h(
             'div',
             { style: { minWidth: 0 } },
             h('div', { className: 'wr-heat-months' }, ticks.map((label, index) => h('span', { key: index }, label))),
-            h('div', { className: 'wr-heat' }, cells),
+            h(
+              'div',
+              {
+                className: 'wr-heat',
+                title: model.bestDate === '' ? null : t('dash.heat.best', { date: model.bestDate, time: fmtDuration(model.best) }),
+              },
+              cells,
+            ),
           ),
         ),
+        // The numbers live under the grid and stay to one line: above it they
+        // pushed the calendar away from the card title.
         h(
           'div',
-          { className: 'wr-heat-legend' },
-          h('span', null, t('dash.heat.none')),
-          h('span', { className: 'wr-heat-cell' }),
-          h('span', { style: { marginLeft: '6px' } }, t('dash.less')),
-          ['var(--wr-heat-1)', 'var(--wr-heat-2)', 'var(--wr-heat-3)', 'var(--wr-heat-4)'].map((color, index) =>
-            h('span', { key: index, className: 'wr-heat-cell', style: { background: color } })),
-          h('span', null, t('dash.more')),
+          { className: 'wr-heat-foot' },
+          h(
+            'div',
+            { className: 'wr-heat-legend' },
+            h('span', null, t('dash.heat.none')),
+            h('span', { className: 'wr-heat-cell' }),
+            h('span', { style: { marginLeft: '6px' } }, t('dash.less')),
+            ['var(--wr-heat-1)', 'var(--wr-heat-2)', 'var(--wr-heat-3)', 'var(--wr-heat-4)'].map((color, index) =>
+              h('span', { key: index, className: 'wr-heat-cell', style: { background: color } })),
+            h('span', null, t('dash.more')),
+          ),
+          h(
+            'div',
+            { className: 'wr-heat-foot-stats' },
+            `${t('dash.heat.active', { days: model.active })} · ${t('dash.heat.total', { time: fmtDuration(model.total) })}`,
+          ),
         ),
       )
     }
@@ -2617,9 +2630,17 @@ window.__ModuleLoader__.load({
         body = h(Overview, { data: data || {} })
       }
 
+      // Each room gets its own paper tint, and the tint follows the tab you are
+      // standing in — a book's thought tab keeps the thought-room warmth.
+      const room = query.trim() !== ''
+        ? 'search'
+        : view === 'book'
+          ? (bookTab === 'thoughts' ? 'thoughts' : 'notes')
+          : view
+
       return h(
         'div',
-        { className: 'wr-root', 'data-dsh-weread-gather': '' },
+        { className: 'wr-root', 'data-view': room, 'data-dsh-weread-gather': '' },
         h('style', { dangerouslySetInnerHTML: { __html: CSS } }),
         head,
         h(
