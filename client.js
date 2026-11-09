@@ -41,7 +41,6 @@ window.__ModuleLoader__.load({
       'action.clearKey': '清除 Key',
       'action.back': '返回',
       'action.retry': '重试',
-      'action.openWeread': '在微信读书打开',
       'action.loadMore': '加载更多',
       'action.copy': '复制',
       'action.copied': '已复制',
@@ -227,7 +226,6 @@ window.__ModuleLoader__.load({
       'action.clearKey': 'Clear key',
       'action.back': 'Back',
       'action.retry': 'Retry',
-      'action.openWeread': 'Open in WeRead',
       'action.loadMore': 'Load more',
       'action.copy': 'Copy',
       'action.copied': 'Copied',
@@ -462,9 +460,11 @@ window.__ModuleLoader__.load({
     function contains(haystack, needle) {
       return haystack !== undefined && haystack !== null && String(haystack).toLowerCase().includes(needle)
     }
-    function wereadBookLink(bookId) {
-      if (typeof bookId !== 'string' || bookId === '' || bookId.startsWith('album:')) return ''
-      return `weread://reading?bId=${bookId}`
+    /** Hard cut for option labels: a long book title must not widen the popup. */
+    function clip(text, max) {
+      const value = text === undefined || text === null ? '' : String(text)
+      if (value.length <= max) return value
+      return `${value.slice(0, Math.max(1, max - 1))}…`
     }
 
     // ----------------------------------------------------------------- styles
@@ -490,7 +490,8 @@ window.__ModuleLoader__.load({
 .wr-btn:disabled{opacity:.55;cursor:default}
 .wr-btn-primary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:#fff}
 .wr-btn-primary:hover{background:var(--dsw-alias-brand-primary);filter:brightness(1.06)}
-.wr-btn-ghost{border-color:transparent;background:transparent}
+.wr-btn-ghost{border-color:var(--wr-line);background:var(--wr-paper-soft)}
+.wr-btn-ghost:hover{background:var(--wr-wash);border-color:var(--wr-sage)}
 .wr-body{flex:1;min-height:0;overflow:auto;padding:26px 30px 64px;scrollbar-width:thin;scrollbar-color:#CFD8C6 transparent}
 .wr-body-inner{max-width:1240px;margin:0 auto}
 .wr-card{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
@@ -600,7 +601,9 @@ window.__ModuleLoader__.load({
 .wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-left:3px solid var(--wr-progress);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
-.wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;transition:color .14s ease,border-color .14s ease}
+.wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;opacity:0;transition:opacity .14s ease,color .14s ease,border-color .14s ease}
+.wr-quote:hover .wr-copy,.wr-thought:hover .wr-copy,.wr-copy:focus,.wr-copy[data-done=true]{opacity:1}
+@media (hover:none){.wr-copy{opacity:1}}
 .wr-copy:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .wr-copy[data-done=true]{color:var(--dsw-alias-state-success-primary);border-color:var(--dsw-alias-state-success-primary)}
 .wr-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;font-size:12px;flex-wrap:wrap}
@@ -621,8 +624,6 @@ window.__ModuleLoader__.load({
 .wr-detail-main{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
 .wr-detail-title{font-size:18px;font-weight:700;line-height:1.35;margin:0}
 .wr-detail-author{font-size:12.5px;color:var(--dsw-alias-label-secondary)}
-.wr-link{appearance:none;border:0;background:transparent;color:var(--dsw-alias-brand-primary);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:none}
-.wr-link:hover{text-decoration:underline}
 .wr-modal-mask{position:fixed;inset:0;z-index:1200;background:rgba(45,60,48,.34);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px}
 .wr-modal{width:min(480px,100%);max-height:80vh;overflow:auto;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:18px;box-shadow:0 30px 70px -30px rgba(45,60,48,.6);padding:22px}
 .wr-modal h3{margin:0 0 4px;font-size:15px}
@@ -1735,9 +1736,17 @@ window.__ModuleLoader__.load({
           }),
           h(
             'select',
-            { className: 'wr-select', value: bookFilter, onChange: (event) => setBookFilter(event.target.value) },
+            {
+              className: 'wr-select',
+              style: { maxWidth: '240px' },
+              title: t('filter.allBooks'),
+              value: bookFilter,
+              onChange: (event) => setBookFilter(event.target.value),
+            },
             h('option', { value: 'all' }, t('filter.allBooks')),
-            bookOptions.map(([id, title]) => h('option', { key: id, value: id }, title)),
+            // Titles are cut short: a 40-character name would otherwise blow the
+            // native popup out to the width of the whole window.
+            bookOptions.map(([id, title]) => h('option', { key: id, value: id, title }, clip(title, 24))),
           ),
           h('div', { className: 'wr-toolbar-fill' }),
           selected.size > 0 ? h('span', { className: 'wr-chip-stat' }, t('export.selected', { count: String(selected.size) })) : null,
@@ -1834,7 +1843,6 @@ window.__ModuleLoader__.load({
       const needle = query.trim().toLowerCase()
       const visibleNotes = needle === '' ? notes : notes.filter((note) => contains(note.text, needle) || contains(note.chapterTitle, needle))
       const visibleThoughts = needle === '' ? thoughts : thoughts.filter((thought) => contains(thought.content, needle) || contains(thought.chapterName, needle))
-      const link = wereadBookLink(book.bookId)
 
       useEffect(() => {
         setPage(0)
@@ -1872,7 +1880,6 @@ window.__ModuleLoader__.load({
               book.rating > 0 ? h('span', { className: 'wr-badge', style: { background: 'var(--dsw-alias-bg-layer-1)', color: 'var(--dsw-alias-state-warn-primary)', border: '1px solid var(--dsw-alias-border-l1)' } }, `${t('book.rating')} ${(book.rating / 10).toFixed(1)}${book.ratingCount > 0 ? ` (${fmtCount(book.ratingCount)})` : ''}`) : null,
               book.publisher ? h('span', { className: 'wr-badge', style: { background: 'var(--dsw-alias-bg-layer-1)', color: 'var(--dsw-alias-label-secondary)', border: '1px solid var(--dsw-alias-border-l1)' } }, book.publisher) : null,
               book.publishYear ? h('span', { className: 'wr-badge', style: { background: 'var(--dsw-alias-bg-layer-1)', color: 'var(--dsw-alias-label-secondary)', border: '1px solid var(--dsw-alias-border-l1)' } }, `${t('book.year')} ${book.publishYear}`) : null,
-              link ? h('a', { className: 'wr-link', href: link }, t('action.openWeread')) : null,
             ),
             book.readingProgress > 0
               ? h(
@@ -2588,7 +2595,7 @@ window.__ModuleLoader__.load({
       },
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
-      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner },
+      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner, clip },
     }
   },
 })

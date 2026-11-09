@@ -409,6 +409,15 @@ else {
 }
 const searchDraw = byLabel('search')
 if (searchDraw && !searchDraw.text.includes('search.typeAll')) guards.push('search: 缺类型筛选')
+// 书籍下拉的选项必须截断，否则原生弹层会被长书名撑满窗口。
+if (typeof smoke.clip !== 'function') guards.push('client module 未暴露 clip')
+else {
+  const short = '顾随诗词讲记'
+  const long = '这一本书的书名特别长特别长特别长特别长特别长特别长特别长特别长'
+  if (smoke.clip(short, 24) !== short) guards.push('clip: 短标题不该被改动')
+  const cut = smoke.clip(long, 24)
+  if (cut.length > 24 || !cut.endsWith('…')) guards.push(`clip: 长标题没截断（${cut.length} 字）`)
+}
 const overviewDraw = byLabel('overview')
 if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
 for (const item of bannerGuards) guards.push(item)
