@@ -363,6 +363,27 @@ renderStandalone('export-panel', smoke.ExportPanel, { selector: { noteIds: [data
   'D:/tmp/exports',
 ])
 
+// 同步提示条：进行中必须常驻且带关闭键；结束后同样可以手动关掉。
+// SyncBanner 的 useState 顺序：dismissed, expired
+const bannerGuards = []
+const byLabel0 = (label) => drawCalls.find((item) => item.label === label && item.ok)
+if (typeof smoke.SyncBanner !== 'function') bannerGuards.push('client module 未暴露 SyncBanner')
+const bannerDone = { phase: 'done', message: '更新 0 本 · 跳过 470 本', running: false }
+const bannerRun = { running: true, phase: 'meta', label: '补全书籍信息', done: 120, total: 400, message: '已补全 120/400 本' }
+renderStandalone('banner-running', smoke.SyncBanner, { sync: bannerRun }, [false, false])
+renderStandalone('banner-done', smoke.SyncBanner, { sync: bannerDone }, [false, false])
+renderStandalone('banner-dismissed', smoke.SyncBanner, { sync: bannerDone }, [true, false])
+for (const label of ['banner-running', 'banner-done']) {
+  const draw = byLabel0(label)
+  if (!draw) { bannerGuards.push(`${label}: 未渲染`); continue }
+  // 关闭键的文案就是 ×，aria-label 不进渲染文本，所以断言这个字符。
+  if (!draw.text.includes('×')) bannerGuards.push(`${label}: 缺关闭按钮`)
+}
+if (byLabel0('banner-running') && !byLabel0('banner-running').text.includes('sync.running')) bannerGuards.push('banner-running: 缺进度文案')
+if (byLabel0('banner-done') && !byLabel0('banner-done').text.includes('sync.done')) bannerGuards.push('banner-done: 缺完成文案')
+const dismissedDraw = byLabel0('banner-dismissed')
+if (dismissedDraw && dismissedDraw.text.length > 0) bannerGuards.push('banner-dismissed: 关闭后仍然有内容')
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -388,6 +409,18 @@ else {
 }
 const searchDraw = byLabel('search')
 if (searchDraw && !searchDraw.text.includes('search.typeAll')) guards.push('search: 缺类型筛选')
+// 书籍下拉的选项必须截断，否则原生弹层会被长书名撑满窗口。
+if (typeof smoke.clip !== 'function') guards.push('client module 未暴露 clip')
+else {
+  const short = '顾随诗词讲记'
+  const long = '这一本书的书名特别长特别长特别长特别长特别长特别长特别长特别长'
+  if (smoke.clip(short, 24) !== short) guards.push('clip: 短标题不该被改动')
+  const cut = smoke.clip(long, 24)
+  if (cut.length > 24 || !cut.endsWith('…')) guards.push(`clip: 长标题没截断（${cut.length} 字）`)
+}
+const overviewDraw = byLabel('overview')
+if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
+for (const item of bannerGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)
