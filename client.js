@@ -2197,6 +2197,27 @@ window.__ModuleLoader__.load({
     }
 
     // ------------------------------------------------------------------- page
+    /**
+     * ⌘K / Ctrl+K belongs to the host: the palette, the composer and every other
+     * panel share that key. Only claim it when this panel is the thing the user is
+     * looking at — the root is laid out, and focus is either inside it or nowhere
+     * (the common "clicked the shelf, then pressed ⌘K" case).
+     */
+    function shouldHandleSearchShortcut(event, root, activeElement) {
+      if (!event || typeof event !== 'object') return false
+      if (!(event.metaKey || event.ctrlKey)) return false
+      if (event.altKey || event.shiftKey) return false
+      if (event.defaultPrevented) return false
+      if (String(event.key || '').toLowerCase() !== 'k') return false
+      if (!root || typeof root.getClientRects !== 'function') return false
+      if (root.getClientRects().length === 0) return false
+      const active = activeElement || null
+      const tag = active && active.tagName ? String(active.tagName).toUpperCase() : ''
+      if (tag === 'BODY' || tag === 'HTML') return true
+      if (active === null) return true
+      return typeof root.contains === 'function' && root.contains(active)
+    }
+
     function StudyPanel() {
       const [state, setState] = useState(null)
       const [data, setData] = useState(null)
@@ -2209,11 +2230,13 @@ window.__ModuleLoader__.load({
       const [booting, setBooting] = useState(true)
       const mounted = useRef(true)
       const searchRef = useRef(null)
+      const rootRef = useRef(null)
 
       useEffect(() => {
         const onKey = (event) => {
-          if (!(event.metaKey || event.ctrlKey)) return
-          if (String(event.key || '').toLowerCase() !== 'k') return
+          const doc = typeof document === 'undefined' ? null : document
+          const active = doc ? doc.activeElement : null
+          if (!shouldHandleSearchShortcut(event, rootRef.current, active)) return
           event.preventDefault()
           const node = searchRef.current
           if (node && typeof node.focus === 'function') {
@@ -2394,7 +2417,7 @@ window.__ModuleLoader__.load({
 
       return h(
         'div',
-        { className: 'wr-root', 'data-dsh-weread-gather': '' },
+        { className: 'wr-root', 'data-dsh-weread-gather': '', ref: rootRef },
         h('style', { dangerouslySetInnerHTML: { __html: CSS } }),
         head,
         h(
@@ -2497,7 +2520,7 @@ window.__ModuleLoader__.load({
       },
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
-      __smoke: { ExportPanel, MarkedText, PickButton },
+      __smoke: { ExportPanel, MarkedText, PickButton, shouldHandleSearchShortcut },
     }
   },
 })

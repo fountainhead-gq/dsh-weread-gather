@@ -363,6 +363,35 @@ renderStandalone('export-panel', smoke.ExportPanel, { selector: { noteIds: [data
   'D:/tmp/exports',
 ])
 
+// ⌘K 归宿主所有：只有书房在前台、焦点在书房里（或没有焦点）时才接管。
+const shortcutGuards = []
+if (typeof smoke.shouldHandleSearchShortcut !== 'function') {
+  shortcutGuards.push('client module 未暴露 shouldHandleSearchShortcut')
+} else {
+  const insideNode = { tagName: 'INPUT' }
+  const outsideNode = { tagName: 'TEXTAREA' }
+  const visibleRoot = { getClientRects: () => [{}], contains: (node) => node === insideNode }
+  const hiddenRoot = { getClientRects: () => [], contains: (node) => node === insideNode }
+  const key = (patch) => Object.assign({ key: 'k', metaKey: false, ctrlKey: true, altKey: false, shiftKey: false, defaultPrevented: false }, patch)
+  const cases = [
+    ['焦点不在任何控件上（body）', key({}), visibleRoot, { tagName: 'BODY' }, true],
+    ['焦点在书房内部', key({}), visibleRoot, insideNode, true],
+    ['焦点没记录（null）', key({}), visibleRoot, null, true],
+    ['焦点在宿主的输入框', key({}), visibleRoot, outsideNode, false],
+    ['面板不可见时', key({}), hiddenRoot, { tagName: 'BODY' }, false],
+    ['宿主已经处理过', key({ defaultPrevented: true }), visibleRoot, { tagName: 'BODY' }, false],
+    ['没有修饰键的 k', key({ ctrlKey: false }), visibleRoot, { tagName: 'BODY' }, false],
+    ['带 Shift 的 ⌘⇧K', key({ shiftKey: true }), visibleRoot, { tagName: 'BODY' }, false],
+    ['面板还没挂载', key({}), null, { tagName: 'BODY' }, false],
+    ['别的按键', key({ key: 'j' }), visibleRoot, { tagName: 'BODY' }, false],
+  ]
+  for (const [label, event, root, active, expected] of cases) {
+    const actual = smoke.shouldHandleSearchShortcut(event, root, active)
+    if (actual !== expected) shortcutGuards.push(`⌘K 判定错误：${label} 期望 ${expected} 实际 ${actual}`)
+  }
+  console.log('[shortcut] %d/%d 判定符合预期', cases.length - shortcutGuards.length, cases.length)
+}
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -388,6 +417,7 @@ else {
 }
 const searchDraw = byLabel('search')
 if (searchDraw && !searchDraw.text.includes('search.typeAll')) guards.push('search: 缺类型筛选')
+for (const item of shortcutGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)

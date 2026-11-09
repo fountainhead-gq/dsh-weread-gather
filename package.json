@@ -1,6 +1,6 @@
 {
   "name": "dsh-weread-gather",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "数字书房 — a private WeRead study in the DSH sidebar: shelf, categories, highlights, thoughts, reading dashboard and heatmap, Markdown export and backup, with search everywhere.",
   "type": "module",
   "license": "MIT",
