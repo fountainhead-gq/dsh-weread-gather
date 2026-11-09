@@ -565,7 +565,7 @@ window.__ModuleLoader__.load({
 .wr-heat-cell{width:13px;height:13px;border-radius:3px;background:var(--wr-heat-0);transition:transform .12s ease}
 .wr-heat-cell[data-on=true]:hover{transform:scale(1.3)}
 .wr-heat-cell[data-future=true]{background:transparent;box-shadow:inset 0 0 0 1px var(--wr-line-2);opacity:.7}
-.wr-banner-close{border:none;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.55;flex:none}
+.wr-banner-close{border:none;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.55;flex:none;margin-left:auto}
 .wr-banner-close:hover{opacity:1;background:var(--wr-wash)}
 .wr-banner-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wr-heat-legend{display:flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;color:var(--dsw-alias-label-secondary)}
