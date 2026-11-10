@@ -1452,7 +1452,38 @@ function fail(res, statusCode, message) {
 }
 
 /** The one route table; each entry is (relative path, method, handler). */
-function makeRoutes(host) {
+function makeRoutes(host, ctx) {
+  const service = (name) => {
+    try {
+      return ctx && typeof ctx.get === 'function' ? ctx.get(name) || null : null
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Every route below hands out the reader's private shelf, writes files, or
+   * spends model tokens, so it asks the host `connection` service first: that
+   * applies the Host/Origin fence (no DNS rebinding, no cross-site calls) and
+   * requires the browser login cookie HTTP alone cannot forge.
+   */
+  const rejected = (req, res) => {
+    const connection = service('connection')
+    if (!connection || typeof connection.requestRejection !== 'function') {
+      fail(res, 401, '未通过 DSH 认证：请在 DSH 页面内打开书房')
+      return true
+    }
+    let rejection
+    try {
+      rejection = connection.requestRejection({ headers: req.headers })
+    } catch {
+      rejection = 401
+    }
+    if (rejection === undefined) return false
+    fail(res, rejection, rejection === 401 ? '未通过 DSH 认证：请在 DSH 页面内打开书房' : '请求来源不被信任')
+    return true
+  }
+
   async function handle(req, res) {
     const url = new URL(req.url || '/', 'http://127.0.0.1')
     if (!url.pathname.startsWith(ROUTE_PREFIX)) return false
@@ -1460,6 +1491,7 @@ function makeRoutes(host) {
     const method = (req.method || 'GET').toUpperCase()
 
     try {
+      if (rejected(req, res)) return true
       if (route === '/state' && method === 'GET') {
         sendJson(res, 200, host.status())
         return true
@@ -1608,7 +1640,7 @@ export function apply(ctx) {
   // the package collides with its own leftovers ("duplicate prefix route").
   ctx.effect(() => {
     const disposers = []
-    for (const route of makeRoutes(host)) {
+    for (const route of makeRoutes(host, ctx)) {
       try {
         disposers.push(ctx.webServer.register(route))
       } catch (error) {

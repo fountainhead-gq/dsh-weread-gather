@@ -51,4 +51,10 @@ const identityOk = patchName === manifest.name && loaderId === manifest.name
 console.log('[identity] package=%s patch=%s client=%s ok=%s', manifest.name, patchName, loaderId, identityOk)
 if (!identityOk) process.exitCode = 1
 
+// 7) 每个 HTTP 路由都必须先过 connection 的信任与认证闸门（插件市场安全评审要求）
+const guardOk = /const rejected = \(req, res\) =>/.test(host) && /connection\.requestRejection\(\{ headers: req\.headers \}\)/.test(host) && /if \(rejected\(req, res\)\) return true/.test(host) && /makeRoutes\(host, ctx\)/.test(host)
+const guardCalls = (host.match(/rejected\(req, res\)/g) || []).length
+console.log('[auth] guard=%s calls=%d ok=%s', guardOk, guardCalls, guardOk && guardCalls >= 1)
+if (!guardOk || guardCalls < 1) process.exitCode = 1
+
 if (!bucketOk || !usesGroup) process.exitCode = 1
