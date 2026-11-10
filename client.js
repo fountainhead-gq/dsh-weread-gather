@@ -610,8 +610,8 @@ window.__ModuleLoader__.load({
 .wr-quote-book{font-weight:600;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .wr-quote-tail{margin-left:auto;flex:none;display:flex;gap:6px;align-items:center}
 .wr-thought{break-inside:avoid;margin:0 0 14px;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-left:2px solid color-mix(in srgb, var(--wr-sage) 70%, transparent);border-radius:14px;padding:15px 17px}
-.wr-cols .wr-thought{margin-bottom:20px;background:color-mix(in srgb, var(--wr-wash) 55%, var(--wr-paper-soft));border-color:transparent;border-left-color:transparent}
-.wr-cols .wr-thought[data-clickable=true]:hover{background:color-mix(in srgb, var(--wr-wash) 78%, var(--wr-paper-soft));border-color:transparent}
+.wr-cols .wr-thought{margin-bottom:20px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-left:2px solid color-mix(in srgb, var(--wr-sage) 70%, transparent);box-shadow:0 1px 2px rgba(38,60,52,.05)}
+.wr-cols .wr-thought[data-clickable=true]:hover{background:var(--wr-paper-soft);border-color:var(--wr-sage);box-shadow:0 4px 12px rgba(38,60,52,.09)}
 .wr-cols .wr-thought[data-picked=true]{border-color:var(--dsw-alias-brand-primary)}
 .wr-thought .wr-quote-text{font-size:13.5px;line-height:1.75;text-wrap:pretty}
 .wr-thought .wr-quote-foot{flex-wrap:wrap;gap:4px 8px;margin-top:12px;padding-top:9px;border-top:1px solid var(--wr-divider)}
