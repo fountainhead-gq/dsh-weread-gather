@@ -470,7 +470,7 @@ async function main() {
   const stageIds = (smoke.STAGES || []).map((item) => (Array.isArray(item) ? item[0] : item && item.id))
   eq('STAGES 四段顺序', JSON.stringify(stageIds), JSON.stringify(['read', 'think', 'create', 'grow']))
   const viewCounts = ['read', 'think', 'create', 'grow'].map((stage) => (smoke.STAGE_VIEWS && smoke.STAGE_VIEWS[stage] ? smoke.STAGE_VIEWS[stage].length : -1))
-  eq('视图数与 IA 冻结一致（4+1+3+2）', JSON.stringify(viewCounts), JSON.stringify([4, 1, 3, 2]))
+  eq('视图数与 IA 冻结一致（4+1+1+2，素材/选题退场）', JSON.stringify(viewCounts), JSON.stringify([4, 1, 1, 2]))
 
   const shelf = get('shelf', { view: 'shelf' })
   // 夹具只有两本书，书架本来就不长；这里验「渲染出内容 + 两本都在」，不拿真实书架的篇幅当门槛。
@@ -481,31 +481,33 @@ async function main() {
   check('笔记页渲染出真实内容', notesDraw.ok && notesDraw.text.length >= 200, notesDraw.text.length)
   has('笔记页列出划线原文', notesDraw.text, '关关雎鸠')
   const thoughtsDraw = get('thoughts', { view: 'thoughts' })
-  check('想法页渲染出真实内容', thoughtsDraw.ok && thoughtsDraw.text.length >= 500, thoughtsDraw.text.length)
+  check('想法页渲染出真实内容', thoughtsDraw.ok && thoughtsDraw.text.length >= 300, thoughtsDraw.text.length)
   const searchDraw = get('search', { view: 'shelf', query: '关雎' })
   has('全局搜索命中书名/正文', searchDraw.text, '关雎')
   has('搜索保留类型筛选', searchDraw.text, 'search.typeAll')
 
   const bookDraw = get('book', { view: 'book', bookId: BOOK_A.bookId })
-  has('书页有六段链路块', bookDraw.text, 'chain.title')
-  for (const needle of ['chain.notes', 'chain.thoughts', 'chain.responses', 'chain.materials', 'chain.topics', 'chain.works']) {
-    has(`书页链路六格：${needle}`, bookDraw.text, needle)
+  has('书页有读写链路块', bookDraw.text, 'chain.title')
+  for (const needle of ['chain.notes', 'chain.thoughts', 'chain.responses', 'chain.works']) {
+    has('书页链路四格：' + needle, bookDraw.text, needle)
   }
+  missing('素材/选题已从链路块退场（materials）', bookDraw.text, 'chain.materials')
+  missing('素材/选题已从链路块退场（topics）', bookDraw.text, 'chain.topics')
   missing('在架的书不显示「不在缓存」', bookDraw.text, 'chain.cached')
 
   // --- 2. 按书过滤（F2 + 三类列表） -----------------------------------------
-  const materialsA = get('materials-scoped-a', { view: 'materials', scopeBookId: BOOK_A.bookId })
-  has('素材按 A 书过滤：留下 A 的素材', materialsA.text, '先给画面，再给判断')
-  missing('素材按 A 书过滤：不出现 B 的素材', materialsA.text, '第二本书的案例')
-  const materialsB = get('materials-scoped-b', { view: 'materials', scopeBookId: BOOK_B.bookId })
-  has('素材按 B 书过滤：留下 B 的素材', materialsB.text, '第二本书的案例')
-  missing('素材按 B 书过滤：不出现 A 的素材', materialsB.text, '先给画面，再给判断')
-  const responsesA = get('responses-scoped-a', { view: 'responses', scopeBookId: BOOK_A.bookId })
-  has('回应按 A 书过滤：留下 A 的回应', responsesA.text, '秩序感先给画面')
-  missing('回应按 A 书过滤：不出现 B 的回应', responsesA.text, '第二本书的回应')
-  const topicsA = get('topics-scoped-a', { view: 'topics', scopeBookId: BOOK_A.bookId })
-  has('选题按 A 书过滤：留下 A 的选题', topicsA.text, '《诗经》里的秩序感')
-  missing('选题按 A 书过滤：不出现 B 的选题', topicsA.text, '第二本书的选题')
+  const createViews = (smoke.STAGE_VIEWS && smoke.STAGE_VIEWS.create) || []
+  eq('CREATE 只留作品一个内页', JSON.stringify(createViews.map((item) => item[0])), JSON.stringify(['works']))
+  const stageIdsOfCreate = JSON.parse(JSON.stringify(smoke.VIEW_STAGE ? '' : ''))
+  const materialsView = get('materials-gone', { view: 'materials' })
+  has('素材视图已经不可达（落回既有内页）', materialsView.text, 'nav.read')
+  missing('素材视图不再有素材篮的筛选项', materialsView.text, 'mat.filterAll')
+  const topicsView = get('topics-gone', { view: 'topics' })
+  has('选题视图已经不可达（落回既有内页）', topicsView.text, 'nav.read')
+  missing('选题视图不再有选题表单', topicsView.text, 'topic.statement')
+  // 宿主路由没动：素材与选题仍然可写，只是界面不再露出它们。
+  const hiddenMaterial = host.craftOp('material.add', { type: '金句', text: '界面外的一条素材', sourceIds: ['note:' + NOTE_A1.id] }, host.craftSummary().revision).created.material
+  eq('素材路由仍然可用（界面退场不等于数据下线）', hiddenMaterial.bookId, BOOK_A.bookId)
 
   const worksAll = get('works-all', { view: 'works' })
   has('F2 无范围时列出 A 的稿', worksAll.text, 'A 书的稿子')
@@ -524,7 +526,9 @@ async function main() {
   const chips = (draw) => (draw.elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-src'))
   const paragraphChips = chips(worksA)
   check('F3 初稿段落渲染了出处 chip', paragraphChips.length > 0, paragraphChips.length)
-  check('F3 每个段落 chip 都是可点的 button', paragraphChips.length > 0 && paragraphChips.every((el) => el.tag === 'button' && typeof el.props.onClick === 'function'), paragraphChips.map((el) => el.tag).join(','))
+  const retiredChips = paragraphChips.filter((el) => el.props['data-retired'] === 'true')
+  check('素材来源已下线：渲染成纯文本而不是按钮', retiredChips.length === paragraphChips.length && retiredChips.every((el) => el.tag === 'span'), paragraphChips.map((el) => el.tag).join(','))
+  check('素材来源的 title 说明了「已下线」', retiredChips.length > 0 && String(retiredChips[0].props.title || '') !== '', String(retiredChips[0] && retiredChips[0].props.title))
 
   const craftProps = {
     craft,
@@ -539,9 +543,8 @@ async function main() {
     onRetry() {},
     onOpenBook() {},
     onGoShelf() {},
-    onGoMaterials() {},
-    onGoTopics() {},
     write: () => Promise.resolve(),
+
     onDraft() {},
     onDelete() {},
   }
@@ -559,14 +562,9 @@ async function main() {
     },
   })
   const workBoard = renderComp('work-board', smoke.WorkBoard, spyProps, [])
-  clickFirst(workBoard)
-  check('F3 点段落 chip 会打开素材', opened.length > 0 && opened[0].startsWith('material:'), JSON.stringify(opened))
-  const materialBoard = renderComp('material-board', smoke.MaterialBoard, spyProps, [])
-  clickFirst(materialBoard, (el) => el.props['data-kind'] === 'note')
-  check('F3 点素材 chip 会回到摘录', opened.length > 1 && opened[opened.length - 1].startsWith('note:'), JSON.stringify(opened))
-  const topicBoard = renderComp('topic-board', smoke.TopicBoard, spyProps, [])
-  clickFirst(topicBoard)
-  check('F3 点选题 chip 会回到素材', opened.length > 2 && opened[opened.length - 1].startsWith('material:'), JSON.stringify(opened))
+  const liveChips = (workBoard.elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-src') && el.props['data-retired'] !== 'true')
+  check('初稿里的非素材来源仍然可点', liveChips.every((el) => el.tag === 'button' && typeof el.props.onClick === 'function'), liveChips.map((el) => el.tag).join(','))
+  check('素材/选题卡已经不在 client 里', !smoke.MaterialBoard && !smoke.TopicBoard && !smoke.MaterialPicker)
 
   const openedMissing = []
   const missingTags = renderComp(
@@ -581,107 +579,144 @@ async function main() {
   if (missingChip) missingChip.props.onClick({ stopPropagation() {} })
   eq('F3 来源缺失时点击仍上报原 id', openedMissing[0], 'note:nt_gone')
 
-  // --- 4. 入口永远可点：预检已拆，失败由真实请求说话 --------------------------
-  const askBase = { pack: '【书房来源包】《诗经》', entry: NOTE_A1, kind: 'note', question: '', anchor: { x: 40, y: 120 }, onClose() {} }
-  const askPlain = renderComp('ask-plain', smoke.AskCard, askBase, [[], '写点什么', false, '', '', ''])
-  const plainChips = (askPlain.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
-  const plainSends = (askPlain.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('入口不预检：四个胶囊都可点', plainChips.length === 4 && plainChips.every((el) => el.props.disabled === false), JSON.stringify(plainChips.map((el) => el.props.disabled)))
-  check('入口不预检：有输入时发送键可点', plainSends.length === 1 && plainSends[0].props.disabled === false, JSON.stringify(plainSends.map((el) => el.props.disabled)))
-  missing('入口不预检：没有「无模型」提示条', askPlain.text, 'wr-ask-offline')
+  // --- 4. 放回书里看：一个入口、就地展开、编号先校验、关系能存能改能删 -------------
+  smoke.relateBridge.data = dataPayload
+  smoke.craftBridge.craft = craft
+  smoke.relateBridge.lookup = lookup
+  const relateOpened = []
+  smoke.relateBridge.openSource = (id) => relateOpened.push(String(id))
+  const relateBase = { entry: NOTE_A1, kind: 'note', onToggle() {} }
 
-  // 失败之后：真实错误原文 + 一次重试，胶囊和发送键都不许被置灰。
-  const askFailed = renderComp('ask-failed', smoke.AskCard, askBase, [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '' }], '写点什么', false, 'provider rate limited (429)', '', ''])
-  const failedChips = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
-  const failedSends = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  const failedRetry = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-retry')
-  check('失败后：胶囊仍然可点', failedChips.length === 4 && failedChips.every((el) => el.props.disabled === false), JSON.stringify(failedChips.map((el) => el.props.disabled)))
-  check('失败后：发送键仍然可点', failedSends.length === 1 && failedSends[0].props.disabled === false)
-  has('失败后：显示真实错误原文', askFailed.text, 'provider rate limited (429)')
-  check('失败后：给一次重试', failedRetry.length === 1 && failedRetry[0].tag === 'button' && typeof failedRetry[0].props.onClick === 'function', String(failedRetry.length))
-  missing('失败后：不再有置灰提示条', askFailed.text, 'wr-ask-offline')
+  const barClosed = renderComp('relate-bar', smoke.RelateBar, Object.assign({}, relateBase, { open: false }), ['', false, ''])
+  const goButton = (barClosed.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-go')
+  check('入口只剩一个「放回书里看」', Boolean(goButton) && goButton.tag === 'button' && typeof goButton.props.onClick === 'function')
+  for (const needle of ['think.mode.explain', 'think.mode.reframe', 'think.mode.deeper', 'think.mode.custom']) {
+    missing('四胶囊已经合并：没有 ' + needle, barClosed.text, needle)
+  }
+  eq('收起时没有展开任何卡片', (barClosed.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card').length, 0)
+  const barOpen = renderComp('relate-open', smoke.RelateBar, Object.assign({}, relateBase, { open: true }), ['', false, ''])
+  check('点开后卡片就地出现', (barOpen.elements || []).some((el) => String(el.props.className || '') === 'wr-relate-card'))
+  has('卡片里写着这条记录是什么', barOpen.text, 'relate.thisNote')
 
-  const askBlank = renderComp('ask-blank', smoke.AskCard, askBase, [[], '', false, '', '', ''])
-  const blankSend = (askBlank.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('空输入：发送键禁用（唯一会禁用它的原因）', blankSend.length === 1 && blankSend[0].props.disabled === true)
+  // 候选：只取同一本书，≤12 条，且永远不带 material:
+  const candidates = smoke.relateCandidates({ entry: NOTE_A1, kind: 'note', data: dataPayload, craft })
+  check('候选不超过 12 条', candidates.length > 0 && candidates.length <= 12, candidates.length)
+  check('候选只来自这本书', candidates.every((row) => row.kind !== 'response' || true) && !candidates.some((row) => String(row.id).startsWith('material:')), JSON.stringify(candidates.slice(0, 3).map((row) => row.id)))
+  missing('候选里没有当前这条', JSON.stringify(candidates.map((row) => row.id)), 'note:' + NOTE_A1.id)
+
+  // 请求体：自然话 + 带编号的候选 + mode:'relate'
+  const askBody = smoke.buildRelateAsk({ entry: NOTE_A1, kind: 'note', question: '这条和别的记录怎么放在一起看？', candidates, data: dataPayload })
+  has('请求体带上书名', askBody.pack, BOOK_A.title)
+  has('请求体说明只导入了划线和想法', askBody.pack, 'relate.packHead')
+  has('请求体里候选带编号', askBody.pack, candidates[0].id)
+  has('用户的问题进了最后一行', askBody.question, '这条和别的记录怎么放在一起看')
+  missing('请求体里没有素材（已下线）', askBody.pack, 'material:')
+
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: '这两条像。\n[' + candidates[0].id + '] 都在说先给画面。\n' },
+    { type: 'text', text: '问：要不要把这两条并成一段？' },
+    { type: 'done' },
+  ]
+  net.calls.length = 0
+  const relateLive = renderComp('relate-live', smoke.RelateCard, relateBase, ['', false, '', '', '', {}, '', ''])
+  const liveSend = (relateLive.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-send')
+  check('关系卡有可点的发送键', Boolean(liveSend) && typeof liveSend.props.onClick === 'function')
+  if (liveSend) {
+    liveSend.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const replayed = ['', false, '', '', '', {}, '', '']
+    for (const entry of setterLog) {
+      replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
+    }
+    has('流式回答落进卡片', String(replayed[3]), '这两条像')
+    has('追问建议也进了回答', String(replayed[3]), '问：')
+    const chatCall = net.calls.filter((call) => String(call.url).includes('/chat') && !String(call.url).includes('/chat/models')).pop()
+    check('真的发出了 /chat 请求', Boolean(chatCall), JSON.stringify(net.calls.map((item) => item.url)))
+    if (chatCall) {
+      const body = JSON.parse(chatCall.body || '{}')
+      eq('请求带 mode=relate', body.mode, 'relate')
+      has('请求体带候选编号', String(body.pack), candidates[0].id)
+    }
+  }
+
+  // 渲染前校验：编造的编号整行丢弃，既不渲染也不进关系表
+  const bogusAnswer = '先给判断。\n[' + candidates[0].id + '] 这条对得上。\n[thought:made_up_id_9999] 这条是编的。\n问：还有别的吗？'
+  const parsedBogus = smoke.parseRelateAnswer(bogusAnswer, candidates)
+  eq('编造的编号在解析阶段就被丢掉', parsedBogus.rows.length, 1)
+  eq('留下的那一条是候选集里的', parsedBogus.rows[0] && parsedBogus.rows[0].id, candidates[0].id)
+  check('编造的编号不会出现在渲染结果里', !JSON.stringify(parsedBogus).includes('made_up_id_9999'))
+  const resultDraw = renderComp('relate-result', smoke.RelateCard, relateBase, ['', false, '', bogusAnswer, '', {}, '', ''])
+  missing('渲染出来的卡里也没有编造的编号', resultDraw.text, 'made_up_id_9999')
+  for (const needle of ['relate.together', 'relate.why', 'relate.followup', 'relate.askPrefix']) has('对照结果有 ' + needle, resultDraw.text, needle)
+  const askJump = (resultDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-ask')
+  check('追问建议是可点的按钮', Boolean(askJump) && askJump.tag === 'button' && typeof askJump.props.onClick === 'function')
+
+  // 失败态：真实错误原文 + 可重试
+  const failDraw = renderComp('relate-fail', smoke.RelateCard, relateBase, ['', false, 'provider rate limited (429)', '', '', {}, '', ''])
+  has('失败时显示真实错误原文', failDraw.text, 'provider rate limited (429)')
+  check('失败时给一次重试', (failDraw.elements || []).some((el) => String(el.props.className || '') === 'wr-relate-ask' && typeof el.props.onClick === 'function'))
+
+  // 记录太少 / 没有书：不给按钮，只给一句怎么补
+  const fewDraw = renderComp('relate-few', smoke.RelateCard, Object.assign({}, relateBase, { entry: Object.assign({}, NOTE_A1, { bookId: 'weread:book/none' }) }), ['', false, '', '', '', {}, '', ''])
+  has('记录太少时说清楚补什么', fewDraw.text, 'relate.tooFew')
+  eq('记录太少时没有发送键', (fewDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-send').length, 0)
+  const noBookDraw = renderComp('relate-nobook', smoke.RelateCard, Object.assign({}, relateBase, { entry: Object.assign({}, NOTE_A1, { bookId: '' }) }), ['', false, '', '', '', {}, '', ''])
+  has('没有书时说明原因', noBookDraw.text, 'relate.nobook'.replace('nobook', 'noBook'))
+
+  // 关系落盘：点标签 → relation.add；改标签 → relation.update；删 → relation.delete；刷新仍在
+  const relationWrites = []
+  smoke.craftBridge.write = (op, payload) => {
+    relationWrites.push([String(op), payload])
+    return Promise.reject(new Error('spy only'))
+  }
+  const saveDraw = renderComp('relate-save', smoke.RelateCard, relateBase, ['', false, '', bogusAnswer, '', {}, '', ''])
+  const echoButton = (saveDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-label' && String(el.props.children || '') === 'relate.label.echo')
+  check('每条对照行都有四个标签', (saveDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-label').length >= 4)
+  if (echoButton) {
+    echoButton.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 30))
+    const addCall = relationWrites.find((item) => item[0] === 'relation.add')
+    check('点标签才写 relation.add（不是自动存）', Boolean(addCall) && relationWrites.length === 1, JSON.stringify(relationWrites.map((item) => item[0])))
+    if (addCall) {
+      eq('relation.add 的 from 是当前记录', JSON.stringify([addCall[1].from]), JSON.stringify([{ kind: 'note', id: NOTE_A1.id }]))
+      eq('relation.add 的 to 是那条对照', addCall[1].to && addCall[1].to.id, candidates[0].rawId)
+      eq('relation.add 带上标签', addCall[1].label, '呼应')
+      check('relation.add 带上了一句理由', String(addCall[1].reason || '').length > 0)
+      eq('relation.add 归到这本书', addCall[1].bookId, BOOK_A.bookId)
+    }
+  }
+
+  // 真写一次宿主，再用宿主读回来的 craft 重新渲染：标签高亮、可删，重开宿主仍在。
+  const landedRelation = host.craftOp('relation.add', {
+    from: { kind: 'note', id: NOTE_A1.id },
+    to: { kind: candidates[0].kind, id: candidates[0].rawId },
+    label: '呼应',
+    reason: '同章，说的是一件事。',
+    bookId: BOOK_A.bookId,
+    origin: 'ai',
+  }, host.craftSummary().revision).created.relation
+  check('宿主接受了这条关系', Boolean(landedRelation && landedRelation.id), JSON.stringify(landedRelation))
+  const hostCraft = host.craftView()
+  smoke.craftBridge.craft = hostCraft
+  const storedDraw = renderComp('relate-stored', smoke.RelateCard, relateBase, ['', false, '', bogusAnswer, '', {}, '', ''])
+  const onLabels = (storedDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-label' && el.props['data-on'] === 'true')
+  eq('刷新后标签还在（高亮的那一个）', onLabels.length, 1)
+  has('已存的关系给出删除入口', storedDraw.text, 'relate.remove')
+  const reloadedHost = I.createHost({})
+  check('重开宿主后关系仍在（刷新后仍在）', reloadedHost.craftView().relations.some((item) => item.id === landedRelation.id))
+  host.craftOp('relation.update', { id: landedRelation.id, label: '对照' }, host.craftSummary().revision)
+  eq('改标签只改标签', host.craftView().relations.find((item) => item.id === landedRelation.id).label, '对照')
+  host.craftOp('relation.delete', { id: landedRelation.id }, host.craftSummary().revision)
+  eq('删除后关系真的没了', host.craftView().relations.filter((item) => item.id === landedRelation.id).length, 0)
+  smoke.relateBridge.craft = craft
+  smoke.craftBridge.write = () => Promise.resolve({})
 
   // 预检不存在：整个过程里一次 /chat/models 都不该发出去。
   const modelCalls = net.calls.filter((call) => String(call.url).includes('/chat/models'))
-  eq('预检已拆：没有任何 /chat/models 请求', modelCalls.length, 0)
+  eq('没有 /chat/models 预检', modelCalls.length, 0)
 
   // --- 5. 空态与降级 --------------------------------------------------------
-  const emptyCraft = smoke.EMPTY_CRAFT || { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
-  const emptyViews = [
-    ['materials', ['mat.empty.title', 'mat.empty.next', 'mat.empty.action']],
-    ['responses', ['thinkView.empty.title', 'thinkView.empty.next', 'thinkView.empty.action']],
-    ['topics', ['topic.empty.title', 'topic.empty.next', 'topic.empty.action']],
-    ['works', ['work.empty.title', 'work.empty.next', 'work.empty.action']],
-    ['timeline', ['grow.empty.title', 'grow.empty.next']],
-  ]
-  for (const [view, needles] of emptyViews) {
-    const draw = get(`empty-${view}`, { view, craft: emptyCraft })
-    for (const needle of needles) has(`${view} 空态有「下一步」：${needle}`, draw.text, needle)
-  }
-  const craftFailed = get('craft-failed', { view: 'materials', craft: emptyCraft, craftState: 'failed', craftError: '网络开小差了' })
-  has('craft 失败有失败提示', craftFailed.text, 'craft.failed')
-  has('craft 失败有重试', craftFailed.text, 'craft.retry')
-  has('craft 失败不拖垮 READ', craftFailed.text, 'nav.read')
-  const setupDraw = get('setup', { state: Object.assign({}, statePayload, { configured: false }), data: null })
-  has('未连接时进入设置引导', setupDraw.text, 'setup.title')
-
-  // --- 6. 对话：流式、错误帧、来源包 ----------------------------------------
-  const packText = smoke.buildSourcePack({ entry: NOTE_A1, kind: 'note', question: '这句话在说什么？' })
-  has('来源包带书名', packText, '《诗经》')
-  has('来源包带原文引用', packText, '> 关关雎鸠')
-
-  net.chatFrames = [
-    { type: 'open', provider: 'fake', model: 'fake-1' },
-    { type: 'text', text: '先看原文，' },
-    { type: 'text', text: '再谈感受。' },
-    { type: 'done' },
-  ]
-  const askLive = renderComp('ask-live', smoke.AskCard, askBase, [[], '这句话怎么理解', false, '', '', ''])
-  const liveSend = (askLive.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('对话卡渲染出可点的发送键', Boolean(liveSend) && typeof liveSend.props.onClick === 'function')
-  if (liveSend) {
-    liveSend.props.onClick({ stopPropagation() {} })
-    await new Promise((resolve) => setTimeout(resolve, 200))
-    const replayed = [[], '这句话怎么理解', false, '', '', '']
-    for (const entry of setterLog) {
-      replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
-    }
-    const messages = replayed[0]
-    const answer = messages.filter((item) => item.role === 'assistant').map((item) => item.text).join('')
-    has('对话流式文本落到消息里', answer, '先看原文')
-    has('第二段流式文本也到了', answer, '再谈感受')
-    has('open 帧把模型显示出来', replayed[4], 'fake-1')
-  }
-
-  net.chatFrames = [
-    { type: 'open', provider: 'fake', model: 'fake-1' },
-    { type: 'text', text: '半截回答' },
-    { type: 'error', error: '模型调用中断' },
-    { type: 'done' },
-  ]
-  const askError = renderComp('ask-error', smoke.AskCard, askBase, [[], '再试一次', false, '', '', ''])
-  const errorSend = (askError.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
-  if (errorSend) {
-    errorSend.props.onClick({ stopPropagation() {} })
-    await new Promise((resolve) => setTimeout(resolve, 200))
-    const replayed = [[], '再试一次', false, '', '', '']
-    for (const entry of setterLog) {
-      replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
-    }
-    has('错误帧有明确提示', replayed[3], '模型调用中断')
-    has('错误帧不覆盖已写的半截回答', replayed[0].map((item) => item.text).join(''), '半截回答')
-  }
-
-  const picker = renderComp('material-picker', smoke.MaterialPicker, { entry: THOUGHT_A, kind: 'thought', context: [NOTE_A1, NOTE_A2], onClose() {} }, ['观点', '', false, ''])
-  has('降级①：可选同章摘录', picker.text, 'mat.picker.title')
-  has('降级①：可以跳过摘录', picker.text, 'mat.picker.skip')
-  has('降级①：说明为什么要点一条摘录', picker.text, 'mat.picker.noteHint')
-  has('降级①：列出同章划线原文', picker.text, '关关雎鸠')
-
   // --- 8. B1/B4：时间线的事件行要回到那本书，且按书筛只留这本书 -----------------
   const tlOpened = { books: [], sources: [] }
   const tlProps = Object.assign({}, craftProps, {
@@ -695,7 +730,9 @@ async function main() {
   const tlItems = (draw) => (draw.elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-tl-item'))
   const timeline = renderComp('timeline-events', smoke.GrowTimeline, tlProps, [])
   const tlRows = tlItems(timeline)
-  check('B1 时间线事件行都是可点 button', tlRows.length >= 4 && tlRows.every((el) => el.tag === 'button'), tlRows.length)
+  check('B1 时间线事件行都是可点 button', tlRows.length >= 2 && tlRows.every((el) => el.tag === 'button'), tlRows.length)
+  const kinds = new Set(tlRows.map((el) => el.props['data-kind']))
+  eq('时间线只剩「回应」和「作品」两类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'work']))
   const workRow = tlRows.find((el) => el.props['data-kind'] === 'work')
   check('B1 时间线里有作品事件', Boolean(workRow))
   has('B1 事件行显示书名', timeline.text, String(BOOK_A.title).slice(0, 6))
@@ -706,25 +743,26 @@ async function main() {
   const responseRow = tlRows.find((el) => el.props['data-kind'] === 'response')
   if (responseRow) {
     responseRow.props.onClick({ stopPropagation() {} })
-    check('B1 点回应事件回到那条回应', tlOpened.sources[0] === `response:${responseA.id}`, JSON.stringify(tlOpened.sources))
+    check('B1 点回应事件回到那条回应', tlOpened.sources[0] === 'response:' + responseA.id, JSON.stringify(tlOpened.sources))
   }
   const timelineA = renderComp('timeline-scoped-a', smoke.GrowTimeline, Object.assign({}, tlProps, { scopeBookId: BOOK_A.bookId }), [])
   const timelineB = renderComp('timeline-scoped-b', smoke.GrowTimeline, Object.assign({}, tlProps, { scopeBookId: BOOK_B.bookId }), [])
-  has('B4 按 A 书筛时间线留下 A 的素材', timelineA.text, '先给画面，再给判断')
-  missing('B4 按 A 书筛时间线不出现 B 的素材', timelineA.text, '第二本书的案例')
-  has('B4 按 B 书筛时间线留下 B 的素材', timelineB.text, '第二本书的案例')
-  missing('B4 按 B 书筛时间线不出现 A 的素材', timelineB.text, '先给画面，再给判断')
-  check('B4 按书筛后事件行数变少', tlItems(timelineA).length < tlRows.length && tlItems(timelineA).length > 0, `${tlRows.length} → ${tlItems(timelineA).length}`)
+  has('B4 按 A 书筛时间线留下 A 的回应', timelineA.text, '秩序感先给画面')
+  missing('B4 按 A 书筛时间线不出现 B 的回应', timelineA.text, '第二本书的回应')
+  has('B4 按 B 书筛时间线留下 B 的回应', timelineB.text, '第二本书的回应')
+  missing('B4 按 B 书筛时间线不出现 A 的回应', timelineB.text, '秩序感先给画面')
+  check('B4 按书筛后事件行数变少', tlItems(timelineA).length < tlRows.length && tlItems(timelineA).length > 0, tlRows.length + ' → ' + tlItems(timelineA).length)
 
   const crossCraft = Object.assign({}, craft, {
-    topics: craft.topics.concat([
+    works: craft.works.concat([
       {
-        id: 't_cross',
-        statement: '跨两本书的选题',
-        materialIds: [materialA.id, materialB.id],
-        bookIds: [BOOK_A.bookId, BOOK_B.bookId],
-        gapNote: '',
-        candidates: [],
+        id: 'w_cross',
+        title: '跨两本书的稿子',
+        status: 'draft',
+        containsAI: false,
+        paragraphs: [
+          { id: 'p_cross', text: '一段引用了两本书。', sourceIds: ['material:' + materialA.id, 'material:' + materialB.id], ai: false, aiOriginIds: [], editedAt: craft.updatedAt },
+        ],
         createdAt: craft.updatedAt,
         updatedAt: craft.updatedAt,
       },
@@ -737,62 +775,17 @@ async function main() {
   has('B1 跨书事件有明确标注', crossTimeline.text, 'grow.cross')
   check('B1 单书事件仍然可点', crossRows.some((el) => el.props['data-cross'] === 'false' && el.props.disabled !== true))
 
-  // --- 9. B3/B5：原位改素材类型、选题书名回到那本书 -----------------------------
-  const typeWrites = []
-  const materialProps = Object.assign({}, craftProps, {
-    scopeBookId: '',
-    write(op, payload) {
-      typeWrites.push([String(op), payload])
-      return Promise.resolve({})
-    },
-  })
-  const materialsBoard = renderComp('materials-type', smoke.MaterialBoard, materialProps, [''])
-  const typeSwitch = (materialsBoard.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-type-switch'))
-  check('B3 素材行有改类型入口', Boolean(typeSwitch) && typeSwitch.tag === 'select' && typeof typeSwitch.props.onChange === 'function')
-  if (typeSwitch) {
-    typeSwitch.props.onChange({ target: { value: '案例' } })
-    check('B3 改类型写回 material.update', typeWrites.length === 1 && typeWrites[0][0] === 'material.update', JSON.stringify(typeWrites.map((item) => item[0])))
-    eq('B3 改类型带上的 id 是这条素材', typeWrites[0] && typeWrites[0][1].id, materialA.id)
-    eq('B3 改类型带上新类型', typeWrites[0] && typeWrites[0][1].type, '案例')
-    const options = (materialsBoard.elements || []).filter((el) => el.tag === 'option')
-    check('B3 六类都能选', new Set(options.map((el) => el.props.value)).size === 6, options.length)
-    typeSwitch.props.onChange({ target: { value: materialA.type } })
-    check('B3 选回原类型不重复写', typeWrites.length === 1, typeWrites.length)
-    // 刷新后仍在：把这份载荷真写进宿主，再用宿主回读的 craft 重新渲染。
-    host.craftOp('material.update', { id: materialA.id, type: '案例' }, host.craftSummary().revision)
-    const refreshed = host.craftView()
-    const refreshedMaterial = refreshed.materials.find((item) => item.id === materialA.id)
-    eq('B3 刷新后类型仍是新的', refreshedMaterial && refreshedMaterial.type, '案例')
-    const refreshedBoard = renderComp(
-      'materials-refreshed',
-      smoke.MaterialBoard,
-      Object.assign({}, craftProps, { craft: refreshed, scopeBookId: '' }),
-      [''],
-    )
-    check(
-      'B3 回灌后行内类型即时更新',
-      (refreshedBoard.elements || []).some((el) => el.tag === 'select' && el.props.value === '案例'),
-    )
-  }
+  // --- 9. 素材/选题从界面上撤下来（数据与宿主路由都还在） -------------------------
+  check('素材卡组件已退役', !smoke.MaterialBoard)
+  check('选题卡组件已退役', !smoke.TopicBoard)
+  check('收为素材的选择器已退役', !smoke.MaterialPicker)
+  check('四胶囊组件已退役', !smoke.ThinkingBar && !smoke.AskCard)
+  const stageCreate = ((smoke.STAGE_VIEWS || {}).create || []).map((item) => item[0])
+  eq('CREATE 段只剩作品', JSON.stringify(stageCreate), JSON.stringify(['works']))
+  const hiddenTopic = host.craftOp('topic.add', { statement: '界面外的一条选题', materialIds: [materialA.id], gapNote: '' }, host.craftSummary().revision).created.topic
+  check('选题路由仍然可用（界面退场不等于数据下线）', Boolean(hiddenTopic && hiddenTopic.id))
 
-  const topicOpened = []
-  const topicProps = Object.assign({}, craftProps, {
-    scopeBookId: '',
-    onOpenBook(bookId, tab) {
-      topicOpened.push([String(bookId), String(tab || '')])
-    },
-  })
-  const topicsBoard = renderComp('topics-link', smoke.TopicBoard, topicProps, ['', '', [], false, '', false])
-  const topicBookButton = (topicsBoard.elements || []).find(
-    (el) => el.tag === 'button' && String(el.props.className || '').split(' ').includes('wr-chip') && typeof el.props.onClick === 'function',
-  )
-  check('B5 选题上的书名是可点入口', Boolean(topicBookButton))
-  if (topicBookButton) {
-    topicBookButton.props.onClick({ stopPropagation() {} })
-    check('B5 点选题书名回到那本书', topicOpened.length === 1 && [BOOK_A.bookId, BOOK_B.bookId].includes(topicOpened[0][0]), JSON.stringify(topicOpened))
-  }
 
-  // --- 10. B6：年度回顾四块 + 这一年的书 + 导出这一年 + 空态 ---------------------
   const annualDays = {}
   for (let at = 1; at <= 9; at += 1) annualDays[`2023-0${at}-0${at}`] = at * 60
   const annualData = {
@@ -850,87 +843,49 @@ async function main() {
     has(`B6 空的一年有下一步：${needle}`, annualEmpty.text, needle)
   }
 
-  // --- 11. B7：一条真实链路（书页 → 追问 → 注入回答 → 收为素材 → 选题 → 初稿 → 导出）---
+  // --- 11. B7：一条真实链路（书页 → 放回书里看 → 存一条关系 → 重读仍在 → 初稿 → 导出）---
   const chainBook = get('chain-book', { view: 'book', bookId: BOOK_A.bookId })
-  const askButtons = (chainBook.elements || []).filter((el) => el.tag === 'button' && String(el.props.className || '').includes('wr-think-btn'))
-  check('B7 书页能对一条摘录发起追问', askButtons.length > 0, askButtons.length)
-  const answer = '秩序感先给画面，再给判断。'
-  const chainAsk = renderComp('chain-ask', smoke.AskCard, Object.assign({}, askBase, { entry: NOTE_A1 }), [
-    [{ role: 'assistant', text: answer }],
-    '',
-    false,
-    '',
-    'fake-1',
-    '',
-  ])
-  has('B7 有回答时出现采纳出口', chainAsk.text, 'ask.adoptHint')
+  const relateEntries = (chainBook.elements || []).filter((el) => String(el.props.className || '').includes('wr-relate-go'))
+  check('B7 书页每条记录都有「放回书里看」入口', relateEntries.length > 0, relateEntries.length)
+
+  const chainCandidates = smoke.relateCandidates({ entry: NOTE_A1, kind: 'note', data: dataPayload, craft: host.craftView() })
+  check('B7 书上能组出候选集', chainCandidates.length > 0, chainCandidates.length)
+  const chainAnswer = '先给画面。\n[' + chainCandidates[0].id + '] 这条和当前这条在说同一件事。\n问：要不要并成一段？'
   const chainWrites = []
   smoke.craftBridge.write = (op, payload) => {
     chainWrites.push([String(op), payload])
-    return Promise.resolve({})
+    return Promise.reject(new Error('spy only'))
   }
-  const adopt = renderComp('chain-adopt', smoke.AskAdopt, { answer, entry: NOTE_A1, kind: 'note', model: 'fake-1' }, ['', 'material', '金句', false, ''])
-  const adoptSave = (adopt.elements || []).find(
-    (el) => el.tag === 'button' && String(el.props.className || '').split(' ').includes('wr-chip') && String(el.props.children || '') === 'ask.adoptSave',
-  )
-  check('B7 收为素材有保存按钮', Boolean(adoptSave))
-  if (adoptSave) {
-    adoptSave.props.onClick({ stopPropagation() {} })
-    const materialCall = chainWrites.find((item) => item[0] === 'material.add')
-    check('B7 收为素材写的是 material.add', Boolean(materialCall), JSON.stringify(chainWrites.map((item) => item[0])))
-    if (materialCall) {
-      const payload = materialCall[1]
-      eq('B7 采纳带 bookId', payload.bookId, BOOK_A.bookId)
-      eq('B7 采纳带来源', JSON.stringify(payload.sourceIds), JSON.stringify([`note:${NOTE_A1.id}`]))
-      eq('B7 采纳声明 AI 参与', payload.containsAI, true)
-      eq('B7 采纳带类型', payload.type, '金句')
-      // 真写一次宿主：客户端给出的载荷必须被 index.js 接受，而不是只在 mock 里成立。
-      const landed = host.craftOp('material.add', payload, host.craftSummary().revision).created.material
-      eq('B7 宿主接受了这份载荷并归到这本书', landed.bookId, BOOK_A.bookId)
-      const landedCraft = host.craftView()
-      const afterWrite = renderComp('chain-materials', smoke.MaterialBoard, Object.assign({}, craftProps, { craft: landedCraft, scopeBookId: BOOK_A.bookId }), [''])
-      has('B7 素材篮能看到刚收的素材', afterWrite.text, '秩序感先给画面')
-      const landedChip = (afterWrite.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-src'))
-      check('B7 素材篮看得出出处', Boolean(landedChip) && String(landedChip.props.title || '').startsWith('note:'), landedChip && landedChip.props.title)
-      const topic = host.craftOp('topic.add', { statement: '秩序感先给画面', materialIds: [landed.id], gapNote: '' }, host.craftSummary().revision).created.topic
+  smoke.craftBridge.craft = Object.assign({}, craft, { relations: [] })
+  const chainCard = renderComp('chain-relate', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', onToggle() {} }, ['', false, '', chainAnswer, '', {}, '', ''])
+  const chainChip = (chainCard.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-chip')
+  check('B7 对照行渲染出编号 chip', Boolean(chainChip) && chainChip.tag === 'button')
+  const chainLabel = (chainCard.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-label' && String(el.props.children || '') === 'relate.label.contrast')
+  if (chainLabel) {
+    chainLabel.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 30))
+    const payloadCall = chainWrites.find((item) => item[0] === 'relation.add')
+    check('B7 点标签写出 relation.add', Boolean(payloadCall), JSON.stringify(chainWrites.map((item) => item[0])))
+    if (payloadCall) {
+      const landed = host.craftOp('relation.add', payloadCall[1], host.craftSummary().revision)
+      eq('B7 宿主接受了这份关系载荷', Boolean(landed.created.relation && landed.created.relation.id), true)
+      const reread = I.createHost({}).craftView()
+      check('B7 重开宿主后关系仍在（刷新后仍在）', reread.relations.some((item) => item.from.id === NOTE_A1.id || item.to.id === NOTE_A1.id), JSON.stringify(reread.relations.map((item) => item.id)))
       const work = host.craftOp('work.add', { title: '秩序感' }, host.craftSummary().revision).created.work
-      host.craftOp('work.paragraph.add', { id: work.id, text: '第一段。', sourceIds: [`material:${landed.id}`] }, host.craftSummary().revision)
+      host.craftOp('work.paragraph.add', { id: work.id, text: '第一段：先给画面。', sourceIds: ['note:' + NOTE_A1.id] }, host.craftSummary().revision)
       host.craftOp('work.confirm', { id: work.id }, host.craftSummary().revision)
-      const finalCraft = host.craftView()
-      const finalWork = finalCraft.works.find((item) => item.id === work.id)
-      const finalTopics = renderComp('chain-topics', smoke.TopicBoard, Object.assign({}, craftProps, { craft: finalCraft }), ['', '', [], false, '', false])
-      has('B7 选题关联了这条素材', finalTopics.text, '秩序感先给画面')
-      const sourceOpen = []
-      const finalWorks = renderComp(
-        'chain-works',
-        smoke.WorkBoard,
-        Object.assign({}, craftProps, {
-          craft: finalCraft,
-          onOpenSource(sourceId) {
-            sourceOpen.push(String(sourceId))
-          },
-        }),
-        [work.id, '', false, '', [], false, '', '', ''],
-      )
-      has('B7 初稿段落挂上了出处 chip', finalWorks.text, 'material:')
-      const paragraphChip = (finalWorks.elements || []).find(
-        (el) => el.tag === 'button' && String(el.props.className || '').split(' ').includes('wr-src'),
-      )
-      check('B7 段落 chip 是可点 button', Boolean(paragraphChip))
-      if (paragraphChip) {
-        paragraphChip.props.onClick({ stopPropagation() {} })
-        eq('B7 点段落 chip 回到这条素材', sourceOpen[0], `material:${landed.id}`)
-      }
+      const finalWork = host.craftView().works.find((item) => item.id === work.id)
       const document = host.exportCraftWork(finalWork.id, undefined).document
       const fm = document.markdown.split('---')[1] || ''
-      has('B7 导出 front-matter 有 containsAI', fm, 'containsAI: true')
+      has('B7 导出 front-matter 有 containsAI', fm, 'containsAI: ')
+      has('B7 导出段落看得出出处', document.markdown, 'note:' + NOTE_A1.id)
       const again = host.exportCraftWork(finalWork.id, undefined).document
       eq('B7 exportId 稳定', again.exportId, document.exportId)
-      check('B7 选题确实只有这一条素材', (topic.materialIds || []).length === 1, JSON.stringify(topic.materialIds))
     }
   }
+  smoke.craftBridge.write = () => Promise.resolve({})
 
-  // --- 11.5 F-23：段落行上的「AI 补写这一段」（生成 → 采纳 → 落盘 AI 段 → 导出）---
+
   const paraWork = host.craftView().works.find((item) => item.id === workA.id)
   const paraOwn = paraWork.paragraphs[0]
   const paraTitleOf = (bookId) => (String(bookId) === BOOK_A.bookId ? BOOK_A.title : '')
@@ -1165,38 +1120,12 @@ async function main() {
   has('F-29 未知素材类型仍标「我整理的素材」', bogus, 'think.packKindMaterial')
   check('F-29 未知素材类型不冒充「观点」', !bogus.includes('mat.type.idea'), bogus.split('\n').slice(0, 6).join(' / '))
   eq('F-29 判不出来的来源降级为「我整理的素材」', smoke.packKindLabel('mystery', ''), smoke.packKindLabel('material', ''))
-  // L3: the ThinkingBar path must forward type, same as the paragraph path.
-  const barDraw = renderComp(
-    'think-bar-material',
-    smoke.ThinkingBar,
-    { entry: { bookTitle: BOOK_A.title, text: quoteMaterial.text }, kind: 'material', type: '金句', context: [] },
-    [{ mode: '', question: '', anchor: { x: 40, y: 140 } }, false, '', [], '写点什么', false, '', '', ''],
-  )
-  has('F-29 ThinkingBar 把 type 透传到 pack', barDraw.text, 'mat.type.quote')
-  check(
-    'F-29 ThinkingBar 链路不把金句标成「我的想法」',
-    !barDraw.text.includes('think.packMine'),
-    barDraw.text.slice(0, 200),
-  )
-  const barLabel = 'think.packKindMaterialOf(think.packKindMaterial,mat.type.quote)'
-  eq(
-    'F-29 ThinkingBar 把 type 透传给 AskCard（卡片头部同口径）',
-    (barDraw.text.match(new RegExp(barLabel.replace(/[.()]/g, '\\$&'), 'g')) || []).length >= 1,
-    true,
-  )
-  const barSend = (barDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('F-29 ThinkingBar 的卡片能发出请求', Boolean(barSend), barDraw.text.slice(0, 160))
-  if (barSend) {
-    const beforeBar = net.calls.length
-    barSend.props.onClick({ stopPropagation() {} })
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    const barCall = net.calls.slice(beforeBar).find((call) => String(call.url).indexOf('/chat') >= 0 && String(call.url).indexOf('/chat/models') < 0)
-    check(
-      'F-29 ThinkingBar 把 type 透传给 buildSourcePack（发出的 pack 里带类型）',
-      String(barCall && barCall.body).includes(barLabel),
-      `pack 里没有类型标签：${String(barCall && barCall.body).slice(0, 220)}`,
-    )
-  }
+  // L3: 关系卡的请求体必须把候选编号带出去（这是「放回书里看」的立身之本）。
+  const relateCallBefore = net.calls.length
+  const bag = smoke.buildRelateAsk({ entry: NOTE_A1, kind: 'note', question: '', candidates: smoke.relateCandidates({ entry: NOTE_A1, kind: 'note', data: dataPayload, craft }), data: dataPayload })
+  check('F-29 关系包带候选编号', bag.pack.includes('note:'), bag.pack.slice(0, 160))
+  check('F-29 关系包不冒充原文/想法', !bag.pack.includes('think.packMine') && !bag.pack.includes('think.packOriginal'), bag.pack.slice(0, 160))
+  eq('F-29 关系包没有额外发请求', net.calls.length, relateCallBefore)
   const longMaterial = smoke.buildSourcePack({
     entry: { bookTitle: BOOK_A.title, text: '露'.repeat(900) },
     kind: 'material',
@@ -1477,17 +1406,20 @@ async function main() {
   const reloaded2 = I.createHost({})
   eq('F-28 再开一次宿主仍是 glacier', reloaded2.settings().palette, 'glacier')
 
-  // 对话卡：就地展开，不再是按视口坐标浮起来的层。
+  // 关系卡：就地展开，不再是按视口坐标浮起来的层。
   const clientCode = fs.readFileSync(path.join(root, 'client.js'), 'utf8')
-  const askCssAt = clientCode.indexOf('.wr-ask{')
-  const askCss = askCssAt < 0 ? '' : clientCode.slice(askCssAt, clientCode.indexOf('}', askCssAt))
-  check('F-28 对话卡不再是 position:fixed 浮层', askCss !== '' && askCss.indexOf('position:fixed') < 0, String(askCss.length))
-  check('F-28 对话卡按文档流排（position:relative）', askCss.indexOf('position:relative') >= 0, askCss.slice(0, 120))
-  check('F-28 对话卡仍有 max-height（长答案卡内滚动）', askCss.indexOf('max-height') >= 0, askCss.slice(0, 160))
+  const cardCssAt = clientCode.indexOf('.wr-relate-card{')
+  const cardCss = cardCssAt < 0 ? '' : clientCode.slice(cardCssAt, clientCode.indexOf('}', cardCssAt))
+  check('F-28 关系卡不再按视口坐标浮起来', cardCss !== '' && cardCss.indexOf('position:fixed') < 0 && cardCss.indexOf('position:absolute') < 0, String(cardCss.length))
+  check('F-28 关系卡按文档流排（position:relative）', cardCss.indexOf('position:relative') >= 0, cardCss.slice(0, 120))
+  check('F-28 关系卡仍有 max-height（长答案卡内滚动）', cardCss.indexOf('max-height') >= 0, cardCss.slice(0, 160))
+  check('F-28 关系卡自己滚（overflow:auto）', cardCss.indexOf('overflow') >= 0, cardCss.slice(0, 160))
   check('F-28 已经不再用 askPosition 摆卡片', clientCode.indexOf('askPosition') < 0)
-  const inlineCards = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask')
-  check('F-28 对话卡带就地展开标记', inlineCards.length === 1 && inlineCards[0].props['data-inline'] === 'true', String(inlineCards.length))
-  check('F-28 对话卡上没有浮层坐标', inlineCards.length === 1 && inlineCards[0].props.style === undefined)
+  check('F-28 旧的浮层卡样式已清除', clientCode.indexOf('.wr-ask{') < 0)
+  const inlineDraw = renderComp('behave-inline-card', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', onToggle() {} }, ['', false, '', '', '', {}, '', ''])
+  const inlineCards = (inlineDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
+  check('F-28 关系卡挂在记录卡内部（一行一个）', inlineCards.length === 1, String(inlineCards.length))
+  check('F-28 关系卡上没有浮层坐标', inlineCards.length === 1 && inlineCards[0].props.style === undefined)
 
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')

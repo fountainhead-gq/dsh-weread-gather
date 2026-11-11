@@ -109,3 +109,24 @@ const palettesAligned = clientPalettes.length > 0 && clientPalettes.join(',') ==
 console.log('[palette] client=%s host=%s aligned=%s tokenGaps=%s retired=%s',
   clientPalettes.join(',') || 'none', hostPalettes.join(',') || 'none', palettesAligned, tokenGaps.slice(0, 8).join(',') || 'none', retired.join(',') || 'none')
 if (!palettesAligned || tokenGaps.length > 0 || retired.length > 0) process.exitCode = 1
+
+// 9. 1.2.2 的界面退场：四胶囊与素材篮/选题板不许回来，CREATE 只留作品。
+// 这些名字的复活不是「多一个入口」，是把用户已经拍板要收掉的东西又摆回来。
+const gone = []
+for (const name of ['AskCard', 'AskAdopt', 'MaterialPicker', 'ThinkingBar', 'MaterialBoard', 'TopicBoard']) {
+  if (new RegExp(`\\b${name}\\b`).test(client)) gone.push(`component:${name}`)
+}
+const createViews = (() => {
+  const at = client.indexOf('const STAGE_VIEWS = {')
+  if (at < 0) return null
+  const tail = client.slice(at)
+  const create = tail.indexOf('create: [')
+  if (create < 0) return null
+  const close = tail.indexOf(']', create)
+  return close < 0 ? null : tail.slice(create, close + 1)
+})()
+if (createViews === null) gone.push('stageViews:missing')
+else if (!/'works'/.test(createViews) || /'materials'/.test(createViews) || /'topics'/.test(createViews)) gone.push(`stageViews:${createViews.replace(/\s+/g, '')}`)
+if (client.indexOf("'nav.materials'") >= 0) gone.push('nav:materials')
+console.log('[retired] %s', gone.length === 0 ? 'none' : gone.join(','))
+if (gone.length > 0) process.exitCode = 1

@@ -314,7 +314,7 @@ const anyBook = dataset.books.find((book) => (book.noteCount || 0) + (book.revie
 
 // 写作侧（craft.json）的样例：形状与 GET /craft 完全一致，来源 id 全部取自
 // 真实 dataset，所以「来源」chip 能解析出原文而不是 id。
-const EMPTY_CRAFT_FIXTURE = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
+const EMPTY_CRAFT_FIXTURE = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], relations: [], threads: [], bookIndex: [] }
 function smokeCraft() {
   const stamp = Math.floor(Date.now() / 1000) - 3600
   const book = anyBook || { bookId: 'weread:book/1', title: '书名', author: '作者' }
@@ -386,6 +386,8 @@ function smokeCraft() {
       updatedAt: stamp,
       confirmedAt: 0,
     }],
+    // 1.2.2：素材/选题还在文件里（旧作品的溯源链要用），但界面不再显示它们。
+    // 夹具故意留着这两类数据，这样「时间线/链路/计数里没有它们」是可验证的。
     bookIndex: [{
       bookId: book.bookId,
       bookTitle: book.title,
@@ -393,24 +395,45 @@ function smokeCraft() {
       counts: { responses: 1, materials: 1, topics: 1, works: 1 },
       cached: true,
     }],
+    relations: [],
+    threads: [],
   }
 }
-// 一本书的素材 + 另一本书的素材被同一个选题引用：时间线上这条必须降级成「跨书」。
+// 一本书的素材 + 另一本书的素材被同一篇初稿引用：时间线上这条必须降级成「跨书」。
 function crossCraft() {
   const base = smokeCraft()
   const other = 'weread:book/888888888'
   const material = base.materials[0]
   base.materials = base.materials.concat([Object.assign({}, material, { id: 'm_smoke2', bookId: other, bookTitle: '另一本书' })])
-  base.topics = base.topics.concat([{
-    id: 't_smoke2',
-    statement: '跨两本书的选题',
-    materialIds: [material.id, 'm_smoke2'],
-    bookIds: [base.bookIndex[0].bookId, other],
-    gapNote: '',
-    candidates: [],
+  const work = base.works[0]
+  base.works = [Object.assign({}, work, {
+    id: 'w_smoke2',
+    title: '跨两本书的初稿',
+    paragraphs: work.paragraphs.concat([{
+      id: 'p_smoke2',
+      text: '第二段：引另一本书。',
+      sourceIds: ['material:m_smoke2'],
+      ai: false,
+      aiOriginIds: [],
+      editedAt: 0,
+    }]),
+  })].concat(base.works)
+  return base
+}
+// 已存下来的关系：对照行上的标签要能读回来（改标签、删除都靠它）。
+function relatedCraft() {
+  const base = smokeCraft()
+  const noteId = String(base.responses[0].sourceIds[0] || '').split(':')[1] || ''
+  base.relations = [{
+    id: 'rel_smoke1',
+    bookId: base.bookIndex[0].bookId,
+    from: { kind: 'note', id: noteId },
+    to: { kind: 'thought', id: 'th_smoke1' },
+    label: '呼应',
+    reason: '都在说诗先给人画面。',
+    origin: 'ai',
     createdAt: base.updatedAt,
-    updatedAt: base.updatedAt,
-  }])
+  }]
   return base
 }
 // StudyPanel 的 useState 调用顺序（改动 client.js 里那段 state 声明时必须同步这里）：
@@ -445,20 +468,17 @@ renderPanel('setup(no key)', seeds({ state: Object.assign({}, statePayload, { co
 renderPanel('empty(no data)', seeds({ state: Object.assign({}, statePayload, { hasData: false }), data: null }))
 renderPanel('error-banner', seeds({ error: '网络开小差了' }))
 renderPanel('sync-running', seeds({ state: Object.assign({}, statePayload, { sync: { running: true, phase: 'meta', label: '补全书籍信息', done: 120, total: 400, message: '已补全 120/400 本' } }) }))
-// 1.2.1 四段旅程的内页：THINK 1 + CREATE 3 + GROW 2，外加空库、取数失败、按书过滤、书掉出缓存。
+// 1.2.2：CREATE 只剩作品；素材篮与选题板退场，所以它们不再有面板视图。
 renderPanel('responses', seedBase('responses'))
-renderPanel('materials', seedBase('materials'))
-renderPanel('topics', seedBase('topics'))
 renderPanel('works', seedBase('works'))
 renderPanel('timeline', seedBase('timeline'))
 renderPanel('annual', seedBase('annual'))
-renderPanel('craft-empty', seeds({ view: 'materials', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE }))
 renderPanel('craft-empty-think', seeds({ view: 'responses', craft: EMPTY_CRAFT_FIXTURE }))
-renderPanel('craft-empty-topics', seeds({ view: 'topics', craft: EMPTY_CRAFT_FIXTURE }))
 renderPanel('craft-empty-works', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE }))
 renderPanel('craft-empty-grow', seeds({ view: 'timeline', craft: EMPTY_CRAFT_FIXTURE }))
-renderPanel('craft-failed', seeds({ view: 'materials', craft: EMPTY_CRAFT_FIXTURE, craftState: 'failed', craftError: '网络开小差了' }))
-renderPanel('craft-scoped', seeds({ view: 'materials', scopeBookId: anyBook.bookId }))
+renderPanel('craft-failed', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE, craftState: 'failed', craftError: '网络开小差了' }))
+renderPanel('craft-scoped', seeds({ view: 'works', scopeBookId: anyBook.bookId }))
 // F2：换一本书进 CREATE，别的书的稿子不能跟过来。用一本夹具里不存在的书做
 // 反证——按 scope 过滤后必须落到空态，而不是把 A 书的稿子留在屏幕上。
 renderPanel('works-scoped-other', seeds({ view: 'works', scopeBookId: 'weread:book/999999999' }))
@@ -772,109 +792,258 @@ else {
   }
 }
 
-// 内联对话卡：原地弹出、带上下文、有 ×、有输入框、等待态有提示。
-// AskCard 的 useState 顺序：messages, draft, busy, error, model, packOpen
-const askGuards = []
-if (typeof smoke.AskCard !== 'function') askGuards.push('client module 未暴露 AskCard')
-const packText = smoke.buildSourcePack
-  ? smoke.buildSourcePack({ entry: thoughtBase, kind: 'thought', context: contextNotes })
-  : '【书房来源包】'
-renderStandalone('ask-empty', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[], '', false, '', '', ''])
-renderStandalone('ask-answer', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '它在说诗要打动人' }], '', false, '', 'deepseek-flash', 'explain'])
-renderStandalone('ask-busy', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[{ role: 'user', text: '再想想' }, { role: 'assistant', text: '' }], '', true, '', '', ''])
-const askEmpty = byLabel0('ask-empty')
-if (!askEmpty) askGuards.push('ask-empty: 未渲染')
-else {
-  for (const needle of ['×', 'think.empty', 'think.send', 'think.aiNote', 'think.mode.explain', 'think.mode.custom'])
-    if (!askEmpty.text.includes(needle)) askGuards.push('ask-empty: 缺 ' + needle)
-  if (!askEmpty.text.includes('一本名字很长很长的书')) askGuards.push('ask-empty: 缺书名上下文')
-  if (!askEmpty.text.includes('第一章')) askGuards.push('ask-empty: 缺章节上下文')
-}
-const askAnswer = byLabel0('ask-answer')
-if (!askAnswer) askGuards.push('ask-answer: 未渲染')
-else {
-  for (const needle of ['这句话怎么理解', '它在说诗要打动人', 'deepseek-flash', '×'])
-    if (!askAnswer.text.includes(needle)) askGuards.push('ask-answer: 缺 ' + needle)
-}
-if (askAnswer && !askAnswer.text.includes('ask.adoptHint')) askGuards.push('ask-answer: 缺采纳出口（F-20）')
-const askBusy = byLabel0('ask-busy')
-if (askBusy && !askBusy.text.includes('think.thinking')) askGuards.push('ask-busy: 等待态缺提示')
+// 「放回书里看」：四胶囊只剩一个入口，卡片就地展开，编号先在候选集里校验。
+// RelateCard 的 useState 顺序：draft, busy, error, answer, kept, saved, rowBusy, rowError
+const relateGuards = []
+if (typeof smoke.RelateCard !== 'function') relateGuards.push('client module 未暴露 RelateCard')
+if (typeof smoke.RelateBar !== 'function') relateGuards.push('client module 未暴露 RelateBar')
+if (typeof smoke.relateCandidates !== 'function') relateGuards.push('client module 未暴露 relateCandidates')
+if (typeof smoke.buildRelateAsk !== 'function') relateGuards.push('client module 未暴露 buildRelateAsk')
+if (typeof smoke.parseRelateAnswer !== 'function') relateGuards.push('client module 未暴露 parseRelateAnswer')
+if (typeof smoke.relateBridge !== 'object' || smoke.relateBridge === null) relateGuards.push('client module 未暴露 relateBridge')
 
-// 预检已经拆掉：入口永远可点，失败由真实请求给出错误 + 一次重试。
-// 这里渲染「已经失败过一轮」的卡片：错误原文与重试按钮都在，四个胶囊与发送键都不置灰。
+// 真实 dataset 里这本书的划线与想法就是候选集；桥接一下，卡片的 useMemo 才看得见它们。
+const relateBook = anyBook
+const relateNote = (dataset.notes || []).find((item) => item.bookId === relateBook.bookId) || null
+const relateThought = (dataset.thoughts || []).find((item) => item.bookId === relateBook.bookId) || null
+const relateEntry = {
+  id: relateNote ? relateNote.id : 'note_fixture',
+  bookId: relateBook.bookId,
+  bookTitle: relateBook.title,
+  author: relateBook.author || '',
+  chapterTitle: relateNote ? relateNote.chapterTitle || '' : '第一章',
+  text: relateNote ? relateNote.text : '夹具里的一条划线',
+  createTime: relateNote ? relateNote.createTime : 1794193279,
+}
+const relateLookup = {
+  note: new Map([(relateNote ? relateNote.id : relateEntry.id)].concat((dataset.notes || []).filter((n) => n.bookId === relateBook.bookId).map((n) => n.id)).map((id) => [String(id), (dataset.notes || []).find((n) => String(n.id) === String(id)) || relateEntry])),
+  thought: new Map((dataset.thoughts || []).filter((t) => t.bookId === relateBook.bookId).map((t) => [String(t.id), t])),
+  response: new Map(),
+  material: new Map(),
+}
+const relateOpened = []
+smoke.relateBridge.data = payload
+smoke.relateBridge.craft = smokeCraft()
+smoke.relateBridge.lookup = relateLookup
+smoke.relateBridge.openSource = (id) => { relateOpened.push(id) }
+const relateCandidates = smoke.relateCandidates({ entry: relateEntry, kind: 'note', data: payload, craft: smokeCraft() }) || []
+if (relateCandidates.length === 0) relateGuards.push('relate: 候选集是空的，后续断言无从谈起')
+if (process.env.RELATE_DEBUG) console.error('[debug] candidates', relateCandidates.length, relateCandidates.map((row) => row.id).slice(0, 4), 'book', relateBook.bookId, 'notes', (dataset.notes || []).filter((n) => String(n.bookId) === String(relateBook.bookId)).length)
+const firstRow = relateCandidates[0] || { id: 'note:missing', rawId: 'missing' }
+if (process.env.RELATE_DEBUG) console.error('[debug] first/second', relateCandidates[0] && relateCandidates[0].id, relateCandidates[1] && relateCandidates[1].id)
+const secondRow = relateCandidates[1] || firstRow
+
+// 「问：」建议 + 两条合法对照行；另有一条模型编造的编号，必须整行丢弃。
+const relateAnswer = [
+  '这两条都在说同一件事：先给画面，再给判断。',
+  `[${firstRow.id}] 它把「读」和「懂」的顺序说清楚了。`,
+  `[${secondRow.id}] 这条更偏方法，可以和上面那条并读。`,
+  '[thought:made_up_id_9999] 这条是模型编的，不该出现。',
+  '问：如果要写出来，这两条哪个该放前面？',
+].join('\n')
+
+const savedCraftBridge = smoke.craftBridge.craft
+smoke.craftBridge.craft = smokeCraft()
+renderStandalone('relate-empty', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', '', '', {}, '', ''])
+renderStandalone('relate-sending', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['想先问一句', true, '', '', '', {}, '', ''])
+if (process.env.RELATE_DEBUG) console.error('[debug] parse', JSON.stringify((smoke.parseRelateAnswer(relateAnswer, relateCandidates) || {}).rows ? (smoke.parseRelateAnswer(relateAnswer, relateCandidates).rows.length) : -1), JSON.stringify(relateAnswer.slice(0, 120)))
+renderStandalone('relate-result', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
+renderStandalone('relate-dropped-id', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
+renderStandalone('relate-error', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['想问的问题', false, 'provider rate limited (429)', '', '', {}, '', ''])
+renderStandalone('relate-saved', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', { [firstRow.id]: { id: 'rel_smoke1', label: '呼应' } }, '', ''])
 renderStandalone(
-  'ask-error',
-  smoke.AskCard,
-  { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} },
-  [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '' }], '写点什么', false, 'provider rate limited (429)', '', ''],
+  'relate-toofew',
+  smoke.RelateCard,
+  { entry: Object.assign({}, relateEntry, { bookId: 'weread:book/123123123', bookTitle: '只有一条记录的书' }), kind: 'note', onToggle() {} },
+  ['', false, '', '', '', {}, '', ''],
 )
+renderStandalone(
+  'relate-nobook',
+  smoke.RelateCard,
+  { entry: Object.assign({}, relateEntry, { bookId: '' }), kind: 'note', onToggle() {} },
+  ['', false, '', '', '', {}, '', ''],
+)
+smoke.craftBridge.craft = savedCraftBridge
+// 就地展开：卡片在记录卡里，记录卡自己加宽；四胶囊与浮层都不该回来。
+renderStandalone('relate-inline-note', smoke.RelateBar, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, ''])
+renderStandalone('relate-inline-thought', smoke.RelateBar, { entry: relateThought || relateEntry, kind: 'thought', open: true, onToggle() {} }, ['', false, ''])
+
 {
-  const errorDraw = byLabel0('ask-error')
-  if (!errorDraw) askGuards.push('ask-error: 未渲染')
+  const emptyDraw = byLabel0('relate-empty')
+  if (!emptyDraw) relateGuards.push('relate-empty: 未渲染')
   else {
-    const elements = errorDraw.elements || []
-    const chips = elements.filter((el) => String(el.props.className || '').indexOf('wr-ask-chip') >= 0)
-    const sends = elements.filter((el) => String(el.props.className || '') === 'wr-ask-send')
-    const retries = elements.filter((el) => String(el.props.className || '') === 'wr-ask-retry')
-    if (chips.length < 4) askGuards.push(`ask-error: 只有 ${chips.length} 个胶囊`)
-    else if (chips.some((el) => el.props.disabled === true)) askGuards.push('ask-error: 出错后胶囊被置灰（入口不该不可点）')
-    if (sends.length === 0) askGuards.push('ask-error: 找不到发送键')
-    else if (!sends.every((el) => el.props.disabled === false)) askGuards.push('ask-error: 出错后发送键被置灰')
-    if (!errorDraw.text.includes('provider rate limited (429)')) askGuards.push('ask-error: 没有显示真实错误原文')
-    if (retries.length !== 1) askGuards.push(`ask-error: 重试按钮数量是 ${retries.length}`)
-    else if (retries[0].tag !== 'button' || typeof retries[0].props.onClick !== 'function')
-      askGuards.push('ask-error: 重试按钮不可点')
-    if (errorDraw.text.includes('wr-ask-offline')) askGuards.push('ask-error: 不该再有置灰提示条')
-    // 就地展开：卡片只是记录卡里的普通块，不再按视口坐标浮起来。
-    const card = elements.find((el) => String(el.props.className || '') === 'wr-ask')
-    if (!card) askGuards.push('ask-error: 找不到对话卡根节点')
-    else {
-      if (card.props['data-inline'] !== 'true') askGuards.push('ask-error: 对话卡没有就地展开标记（data-inline）')
-      if (card.props.style !== undefined) askGuards.push('ask-error: 对话卡还带着浮层定位的内联坐标')
-    }
+    for (const needle of ['relate.send', 'relate.thisNote'])
+      if (!emptyDraw.text.includes(needle)) relateGuards.push('relate-empty: 缺 ' + needle)
+    const inputs = (emptyDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-input')
+    if (inputs.length !== 1) relateGuards.push(`relate-empty: 输入框数量是 ${inputs.length}`)
+    else if (inputs[0].props.placeholder !== 'relate.placeholder') relateGuards.push('relate-empty: 输入框没有占位说明')
+    // 四胶囊必须真的没了：连文案都不该出现。
+    for (const needle of ['think.mode.explain', 'think.mode.reframe', 'think.mode.deeper', 'think.mode.custom'])
+      if (emptyDraw.text.includes(needle)) relateGuards.push('relate-empty: 旧的四胶囊又出现了 —— ' + needle)
+    const sends = (emptyDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-send')
+    if (sends.length !== 1) relateGuards.push(`relate-empty: 发送键数量是 ${sends.length}`)
+    else if (sends[0].tag !== 'button' || typeof sends[0].props.onClick !== 'function') relateGuards.push('relate-empty: 发送键不可点')
   }
 }
-// 布局只能从样式表看：.wr-ask 必须是文档流里的块，且自带 max-height + 内部滚动。
-const askCssBlock = (() => {
-  const at = code.indexOf('.wr-ask{')
+{
+  const sending = byLabel0('relate-sending')
+  if (!sending) relateGuards.push('relate-sending: 未渲染')
+  else {
+    if (!sending.text.includes('relate.thinking')) relateGuards.push('relate-sending: 等待态缺「正在对照…」')
+    const sends = (sending.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-send')
+    if (sends.length > 0 && !sends.every((el) => el.props.disabled === true)) relateGuards.push('relate-sending: 等待中发送键还能点')
+  }
+}
+{
+  const result = byLabel0('relate-result')
+  if (!result) relateGuards.push('relate-result: 未渲染')
+  else {
+    for (const needle of ['relate.together', 'relate.why', 'relate.followup', 'relate.askPrefix', 'relate.keepThought', 'relate.collapse'])
+      if (!result.text.includes(needle)) relateGuards.push('relate-result: 缺 ' + needle)
+    const chips = (result.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
+    const clickable = chips.filter((el) => el.tag === 'button' && typeof el.props.onClick === 'function')
+    if (chips.length < 2) relateGuards.push(`relate-result: 对照行只有 ${chips.length} 个编号 chip`)
+    else if (clickable.length !== chips.length) relateGuards.push(`relate-result: ${chips.length} 个 chip 只有 ${clickable.length} 个可点`)
+    const labels = (result.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-label')
+    for (const needle of ['relate.label.echo', 'relate.label.contrast', 'relate.label.mine', 'relate.label.check'])
+      if (!result.text.includes(needle)) relateGuards.push('relate-result: 缺标签 ' + needle)
+    if (labels.length === 0) relateGuards.push('relate-result: 没有标签按钮')
+    else if (!labels.every((el) => el.tag === 'button' && typeof el.props.onClick === 'function')) relateGuards.push('relate-result: 标签按钮不可点')
+    const asks = (result.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-ask')
+    if (asks.length === 0) relateGuards.push('relate-result: 「问：」建议没有渲染成按钮')
+  }
+}
+{
+  // 渲染前就丢：编造的编号不许出现在文本里，也不许变成 chip 或被存成关系。
+  const dropped = byLabel0('relate-dropped-id')
+  if (!dropped) relateGuards.push('relate-dropped-id: 未渲染')
+  else {
+    if (dropped.text.includes('made_up_id_9999')) relateGuards.push('relate-dropped-id: 模型编造的编号被渲染出来了')
+    const chips = (dropped.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
+    if (chips.some((el) => String(el.props.title || '').includes('made_up_id_9999'))) relateGuards.push('relate-dropped-id: 编造的编号成了 chip')
+    if (chips.length !== 2) relateGuards.push(`relate-dropped-id: 该留 2 条对照行，实际 ${chips.length}`)
+  }
+}
+{
+  const failure = byLabel0('relate-error')
+  if (!failure) relateGuards.push('relate-error: 未渲染')
+  else {
+    if (!failure.text.includes('provider rate limited (429)')) relateGuards.push('relate-error: 没显示真实错误原文')
+    const retries = (failure.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-ask')
+    if (retries.length === 0) relateGuards.push('relate-error: 失败后没有重试入口')
+    else if (typeof retries[0].props.onClick !== 'function') relateGuards.push('relate-error: 重试入口不可点')
+  }
+}
+{
+  const saved = byLabel0('relate-saved')
+  if (!saved) relateGuards.push('relate-saved: 未渲染')
+  else {
+    const onLabels = (saved.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-label' && el.props['data-on'] === 'true')
+    if (onLabels.length !== 1) relateGuards.push(`relate-saved: 已存标签高亮数量是 ${onLabels.length}`)
+    if (!saved.text.includes('relate.remove')) relateGuards.push('relate-saved: 已存的关系没有删除入口')
+    if (!saved.text.includes('relate.saved')) relateGuards.push('relate-saved: 已存状态没有写出来')
+  }
+}
+{
+  const few = byLabel0('relate-toofew')
+  if (!few) relateGuards.push('relate-toofew: 未渲染')
+  else {
+    if (!few.text.includes('relate.tooFew')) relateGuards.push('relate-toofew: 记录太少时没有给出下一步')
+    if (few.text.includes('relate.send')) relateGuards.push('relate-toofew: 记录太少时不该给发送按钮')
+    const inputs = (few.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-input')
+    if (inputs.length > 0) relateGuards.push('relate-toofew: 记录太少时不该给输入框')
+  }
+}
+{
+  const noBook = byLabel0('relate-nobook')
+  if (!noBook) relateGuards.push('relate-nobook: 未渲染')
+  else if (!noBook.text.includes('relate.noBook')) relateGuards.push('relate-nobook: 没书时没有说明原因')
+}
+{
+  for (const label of ['relate-inline-note', 'relate-inline-thought']) {
+    const draw = byLabel0(label)
+    if (!draw) { relateGuards.push(`${label}: 未渲染`); continue }
+    const cards = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
+    if (cards.length !== 1) relateGuards.push(`${label}: 展开后没有就地关系卡`)
+  }
+}
+// 收起时只有一个入口按钮：点它就是「放回书里看」。
+renderStandalone('relate-bar-closed', smoke.RelateBar, { entry: relateEntry, kind: 'note', open: false, onToggle() {} }, ['', false, ''])
+{
+  const barDraw = byLabel0('relate-bar-closed')
+  if (!barDraw) relateGuards.push('relate-bar-closed: 未渲染')
+  else {
+    if (!barDraw.text.includes('nav.relate')) relateGuards.push('relate-bar-closed: 入口文案不是 nav.relate')
+    const go = (barDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-go')
+    if (go.length !== 1) relateGuards.push(`relate-bar-closed: 入口按钮数量是 ${go.length}`)
+    else if (go[0].tag !== 'button' || typeof go[0].props.onClick !== 'function') relateGuards.push('relate-bar-closed: 入口按钮不可点')
+    if (barDraw.text.includes('wr-relate-card')) relateGuards.push('relate-bar-closed: 收起时不该有关系卡')
+  }
+}
+// 记录卡在展开时加宽（grid-column: 1/-1），不是在卡片里再挤一个小格子。
+{
+  const thoughtRow = dataset.thoughts && dataset.thoughts[0]
+  renderStandalone('relate-thought-row', smoke.ThoughtRow, { thought: thoughtRow, wall: true, context: [] }, [false, false, true])
+  const rowDraw = byLabel0('relate-thought-row')
+  if (!rowDraw) relateGuards.push('ThoughtRow: 未渲染')
+  else {
+    const rowCards = (rowDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-thought')
+    if (rowCards.length === 0) relateGuards.push('ThoughtRow: 找不到想法卡')
+    else if (rowCards[0].props['data-wide'] !== 'true') relateGuards.push('ThoughtRow: 展开时记录卡没有加宽（data-wide）')
+  }
+}
+// 布局只能从样式表看：卡片在文档流里，max-height + 内部滚动，且不再有浮层坐标。
+const relateCss = (name) => {
+  const at = code.indexOf(`.${name}{`)
   if (at < 0) return ''
   const end = code.indexOf('}', at)
   return end > at ? code.slice(at, end) : ''
-})()
-if (askCssBlock === '') {
-  askGuards.push('CSS: 找不到 .wr-ask 规则')
-} else {
-  if (askCssBlock.indexOf('position:fixed') >= 0) askGuards.push('CSS: .wr-ask 还是 position:fixed 浮层')
-  if (askCssBlock.indexOf('position:relative') < 0) askGuards.push('CSS: .wr-ask 不在文档流里（缺 position:relative）')
-  if (askCssBlock.indexOf('max-height') < 0) askGuards.push('CSS: .wr-ask 没有 max-height，长回答会把输入框顶出屏幕')
-  if (askCssBlock.indexOf('max-width:480px') < 0) askGuards.push('CSS: .wr-ask 的宽度上限不是 480px')
 }
-if (code.indexOf('askPosition') >= 0) askGuards.push('CSS: 还在按视口坐标摆卡片（askPosition 未删）')
-if (code.indexOf("request('/chat/models')") >= 0) askGuards.push('预检: 客户端还在请求 /chat/models')
+const cardCss = relateCss('wr-relate-card')
+if (cardCss === '') relateGuards.push('CSS: 找不到 .wr-relate-card 规则')
+else {
+  if (cardCss.indexOf('position:fixed') >= 0) relateGuards.push('CSS: 关系卡还是 position:fixed 浮层')
+  if (cardCss.indexOf('position:absolute') >= 0) relateGuards.push('CSS: 关系卡是绝对定位，会盖住上面的记录')
+  if (cardCss.indexOf('max-height') < 0) relateGuards.push('CSS: 关系卡没有 max-height')
+  if (cardCss.indexOf('overflow') < 0) relateGuards.push('CSS: 关系卡没有内部滚动')
+}
+if (code.indexOf('grid-column:1/-1') < 0) relateGuards.push('CSS: 记录卡展开时不会独占一行')
+if (code.indexOf('askPosition') >= 0) relateGuards.push('CSS: 还在按视口坐标摆卡片（askPosition 未删）')
+if (code.indexOf('wr-ask{') >= 0) relateGuards.push('CSS: 旧的 .wr-ask 样式还在')
+if (code.indexOf("request('/chat/models')") >= 0) relateGuards.push('预检: 客户端还在请求 /chat/models')
 
-// F3：段落、回应、素材、选题上的来源 chip 都要能点回原物（带出处定位）。
+// 请求体照设计稿 §4 组：自然话 + 带编号的候选 + mode:'relate'。
+if (typeof smoke.buildRelateAsk === 'function' && relateCandidates.length > 0) {
+  const ask = smoke.buildRelateAsk({ entry: relateEntry, kind: 'note', question: '', candidates: relateCandidates, data: payload })
+  if (!ask || typeof ask.pack !== 'string' || typeof ask.question !== 'string') {
+    relateGuards.push('buildRelateAsk: 返回值不是 {pack, question}')
+  } else {
+    for (const needle of ['relate.packHead', 'relate.packNote', 'relate.packList', 'relate.packRule', 'relate.packFollowRule', 'relate.packDefault'])
+      if (!ask.pack.includes(needle) && !ask.question.includes(needle)) relateGuards.push('请求体: 缺 ' + needle)
+    if (!ask.pack.includes(firstRow.id)) relateGuards.push('请求体: 候选没有带编号')
+    if (ask.pack.includes('material:')) relateGuards.push('请求体: 候选里混进了素材（素材已下线）')
+    if (relateCandidates.length > 12) relateGuards.push(`请求体: 候选 ${relateCandidates.length} 条，超过 12`)
+    if (relateCandidates.some((row) => String(row.id) === `note:${relateEntry.id}`)) relateGuards.push('请求体: 候选里混进了当前这条')
+    if (smoke.buildRelateAsk({ entry: relateEntry, kind: 'note', question: '怎么理解？', candidates: relateCandidates, data: payload }).question.indexOf('relate.packWant') < 0)
+      relateGuards.push('请求体: 用户填了问题却没用 relate.packWant')
+  }
+}
+
+// F3：段落上的来源 chip 能点回原物；material: 因为素材下线，只能是纯文本。
 const worksDraw = byLabel0('works')
 if (worksDraw) {
-  const srcChips = (worksDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-src' || String(el.props.className || '') === 'wr-src wr-src-empty')
-  const clickable = srcChips.filter((el) => el.tag === 'button' && typeof el.props.onClick === 'function')
-  if (srcChips.length === 0) askGuards.push('works: 段落没有渲染来源 chip')
-  else if (clickable.length !== srcChips.length) askGuards.push(`works: ${srcChips.length} 个来源 chip 只有 ${clickable.length} 个可点（F3）`)
-} else {
-  askGuards.push('works: 未渲染，无法断言来源 chip')
-}
-
-// F-20 第二个出口：从想法直接收为素材，降级①要能看到「同章摘录」选择器与跳过。
-if (typeof smoke.MaterialPicker === 'function') {
-  renderStandalone('material-picker', smoke.MaterialPicker, { entry: thoughtBase, kind: 'thought', context: contextNotes, onClose() {} }, ['观点', '', false, ''])
-  const picker = byLabel0('material-picker')
-  if (!picker) askGuards.push('material-picker: 未渲染')
+  const chips = (worksDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-src')
+  const retired = chips.filter((el) => el.props['data-retired'] === 'true')
+  const live = chips.filter((el) => el.props['data-retired'] !== 'true')
+  if (chips.length === 0) relateGuards.push('works: 段落没有渲染来源 chip')
   else {
-    for (const needle of ['mat.picker.title', 'mat.picker.skip', 'mat.picker.save', 'mat.type.idea'])
-      if (!picker.text.includes(needle)) askGuards.push('material-picker: 缺 ' + needle)
-    if (!picker.text.includes('同章划线 1')) askGuards.push('material-picker: 缺同章摘录上下文')
+    if (retired.length === 0) relateGuards.push('works: 素材来源没有按「已下线」渲染成纯文本')
+    if (retired.some((el) => el.tag === 'button')) relateGuards.push('works: 素材来源仍然是可点按钮')
+    if (live.some((el) => el.tag !== 'button' || typeof el.props.onClick !== 'function'))
+      relateGuards.push('works: 划线/想法来源 chip 不可点（F3）')
   }
 } else {
-  askGuards.push('client module 未暴露 MaterialPicker')
+  relateGuards.push('works: 未渲染，无法断言来源 chip')
 }
 
 // F-23：段落行上的「AI 补写这一段」。三种状态都要能一眼看出：能写、无模型、
@@ -1002,9 +1171,9 @@ if (code.indexOf("data-palette', name") >= 0 && code.indexOf("=== 'follow' ? {}"
 // 四段旅程：二层导航、六个内页、三个空/失败态、书页链路块。
 // 这里只声明断言队列，真正的求值放到 guards 初始化之后（checkJourneys）。
 const journeyGuards = []
-const CRAFT_STAGE = { responses: 'think', materials: 'create', topics: 'create', works: 'create', timeline: 'grow', annual: 'grow' }
+const CRAFT_STAGE = { responses: 'think', works: 'create', timeline: 'grow', annual: 'grow' }
 function checkJourneys(guards, byLabel, bookDraw) {
-  for (const label of ['responses', 'materials', 'topics', 'works', 'timeline', 'annual']) {
+  for (const label of ['responses', 'works', 'timeline', 'annual']) {
     const draw = byLabel(label)
     if (!draw) { journeyGuards.push(`${label}: 未渲染`); continue }
     // 两层导航在每一个内页上都得在：第一行四个旅程 + 第二行当前旅程的口径说明。
@@ -1015,16 +1184,13 @@ function checkJourneys(guards, byLabel, bookDraw) {
     if (!draw.text.includes(`journey.${stage}.hint`)) journeyGuards.push(`${label}: 第二行导航缺 journey.${stage}.hint`)
   }
   if (byLabel('responses') && !byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 缺「对话不落盘」的口径')
-  if (byLabel('materials') && !byLabel('materials').text.includes('mat.type.quote')) journeyGuards.push('materials: 缺类型筛选')
-  if (byLabel('topics') && !byLabel('topics').text.includes('topic.count')) journeyGuards.push('topics: 缺计数')
   if (byLabel('works') && !byLabel('works').text.includes('work.export')) journeyGuards.push('works: 缺导出按钮')
   if (byLabel('timeline') && !byLabel('timeline').text.includes('grow.total')) journeyGuards.push('timeline: 缺事件总数')
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
   // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。
   const emptyExpect = {
-    'craft-empty': ['mat.empty.title', 'mat.empty.next', 'mat.empty.action'],
+    'craft-empty': ['work.empty.title', 'work.empty.next', 'work.empty.action'],
     'craft-empty-think': ['thinkView.empty.title', 'thinkView.empty.next', 'thinkView.empty.action'],
-    'craft-empty-topics': ['topic.empty.title', 'topic.empty.next', 'topic.empty.action'],
     'craft-empty-works': ['work.empty.title', 'work.empty.next', 'work.empty.action'],
     'craft-empty-grow': ['grow.empty.title', 'grow.empty.next'],
   }
@@ -1052,13 +1218,13 @@ function checkJourneys(guards, byLabel, bookDraw) {
     if (!degradedDraw.text.includes('chain.title')) journeyGuards.push('book-chain-degraded: 缺链路块')
   }
   // 页脚两个时间各说各话。
-  if (byLabel('materials') && !byLabel('materials').text.includes('synced.craftAt')) journeyGuards.push('materials: 缺创作更新时间')
+  if (byLabel('works') && !byLabel('works').text.includes('synced.craftAt')) journeyGuards.push('works: 缺创作更新时间')
 
   // B1：时间线的每一条都得能回到产生它的那本书，跨书的事件降级成不可点而不是假装可点。
   const tlItems = (label) =>
     ((byLabel(label) || {}).elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-tl-item'))
   const timelineItems = tlItems('timeline')
-  if (timelineItems.length < 4) journeyGuards.push(`timeline: 事件行太少（${timelineItems.length}）`)
+  if (timelineItems.length < 2) journeyGuards.push(`timeline: 事件行太少（${timelineItems.length}）`)
   if (timelineItems.some((el) => el.tag !== 'button')) journeyGuards.push('timeline: 事件行不是可点 button')
   if (!timelineItems.some((el) => el.tag === 'button' && typeof el.props.onClick === 'function' && el.props.disabled !== true))
     journeyGuards.push('timeline: 没有任何一条能点回书页')
@@ -1071,29 +1237,12 @@ function checkJourneys(guards, byLabel, bookDraw) {
 
   // B4：把一本书放进 GROW，时间线只留这本书的事件；别的书进来必须是空态。
   const scopedTimeline = tlItems('timeline-scoped')
-  if (scopedTimeline.length !== timelineItems.length) journeyGuards.push(`timeline-scoped: 该书的 4 条事件没全留下（${scopedTimeline.length}）`)
+  if (scopedTimeline.length !== timelineItems.length) journeyGuards.push(`timeline-scoped: 该书的事件没全留下（${scopedTimeline.length}/${timelineItems.length}）`)
   if (scopedTimeline.some((el) => el.props['data-cross'] === 'true')) journeyGuards.push('timeline-scoped: 按书过滤后不该还有跨书事件')
   if (byLabel('timeline-scoped') && !byLabel('timeline-scoped').text.includes('thinkView.scope')) journeyGuards.push('timeline-scoped: 没写明只看这本书')
   if (byLabel('timeline-scoped-other') && !byLabel('timeline-scoped-other').text.includes('grow.empty.title'))
     journeyGuards.push('timeline-scoped-other: 别的书的事件串进了这本书的时间线')
 
-  // B3：素材类型可以在原位改，不需要另开编辑面板。
-  const typeSwitches = ((byLabel('materials') || {}).elements || []).filter((el) =>
-    String(el.props.className || '').split(' ').includes('wr-type-switch'),
-  )
-  if (typeSwitches.length === 0) journeyGuards.push('materials: 素材没有改类型的入口')
-  else {
-    const sw = typeSwitches[0]
-    if (sw.tag !== 'select' || typeof sw.props.onChange !== 'function') journeyGuards.push('materials: 改类型入口不是可用的 select')
-    const options = ((byLabel('materials') || {}).elements || []).filter((el) => el.tag === 'option')
-    if (options.length < 6) journeyGuards.push(`materials: 改类型只有 ${options.length} 个选项`)
-  }
-
-  // B5：选题上的书名是回到那本书的入口。
-  const topicBookButtons = ((byLabel('topics') || {}).elements || []).filter(
-    (el) => el.tag === 'button' && String(el.props.className || '').split(' ').includes('wr-chip') && typeof el.props.onClick === 'function',
-  )
-  if (topicBookButtons.length === 0) journeyGuards.push('topics: 书名不是可点的入口')
 
   // B6：年度回顾要能说出「这一年」，也要能把这一年导出去。
   const annualDraw = byLabel('annual')
@@ -1160,7 +1309,7 @@ if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('
 for (const item of bannerGuards) guards.push(item)
 for (const item of thoughtGuards) guards.push(item)
 for (const item of packGuards) guards.push(item)
-for (const item of askGuards) guards.push(item)
+for (const item of relateGuards) guards.push(item)
 checkJourneys(guards, byLabel, bookDraw)
 for (const item of journeyGuards) guards.push(item)
 for (const item of paragraphGuards) guards.push(item)

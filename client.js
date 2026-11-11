@@ -261,8 +261,6 @@ window.__ModuleLoader__.load({
       'nav.create': '创作',
       'nav.grow': '积累',
       'nav.responses': '回应',
-      'nav.materials': '素材',
-      'nav.topics': '选题',
       'nav.works': '初稿',
       'nav.timeline': '时间线',
       'nav.annual': '年度回顾',
@@ -321,6 +319,44 @@ window.__ModuleLoader__.load({
       'src.thought': '想法',
       'src.response': '回应',
       'src.material': '素材',
+      'src.materialRetired': '素材已下线，仅作来源标记',
+      'nav.relate': '放回书里看',
+      'relate.placeholder': '想问什么可以写，不写也行',
+      'relate.send': '发送',
+      'relate.thinking': '正在对照…',
+      'relate.together': '一起看',
+      'relate.why': '为什么值得对照：',
+      'relate.followup': '可以接着问',
+      'relate.askPrefix': '问：',
+      'relate.none': '在你现在的记录里，我没找到有依据的关联。',
+      'relate.noneHint': '如果在《{chapter}》里再划一句，或把这一段后面的两段补进来，我就能把它们放在一起看。',
+      'relate.noneNoChapter': '如果再划一句、或写一句想法，我就能把它们放在一起看。',
+      'relate.keepThought': '记成想法',
+      'relate.collapse': '收起',
+      'relate.offline': '当前没有可用的模型。你仍然可以直接记想法。',
+      'relate.tooFew': '这本书你现在只有这一条记录。再划一句、或写一句想法，我再帮你对照。',
+      'relate.noBook': '这条记录没有关联的书，暂时没法把别的记录放回来看。',
+      'relate.thisNote': '这条划线',
+      'relate.thisThought': '这条想法',
+      'relate.packHead': '我在微信读书里读{title}（{author}），只导入了划线和想法，没有全文。',
+      'relate.packNote': '这条是我 {date} 在《{chapter}》章的划线：',
+      'relate.packThought': '这条是我 {date} 在《{chapter}》章写的想法：',
+      'relate.packList': '同一本书里我还有这些记录（括号里是编号）：',
+      'relate.packLine': '- ({id}) {date}《{chapter}》：{text}',
+      'relate.packRule': '值得对照的挑一到三条，每条用 [编号] 开头，一句话说清它和这条划线怎么接上；一条都没有就直接说没有，并告诉我补哪条划线或哪段上下文最有用。',
+      'relate.packFollowRule': '最后如果有值得追问的方向，用「问：」开头列一到两条。',
+      'relate.packWant': '我想问：{question}',
+      'relate.packDefault': '我想知道：{this}，在我自己的记录里能和什么放在一起看？',
+      'relate.dropped': '这条记录已经找不到了',
+      'relate.save': '存为关系',
+      'relate.kept': '已记成想法',
+      'relate.saved': '已存下这条关系',
+      'relate.saveFailed': '没存上：{error}',
+      'relate.remove': '删除关系',
+      'relate.label.echo': '呼应',
+      'relate.label.contrast': '对照',
+      'relate.label.mine': '个人回应',
+      'relate.label.check': '待核实',
       'topic.empty.title': '还没有选题',
       'topic.empty.next': '挑几条素材，写成一句话。',
       'topic.empty.action': '去素材篮',
@@ -344,6 +380,7 @@ window.__ModuleLoader__.load({
       'work.empty.title': '还没有初稿',
       'work.empty.next': '选一个选题，把素材写成段落。',
       'work.empty.action': '去选题',
+      'work.empty.actionShelf': '去书架',
       'work.new': '新建初稿',
       'work.titlePlaceholder': '初稿标题',
       'work.create': '建这篇',
@@ -667,8 +704,6 @@ window.__ModuleLoader__.load({
       'nav.create': 'Create',
       'nav.grow': 'Grow',
       'nav.responses': 'Answers',
-      'nav.materials': 'Material',
-      'nav.topics': 'Topics',
       'nav.works': 'Drafts',
       'nav.timeline': 'Timeline',
       'nav.annual': 'Yearly review',
@@ -727,6 +762,44 @@ window.__ModuleLoader__.load({
       'src.thought': 'Thought',
       'src.response': 'Answer',
       'src.material': 'Material',
+      'src.materialRetired': 'Sources retired; kept as a citation only',
+      'nav.relate': 'Put it back in the book',
+      'relate.placeholder': 'Ask anything, or leave it empty',
+      'relate.send': 'Send',
+      'relate.thinking': 'Looking across your notes…',
+      'relate.together': 'Read together',
+      'relate.why': 'Why it belongs together: ',
+      'relate.followup': 'You could ask',
+      'relate.askPrefix': 'Ask: ',
+      'relate.none': 'I found no grounded connection in your notes.',
+      'relate.noneHint': 'Highlight one more line in {chapter}, or add the next two paragraphs, and I can read them together.',
+      'relate.noneNoChapter': 'Highlight one more line, or write one more thought, and I can read them together.',
+      'relate.keepThought': 'Keep as my thought',
+      'relate.collapse': 'Collapse',
+      'relate.offline': 'No model available. You can still write a thought.',
+      'relate.tooFew': 'Only one record so far. Add a highlight or a thought, then I can read them together.',
+      'relate.noBook': 'This record has no book attached, so there is nothing to put it back beside.',
+      'relate.thisNote': 'This highlight',
+      'relate.thisThought': 'This thought',
+      'relate.packHead': 'I read {title} ({author}) in WeRead. Only my highlights and thoughts were imported — no full text.',
+      'relate.packNote': 'This is a highlight I made on {date}, in the chapter «{chapter}»:',
+      'relate.packThought': 'This is a thought I wrote on {date}, in the chapter «{chapter}»:',
+      'relate.packList': 'In the same book I also have these records (the id is in brackets):',
+      'relate.packLine': '- ({id}) {date} «{chapter}»: {text}',
+      'relate.packRule': 'Pick one to three worth contrasting. Start each line with [id] and say in one sentence how it connects to this highlight. If none does, say so plainly and tell me which highlight or passage would help most.',
+      'relate.packFollowRule': 'If there is a direction worth asking about, list one or two at the end, each starting with "问：".',
+      'relate.packWant': 'What I want to ask: {question}',
+      'relate.packDefault': 'What I want to know: {this} — what in my own records could be read alongside it?',
+      'relate.dropped': 'that record can no longer be found',
+      'relate.save': 'Save as a relation',
+      'relate.kept': 'Kept as a thought',
+      'relate.saved': 'Relation saved',
+      'relate.saveFailed': 'Not saved: {error}',
+      'relate.remove': 'Delete relation',
+      'relate.label.echo': 'Echo',
+      'relate.label.contrast': 'Contrast',
+      'relate.label.mine': 'Personal reply',
+      'relate.label.check': 'To verify',
       'topic.empty.title': 'No topic yet',
       'topic.empty.next': 'Pick a few materials and turn them into one sentence.',
       'topic.empty.action': 'Go to material',
@@ -750,6 +823,7 @@ window.__ModuleLoader__.load({
       'work.empty.title': 'No draft yet',
       'work.empty.next': 'Pick a topic and turn material into paragraphs.',
       'work.empty.action': 'Go to topics',
+      'work.empty.actionShelf': 'Go to the shelf',
       'work.new': 'New draft',
       'work.titlePlaceholder': 'Draft title',
       'work.create': 'Create',
@@ -921,7 +995,7 @@ window.__ModuleLoader__.load({
       return { 'data-palette': paletteOf(value) }
     }
 
-    const EMPTY_CRAFT = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
+    const EMPTY_CRAFT = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], relations: [], threads: [], bookIndex: [] }
     const SOURCE_PREFIX = { note: 'note:', thought: 'thought:', response: 'response:', material: 'material:' }
     /** Whatever the host sends back, the client only ever reads these fields. */
     function asCraft(payload) {
@@ -936,6 +1010,10 @@ window.__ModuleLoader__.load({
         materials: list(source.materials),
         topics: list(source.topics),
         works: list(source.works),
+        // 1.2.2: the relate card reads and writes these, so the snapshot has to carry
+        // them; an older host that does not know them simply yields empty lists.
+        relations: list(source.relations),
+        threads: list(source.threads),
         bookIndex: list(source.bookIndex),
       }
     }
@@ -1169,50 +1247,54 @@ window.__ModuleLoader__.load({
 .wr-thread-item{font-size:12.5px;line-height:1.7;padding:6px 0;border-top:1px dashed var(--wr-divider)}
 .wr-thread-item:first-of-type{border-top:0;padding-top:0}
 .wr-thread-date{display:block;font-size:10.5px;color:var(--wr-ink-mute);margin-top:2px}
-.wr-think{margin-top:8px;opacity:0;transition:opacity .14s ease}
-.wr-quote:hover .wr-think,.wr-thought:hover .wr-think,.wr-cols .wr-thought:hover .wr-think,.wr-think:focus-within,.wr-think[data-busy=true]{opacity:1}
-@media (hover:none){.wr-think{opacity:1}}
-.wr-think-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.wr-think-btn{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:5px 10px;border-radius:999px;cursor:pointer;transition:border-color .14s ease,color .14s ease,background .14s ease}
-.wr-think-btn:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
-.wr-think-btn[data-active=true]{border-color:var(--wr-moss);color:var(--wr-moss);background:var(--wr-wash)}
-.wr-think-btn:disabled{opacity:.5;cursor:default}
-.wr-think-custom{display:flex;gap:6px;align-items:center;margin-top:6px}
-.wr-think-input{flex:1;min-width:0;font:inherit;font-size:12px;line-height:1.5;padding:5px 10px;border-radius:999px;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink)}
-.wr-think-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
-.wr-think-go{border-color:var(--wr-moss);color:var(--wr-on-accent);background:var(--wr-moss)}
-.wr-think-go:hover{background:var(--wr-moss);color:var(--wr-on-accent);border-color:var(--wr-moss);filter:brightness(1.04)}
-.wr-think-msg{margin-top:6px;font-size:11px;line-height:1.5;color:var(--wr-ink-mute)}
-.wr-think[data-open=true]{opacity:1}
-.wr-ask{position:relative;margin-top:10px;width:100%;max-width:480px;display:flex;flex-direction:column;max-height:min(72vh,640px);background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;box-shadow:0 1px 2px color-mix(in srgb, var(--wr-ink) 6%, transparent);overflow:hidden}
-.wr-ask-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--wr-divider)}
-.wr-ask-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;min-width:0;flex:1}
-.wr-ask-kind{font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft)}
-.wr-ask-book{font-size:12.5px;color:var(--wr-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-.wr-ask-chapter{font-size:11px;color:var(--wr-ink-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wr-ask-close{appearance:none;flex:none;width:24px;height:24px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:16px;line-height:1;cursor:pointer;transition:background .12s ease,color .12s ease}
-.wr-ask-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
-.wr-ask-tools{display:flex;flex-wrap:wrap;gap:6px;padding:9px 14px 0}
-.wr-ask-chip{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer}
-.wr-ask-chip:hover{border-color:var(--wr-moss);color:var(--wr-ink)}
-.wr-ask-chip[data-on=true]{border-color:var(--wr-sage);background:var(--wr-wash);color:var(--wr-ink)}
-.wr-ask-chip:disabled{opacity:.5;cursor:default}
-.wr-ask-body{flex:0 1 auto;min-height:0;max-height:52vh;overflow:auto;resize:vertical;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.wr-ask-empty{font-size:11.5px;line-height:1.6;color:var(--wr-ink-mute)}
-.wr-ask-msg{max-width:92%;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
-.wr-ask-msg[data-role=user]{align-self:flex-end;padding:7px 11px;border-radius:12px 12px 4px 12px;background:var(--wr-wash);color:var(--wr-ink)}
-.wr-ask-msg[data-role=assistant]{align-self:flex-start;padding:2px 0;color:var(--wr-ink)}
-.wr-ask-typing{color:var(--wr-ink-mute);font-size:11.5px}
-.wr-ask-error{display:flex;align-items:center;gap:8px;justify-content:space-between;margin:0 14px;padding:7px 10px;border-radius:10px;background:color-mix(in srgb, var(--dsw-alias-state-error) 10%, var(--wr-paper-soft));color:var(--dsw-alias-state-error);font-size:11.5px;line-height:1.5}
-.wr-ask-error-text{flex:1;min-width:0}
-.wr-ask-retry{appearance:none;flex:none;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer}
-.wr-ask-retry:disabled{opacity:.5;cursor:default}
-.wr-ask-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 14px 8px;border-top:1px solid var(--wr-divider)}
-.wr-ask-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:9px 12px;min-height:52px;max-height:132px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
-.wr-ask-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
-.wr-ask-send{appearance:none;flex:none;align-self:flex-end;border:1px solid var(--wr-moss);background:var(--wr-moss);color:var(--wr-on-accent);font:inherit;font-size:11.5px;line-height:1;padding:9px 14px;border-radius:999px;cursor:pointer}
-.wr-ask-send:disabled{opacity:.45;cursor:default}
-.wr-ask-note{padding:0 14px 10px;font-size:10px;line-height:1.4;color:var(--wr-ink-mute)}
+.wr-relate{margin-top:8px;opacity:0;transition:opacity .14s ease}
+.wr-quote:hover .wr-relate,.wr-thought:hover .wr-relate,.wr-relate:focus-within,.wr-relate[data-open=true]{opacity:1}
+@media (hover:none){.wr-relate{opacity:1}}
+.wr-relate-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wr-relate-go{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:5px 10px;border-radius:999px;cursor:pointer;transition:border-color .14s ease,color .14s ease,background .14s ease}
+.wr-relate-go:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
+.wr-relate-go:disabled{opacity:.45;cursor:default}
+.wr-cols > .wr-quote[data-wide=true],.wr-cols > .wr-thought[data-wide=true]{grid-column:1/-1}
+.wr-relate-card{position:relative;margin-top:10px;display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--wr-line);border-radius:14px;background:var(--wr-paper-soft);max-height:min(70vh,560px);overflow:auto}
+.wr-relate-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wr-relate-kind{font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft)}
+.wr-relate-book{font-size:12px;color:var(--wr-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-relate-close{appearance:none;margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:15px;line-height:1;cursor:pointer}
+.wr-relate-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
+.wr-relate-summary{font-size:11px;color:var(--wr-ink-mute);line-height:1.5}
+.wr-relate-ask-line{display:flex;gap:8px;align-items:flex-end}
+.wr-relate-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:8px 11px;min-height:44px;max-height:120px;resize:none;overflow-y:auto;border-radius:11px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
+.wr-relate-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
+.wr-relate-send{appearance:none;flex:none;border:1px solid var(--wr-moss);background:var(--wr-moss);color:var(--wr-on-accent);font:inherit;font-size:11.5px;line-height:1;padding:8px 13px;border-radius:999px;cursor:pointer}
+.wr-relate-send:disabled{opacity:.45;cursor:default}
+.wr-relate-answer{margin:0;font-size:12.5px;line-height:1.75;color:var(--wr-ink);white-space:pre-wrap;word-break:break-word}
+.wr-relate-title{margin:0;font-size:11px;color:var(--wr-ink-mute);letter-spacing:.02em}
+.wr-relate-list{display:flex;flex-direction:column;gap:8px}
+.wr-relate-item{border:1px solid var(--wr-line);border-radius:11px;padding:9px 11px;background:var(--wr-paper);display:flex;flex-direction:column;gap:6px}
+.wr-relate-item[data-missing=true]{border-style:dashed;background:transparent}
+.wr-relate-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wr-relate-chip{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-moss);font:inherit;font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;cursor:pointer}
+.wr-relate-chip:hover{border-color:var(--wr-moss);color:var(--wr-ink)}
+.wr-relate-chip[data-missing=true]{border-style:dashed;color:var(--wr-ink-mute);cursor:default}
+.wr-relate-when{font-size:10.5px;color:var(--wr-ink-mute)}
+.wr-relate-text{margin:0;font-size:12px;line-height:1.65;color:var(--wr-ink-soft)}
+.wr-relate-why{margin:0;font-size:11px;line-height:1.6;color:var(--wr-ink-mute)}
+.wr-relate-labels{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.wr-relate-label{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:3px 8px;border-radius:999px;cursor:pointer}
+.wr-relate-label:hover{border-color:var(--wr-sage);color:var(--wr-ink)}
+.wr-relate-label[data-on=true]{border-color:var(--wr-moss);background:var(--wr-wash);color:var(--wr-moss)}
+.wr-relate-label:disabled{opacity:.5;cursor:default}
+.wr-relate-saved{font-size:10.5px;color:var(--wr-moss)}
+.wr-relate-asks{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.wr-relate-ask{appearance:none;text-align:left;border:1px dashed var(--wr-line);background:transparent;color:var(--wr-ink-soft);font:inherit;font-size:11.5px;line-height:1.5;padding:5px 10px;border-radius:10px;cursor:pointer}
+.wr-relate-ask:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
+.wr-relate-error{margin:0;font-size:11px;line-height:1.5;color:var(--dsw-alias-state-error)}
+.wr-relate-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wr-relate-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
+.wr-relate-notice{margin:0;font-size:11px;line-height:1.5;color:var(--wr-ink-soft)}
+.wr-relate-offline{margin:0;font-size:11.5px;line-height:1.6;color:var(--wr-ink-mute)}
+.wr-line-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:9px 12px;min-height:52px;max-height:132px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
+.wr-line-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
 .wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;opacity:0;transition:opacity .14s ease,color .14s ease,border-color .14s ease}
@@ -1340,22 +1422,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-draft-export{background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:12px;padding:10px 12px;max-height:260px;overflow:auto;margin-top:10px}
 .wr-empty-next{margin:6px auto 12px;max-width:440px;font-size:12px;line-height:1.65;color:var(--wr-ink-soft)}
 .wr-notice-line{font-size:11.5px;color:var(--wr-ink-soft);margin:0 0 10px}
-.wr-adopt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--wr-divider);background:var(--wr-surface)}
-.wr-adopt-hint{font-size:10.5px;color:var(--wr-ink-mute);line-height:1.45;flex:1 1 150px;min-width:0}
-.wr-adopt-actions{display:flex;gap:6px;flex-wrap:wrap}
-.wr-adopt-actions .wr-btn{font-size:11px;padding:3px 9px}
-.wr-adopt-types{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%}
-.wr-adopt-types .wr-chip{font-size:11px;padding:3px 8px}
 .wr-adopt-error{font-size:10.5px;color:var(--dsw-alias-state-error-primary);width:100%}
 .wr-btn[data-active=true]{border-color:var(--wr-moss);color:var(--wr-moss)}
-.wr-think-take{border-style:dashed;color:var(--wr-ink-soft)}
 .wr-modal-body{display:flex;flex-direction:column;gap:10px;padding:4px 1px 8px;min-height:0;overflow:auto}
-.wr-picker{max-width:520px}
-.wr-picker-link{display:flex;flex-direction:column;gap:6px}
-.wr-picker-list{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto}
-.wr-picker-row{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;font:inherit;font-size:12px;line-height:1.55;color:var(--wr-ink-soft);background:transparent;border:1px solid var(--wr-line);border-radius:9px;padding:6px 9px;cursor:pointer}
-.wr-picker-row:hover{border-color:var(--wr-sage);color:var(--wr-ink)}
-.wr-picker-row[data-on=true]{background:var(--wr-wash);border-color:var(--wr-moss);color:var(--wr-ink)}
 `
 
     // ------------------------------------------------------------ components
@@ -2414,197 +2483,283 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       }
     }
 
-    /** 卡片的最大宽度；窄屏时由 CSS 的 max-width:100% 兜住，不再按视口坐标摆放。 */
-    const ASK_WIDTH = 480
-
-    /**
-     * The conversation card that opens right where the reader is. It is a normal
-     * block inside the record card, right under the buttons that opened it: a long
-     * answer only makes the page taller, it never covers the passage above.
-     */
-    /* The writing side belongs to the study, but the ask card needs exactly two
-       things from it: somewhere to write, and a way to read the craft snapshot.
-       A tiny bridge keeps AskCard free of props it otherwise never uses. */
+    /* The writing side belongs to the study, but a record card needs exactly three
+       things from it: somewhere to write, the craft snapshot, and a way back to what
+       a source id names. A tiny bridge keeps RelateCard free of props it never uses. */
     const craftBridge = { write: null, craft: null }
 
-    /** F-20: the only thing that survives a conversation is the line you keep. */
-    function AskAdopt(props) {
-      const [saved, setSaved] = useState('')
-      const [panel, setPanel] = useState('')
-      const [type, setType] = useState('观点')
-      const [busy, setBusy] = useState(false)
-      const [error, setError] = useState('')
-      const answer = String(props.answer || '').trim()
-      if (answer === '') return null
-      const entry = props.entry || {}
-      const prefix = props.kind === 'thought' ? 'thought' : 'note'
-      const sourceId = `${prefix}:${String(entry.id === undefined || entry.id === null ? '' : entry.id)}`
+// ---------------------------------------------------------------- relate
+    // 「放回书里看」is one entry, one card, and one rule that cannot move: the model
+    // may only name records we actually sent it. A made-up id is dropped before it
+    // is rendered, because a chip that leads nowhere is worse than no chip.
+
+    const RELATE_LIMIT = 12
+    const RELATE_SAME_CHAPTER = 6
+    const RELATION_LABELS = [
+      ['呼应', 'relate.label.echo'],
+      ['对照', 'relate.label.contrast'],
+      ['个人回应', 'relate.label.mine'],
+      ['待核实', 'relate.label.check'],
+    ]
+    /** One line = one candidate; anything else is prose the model wrote around it. */
+    const RELATE_LINE = /^\[((?:note|thought|response):[^\]]+)\]\s*(.+)$/
+    const RELATE_ASK = /^问[:：]\s*(.+)$/
+    const RELATE_NONE = /(没找到|没有找到|未找到|没有可靠的关联|没有依据)/
+
+    /** What the record cards need from the study (book list, craft snapshot, jumps). */
+    const relateBridge = { data: {}, craft: null, lookup: null, openSource: null }
+
+    /** One record's id, as a string, even when the source omitted it. */
+    function relateIdOf(entry) {
+      const value = entry && entry.id !== undefined && entry.id !== null ? entry.id : ''
+      return String(value)
+    }
+
+    function relationLabelKey(label) {
+      const hit = RELATION_LABELS.find((item) => item[0] === label)
+      return hit ? hit[1] : ''
+    }
+
+    /** Unknown labels are read back as 「对照」: the store stays authoritative on write. */
+    function normalizeRelationLabel(label) {
+      const name = String(label || '')
+      return relationLabelKey(name) === '' ? '对照' : name
+    }
+
+    function relateChapterOf(entry, kind) {
+      return String((kind === 'note' ? entry.chapterTitle : entry.chapterName) || '')
+    }
+
+    /**
+     * The only records the model is allowed to name: same book, not the one you are
+     * standing on, same chapter first, then the newest up to twelve. The ids in this
+     * list are the whole validation set — nothing outside it may reach the screen.
+     */
+    function relateCandidates(input) {
+      const entry = (input && input.entry) || {}
+      const kind = input && input.kind === 'thought' ? 'thought' : 'note'
+      const data = (input && input.data) || {}
+      const craft = (input && input.craft) || {}
       const bookId = String(entry.bookId || '')
-
-      const save = (op, payload) => {
-        const write = craftBridge.write
-        if (typeof write !== 'function') {
-          setError(t('craft.offline'))
-          return
-        }
-        setBusy(true)
-        setError('')
-        write(op, payload)
-          .then(() => {
-            setBusy(false)
-            setPanel('')
-            setSaved(op === 'response.add' ? 'thought' : 'material')
-          })
-          .catch((thrown) => {
-            setBusy(false)
-            setError(thrown && thrown.message ? thrown.message : String(thrown))
-          })
+      if (bookId === '') return []
+      const own = `${kind}:${relateIdOf(entry)}`
+      const chapter = relateChapterOf(entry, kind)
+      const rows = []
+      const add = (row) => {
+        if (row.id === own || row.text === '') return
+        rows.push(row)
       }
-      const keepThought = () =>
-        save('response.add', {
-          text: answer,
-          sourceIds: [sourceId],
-          // A thought entry has no bookId of its own; a highlight carries the
-          // book, so the payload can name it and the host can cross-check.
-          bookId: bookId === '' ? undefined : bookId,
-          containsAI: true,
-          model: props.model || '',
-          origin: 'think',
+      for (const note of data.notes || []) {
+        if (String(note.bookId || '') !== bookId) continue
+        add({
+          id: `note:${String(note.id)}`,
+          kind: 'note',
+          rawId: String(note.id),
+          text: String(note.text || ''),
+          chapter: String(note.chapterTitle || ''),
+          time: Number(note.createTime) || 0,
         })
-      const keepMaterial = () =>
-        save('material.add', {
-          type,
-          text: answer,
-          sourceIds: [sourceId],
-          bookId: bookId === '' ? undefined : bookId,
-          containsAI: true,
-          authorType: 'ai',
-          origin: 'craft',
+      }
+      for (const thought of data.thoughts || []) {
+        if (String(thought.bookId || '') !== bookId) continue
+        add({
+          id: `thought:${String(thought.id)}`,
+          kind: 'thought',
+          rawId: String(thought.id),
+          text: String(thought.content || ''),
+          chapter: String(thought.chapterName || ''),
+          time: Number(thought.createTime) || 0,
         })
+      }
+      for (const item of craft.responses || []) {
+        if (String(item.bookId || '') !== bookId) continue
+        add({
+          id: `response:${String(item.id)}`,
+          kind: 'response',
+          rawId: String(item.id),
+          text: String(item.text || ''),
+          chapter: '',
+          time: Number(item.adoptedAt || item.createdAt) || 0,
+        })
+      }
+      const newest = (left, right) => right.time - left.time
+      const same = chapter === '' ? [] : rows.filter((row) => row.chapter !== '' && row.chapter === chapter).sort(newest).slice(0, RELATE_SAME_CHAPTER)
+      const taken = new Set(same.map((row) => row.id))
+      const rest = rows.filter((row) => !taken.has(row.id)).sort(newest)
+      return same.concat(rest).slice(0, RELATE_LIMIT)
+    }
 
-      return h(
-        'div',
-        { className: 'wr-adopt' },
-        h('span', { className: 'wr-adopt-hint' }, t('ask.adoptHint')),
-        saved === ''
-          ? h(
-              'div',
-              { className: 'wr-adopt-actions' },
-              h(
-                'button',
-                { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: keepThought },
-                t('ask.adoptThought'),
-              ),
-              h(
-                'button',
-                {
-                  className: 'wr-btn wr-btn-ghost',
-                  type: 'button',
-                  disabled: busy,
-                  'data-active': panel === 'material' ? 'true' : 'false',
-                  onClick: () => setPanel(panel === 'material' ? '' : 'material'),
-                },
-                t('ask.adoptMaterial'),
-              ),
-            )
-          : h('span', { className: 'wr-tag', 'data-tone': 'ai' }, `${t('ask.adoptDone')} · ${t(saved === 'thought' ? 'nav.responses' : 'nav.materials')}`),
-        saved !== '' || panel !== 'material'
-          ? null
-          : h(
-              'div',
-              { className: 'wr-adopt-types' },
-              h('span', { className: 'wr-muted' }, t('ask.adoptType')),
-              MATERIAL_TYPES.map(([label, key]) =>
-                h(
-                  'button',
-                  {
-                    className: 'wr-chip',
-                    key: label,
-                    type: 'button',
-                    'data-active': type === label ? 'true' : 'false',
-                    disabled: busy,
-                    onClick: () => setType(label),
-                  },
-                  t(key),
-                ),
-              ),
-              h('button', { className: 'wr-chip', type: 'button', disabled: busy, onClick: keepMaterial }, t('ask.adoptSave')),
-              h('button', { className: 'wr-chip', type: 'button', disabled: busy, onClick: () => setPanel('') }, t('ask.adoptCancel')),
-            ),
-        error === '' ? null : h('span', { className: 'wr-adopt-error' }, t('ask.adoptFailed', { error })),
+    /**
+     * §4.2 in one place: a paragraph the reader could have typed, the numbered
+     * candidates, and the one line that is actually the question. The narrative goes
+     * in `pack`, the question in `question`, so the host prompt stays a normal turn.
+     */
+    function buildRelateAsk(input) {
+      const entry = (input && input.entry) || {}
+      const kind = input && input.kind === 'thought' ? 'thought' : 'note'
+      const candidates = Array.isArray(input && input.candidates) ? input.candidates : []
+      const data = (input && input.data) || {}
+      const asked = String((input && input.question) || '').trim()
+      const bookId = String(entry.bookId || '')
+      const book = (data.books || []).find((item) => String(item.bookId) === bookId) || null
+      const title = String(entry.bookTitle || (book && book.title) || '').trim()
+      const author = String(entry.author || (book && book.author) || '').trim()
+      const chapter = relateChapterOf(entry, kind)
+      const when = fmtDate(entry.createTime)
+      const body = String((kind === 'thought' ? entry.content : entry.text) || '').trim()
+      const lines = [
+        t('relate.packHead', {
+          title: title === '' ? t('think.packUnknown') : `《${title}》`,
+          author: author === '' ? '—' : author,
+        }),
+      ]
+      lines.push(
+        t(kind === 'thought' ? 'relate.packThought' : 'relate.packNote', {
+          date: when,
+          chapter: chapter === '' ? '—' : chapter,
+        }),
+      )
+      lines.push(kind === 'note' ? `> ${clip(body, 600)}` : clip(body, 600))
+      if (candidates.length > 0) {
+        lines.push('')
+        lines.push(t('relate.packList'))
+        for (const row of candidates) {
+          lines.push(
+            t('relate.packLine', {
+              id: row.id,
+              date: fmtDate(row.time),
+              chapter: row.chapter === '' ? '—' : row.chapter,
+              text: clip(row.text, 120),
+            }),
+          )
+        }
+      }
+      lines.push('')
+      lines.push(t('relate.packRule'))
+      lines.push(t('relate.packFollowRule'))
+      return {
+        pack: lines.join('\n'),
+        question: asked === ''
+          ? t('relate.packDefault', { this: t(kind === 'thought' ? 'relate.thisThought' : 'relate.thisNote') })
+          : t('relate.packWant', { question: asked }),
+      }
+    }
+
+    /**
+     * Parsing is where the guarantee lives: a `[id]` line whose id is not in the set
+     * we sent is dropped here, so it can neither be rendered nor be saved as a
+     * relation. Everything shown around a row (chapter, date, text) comes from the
+     * local candidate, never from what the model said about it.
+     */
+    function parseRelateAnswer(text, candidates) {
+      const table = new Map((Array.isArray(candidates) ? candidates : []).map((row) => [row.id, row]))
+      const rows = []
+      const asks = []
+      const prose = []
+      let saidNone = false
+      for (const raw of String(text || '').split(/\r?\n/)) {
+        const line = String(raw || '').trim()
+        if (line === '') continue
+        const ask = line.match(RELATE_ASK)
+        if (ask) {
+          asks.push(String(ask[1]).trim())
+          continue
+        }
+        const hit = line.match(RELATE_LINE)
+        if (hit) {
+          const id = String(hit[1]).trim()
+          if (!table.has(id)) continue
+          if (rows.some((row) => row.id === id)) continue
+          rows.push({ id, why: clip(String(hit[2]).trim(), 60), candidate: table.get(id) })
+          continue
+        }
+        if (RELATE_NONE.test(line)) saidNone = true
+        prose.push(line.replace(/^[-*]\s*/, ''))
+      }
+      return {
+        rows,
+        asks: asks.slice(0, 2),
+        prose: prose.join('\n').trim(),
+        none: rows.length === 0 && (saidNone || String(text || '').trim() !== ''),
+      }
+    }
+
+    /** The relation already stored for one end of this record, if any. */
+    function storedRelation(relations, ownId, sourceId) {
+      const ends = (rel) => [rel.from, rel.to].map((item) => (item ? `${item.kind}:${item.id}` : ''))
+      return (
+        (Array.isArray(relations) ? relations : []).find((rel) => {
+          const pair = ends(rel || {})
+          return pair.includes(ownId) && pair.includes(sourceId)
+        }) || null
       )
     }
 
-    function AskCard(props) {
-      const [messages, setMessages] = useState([])
+    function RelateCard(props) {
+      const entry = props.entry || {}
+      const kind = props.kind === 'thought' ? 'thought' : 'note'
+      const store = craftBridge.craft || EMPTY_CRAFT
+      const data = relateBridge.data || {}
+      const relations = Array.isArray(store.relations) ? store.relations : []
+      const ownId = `${kind}:${relateIdOf(entry)}`
+      const bookId = String(entry.bookId || '')
+      const book = String(entry.bookTitle || '') || bookTitleOf(bookId, data, store)
+      const chapter = relateChapterOf(entry, kind)
       const [draft, setDraft] = useState('')
       const [busy, setBusy] = useState(false)
       const [error, setError] = useState('')
-      const [model, setModel] = useState('')
-      const [active, setActive] = useState('')
-      // 不再预检 /chat/models：两个 AI 入口发的是同一个请求体，探不到模型不等于用不了，
-      // 预检只会把能用的入口误判成不能用。入口永远可点，失败由真实请求给出可读错误 + 一次重试。
+      const [answer, setAnswer] = useState('')
+      const [kept, setKept] = useState('')
+      const [saved, setSaved] = useState({})
+      const [rowBusy, setRowBusy] = useState('')
+      const [rowError, setRowError] = useState('')
       const abortRef = useRef(null)
-      const bodyRef = useRef(null)
-      const inputRef = useRef(null)
-      const touchedRef = useRef(false)
       const turnsRef = useRef([])
       const lastQuestionRef = useRef('')
-      // The last answer with any text in it is what an adoption can keep.
-      const lastAnswer = (() => {
-        for (let at = messages.length - 1; at >= 0; at -= 1) {
-          const msg = messages[at]
-          if (msg && msg.role === 'assistant' && String(msg.text || '').trim() !== '') return String(msg.text)
-        }
-        return ''
-      })()
 
-      const scrollBody = () => {
-        const node = bodyRef.current
-        if (node && typeof node.scrollHeight === 'number') node.scrollTop = node.scrollHeight
-      }
-      useEffect(() => {
-        scrollBody()
-      }, [messages, busy])
-      // The box grows with what is typed in it, then scrolls instead of pushing
-      // the answer off screen.
-      useEffect(() => {
-        const node = inputRef.current
-        if (!node || !node.style) return
-        node.style.height = 'auto'
-        const next = typeof node.scrollHeight === 'number' ? node.scrollHeight : 0
-        node.style.height = `${Math.min(Math.max(next || 52, 52), 132)}px`
-      }, [draft])
+      const candidates = useMemo(
+        () => relateCandidates({ entry, kind, data, craft: store }),
+        [entry, kind, data, store],
+      )
+      const tooFew = candidates.length === 0
+      const noBook = bookId === ''
+      const parsed = parseRelateAnswer(answer, candidates)
 
-      const appendText = (text) => {
-        setMessages((prev) => {
-          if (prev.length === 0) return prev
-          const next = prev.slice()
-          const last = next[next.length - 1]
-          next[next.length - 1] = { role: 'assistant', text: `${(last && last.text) || ''}${text}` }
-          return next
-        })
+      const stop = (event) => {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
       }
 
-      // 一次请求：send（新问题）与 retry（重发上一条）共用，重试时不会把同一个问题再说一遍。
-      const run = (question, history) => {
+      const close = () => {
+        if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
+        if (typeof props.onToggle === 'function') props.onToggle(false)
+      }
+
+      // Leaving the card stops the request: an answer nobody sees must not keep
+      // running, and nothing is written when it stops.
+      useEffect(() => () => {
+        if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
+      }, [])
+
+      const run = (raw) => {
+        const question = String(raw || '').trim()
+        if (busy || noBook || tooFew) return
+        const ask = buildRelateAsk({ entry, kind, question, candidates, data })
+        lastQuestionRef.current = question
+        setDraft(question)
         setError('')
+        setKept('')
         setBusy(true)
-        setMessages((prev) => prev.concat([{ role: 'assistant', text: '' }]))
+        setAnswer('')
+        let text = ''
         const controller = typeof AbortController === 'function' ? new AbortController() : null
         abortRef.current = controller
-        let answer = ''
         streamChat(
-          { pack: props.pack, history, question },
+          { pack: ask.pack, question: ask.question, mode: 'relate', history: turnsRef.current.slice(-6) },
           (event) => {
             if (!event) return
-            if (event.type === 'open') {
-              setModel(event.model || '')
-              return
-            }
             if (event.type === 'text') {
-              answer += event.text
-              appendText(event.text)
+              text += event.text
+              setAnswer(text)
               return
             }
             if (event.type === 'error') setError(event.error || t('think.failed'))
@@ -2618,68 +2773,233 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           .finally(() => {
             setBusy(false)
             abortRef.current = null
-            turnsRef.current = turnsRef.current.concat([{ question, answer }]).slice(-6)
+            if (text !== '') turnsRef.current = turnsRef.current.concat([{ question: ask.question, answer: text }]).slice(-6)
           })
       }
 
-      const send = (raw) => {
-        const question = String(raw || '').trim()
-        if (question === '' || busy) return
-        setDraft('')
-        lastQuestionRef.current = question
-        setMessages((prev) => prev.concat([{ role: 'user', text: question }]))
-        run(question, turnsRef.current.slice(-6))
+      const rawIdOf = (sourceId) => {
+        const kindOf = sourceKind(sourceId)
+        return kindOf === '' ? '' : sourceRawId(sourceId)
       }
 
-      // 失败后只给一次重试：丢掉上一轮的半截回答，用同一个问题和同一段 history 再问一次。
-      // 不给重试的话，模型 429 这类一次性失败会逼读者从头再打一遍问题。
-      const retry = () => {
-        const question = lastQuestionRef.current
-        if (question === '' || busy) return
-        setMessages((prev) => {
-          const next = prev.slice()
-          while (next.length > 0 && next[next.length - 1].role === 'assistant') next.pop()
-          return next
+      const savedOf = (sourceId) => {
+        const local = saved[sourceId]
+        if (local) return local
+        const found = storedRelation(relations, ownId, sourceId)
+        return found ? { id: found.id, label: normalizeRelationLabel(found.label) } : null
+      }
+
+      const write = (op, payload) => {
+        const writeFn = craftBridge.write
+        if (typeof writeFn !== 'function') return Promise.reject(new Error(t('craft.offline')))
+        return writeFn(op, payload)
+      }
+
+      const saveRelation = (row, label) => {
+        const current = savedOf(row.id)
+        setRowBusy(row.id)
+        setRowError('')
+        const done = (result) => {
+          setRowBusy('')
+          if (result && result.dropped) {
+            setRowError(t('relate.saveFailed', { error: t('relate.dropped') }))
+            return
+          }
+          const created = result && result.created && result.created.relation ? result.created.relation : null
+          const id = created && created.id ? String(created.id) : current ? current.id : ''
+          if (id === '') {
+            setRowError(t('relate.saveFailed', { error: t('craft.failed') }))
+            return
+          }
+          setSaved((prev) => Object.assign({}, prev, { [row.id]: { id, label } }))
+        }
+        const fail = (thrown) => {
+          setRowBusy('')
+          setRowError(t('relate.saveFailed', { error: thrown && thrown.message ? thrown.message : String(thrown) }))
+        }
+        if (current) {
+          write('relation.update', { id: current.id, label }).then(done).catch(fail)
+          return
+        }
+        write('relation.add', {
+          from: { kind, id: relateIdOf(entry) },
+          to: { kind: row.candidate.kind, id: rawIdOf(row.candidate.id) },
+          label,
+          reason: row.why,
+          bookId: bookId === '' ? undefined : bookId,
+          origin: 'ai',
+        }).then(done).catch(fail)
+      }
+
+      const dropRelation = (row) => {
+        const current = savedOf(row.id)
+        if (!current) return
+        setRowBusy(row.id)
+        setRowError('')
+        write('relation.delete', { id: current.id })
+          .then(() => {
+            setRowBusy('')
+            setSaved((prev) => {
+              const next = Object.assign({}, prev)
+              delete next[row.id]
+              return next
+            })
+          })
+          .catch((thrown) => {
+            setRowBusy('')
+            setRowError(t('relate.saveFailed', { error: thrown && thrown.message ? thrown.message : String(thrown) }))
+          })
+      }
+
+      const keepThought = () => {
+        const text = parsed.prose !== '' ? parsed.prose : parsed.rows.map((row) => row.why).join('；')
+        if (text === '') return
+        setRowBusy('keep')
+        setRowError('')
+        write('response.add', {
+          text: clip(text, 600),
+          sourceIds: [ownId],
+          bookId: bookId === '' ? undefined : bookId,
+          containsAI: true,
+          origin: 'think',
         })
-        run(question, turnsRef.current.slice(-6))
+          .then(() => {
+            setRowBusy('')
+            setKept('thought')
+          })
+          .catch((thrown) => {
+            setRowBusy('')
+            setRowError(t('relate.saveFailed', { error: thrown && thrown.message ? thrown.message : String(thrown) }))
+          })
       }
 
-      // 打开时只把问题放进输入框，让读者先改再发；一旦他自己动过输入框，就不再覆盖。
-      useEffect(() => {
-        if (props.question) setDraft(String(props.question))
-        setActive(props.mode || '')
-      }, [])
-
-      const fillMode = (id, askKey) => {
-        setActive(id)
-        if (touchedRef.current) return
-        setDraft(t(askKey))
+      const jump = (sourceId) => {
+        const open = relateBridge.openSource
+        if (typeof open === 'function') open(sourceId)
       }
 
-      const close = () => {
-        if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
-        if (typeof props.onClose === 'function') props.onClose()
-      }
+      const summary = [
+        t(kind === 'thought' ? 'relate.thisThought' : 'relate.thisNote'),
+        fmtDate(entry.createTime),
+        chapter === '' ? '' : `《${chapter}》`,
+      ].filter((item) => item !== '').join(' · ')
 
-      const stop = (event) => {
-        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
-      }
+      const rowsView = parsed.rows.map((row) => {
+        const current = savedOf(row.id)
+        const known = craftSourceHit(row.id, relateBridge.lookup || {}) !== null || row.candidate !== null
+        return h(
+          'div',
+          { className: 'wr-relate-item', key: row.id, 'data-missing': known ? 'false' : 'true' },
+          h(
+            'div',
+            { className: 'wr-relate-meta' },
+            known
+              ? h(
+                  'button',
+                  {
+                    className: 'wr-relate-chip',
+                    type: 'button',
+                    title: row.id,
+                    onClick: (event) => {
+                      stop(event)
+                      jump(row.id)
+                    },
+                  },
+                  row.id,
+                )
+              : h('span', { className: 'wr-relate-chip', 'data-missing': 'true', title: row.id }, `${row.id} · ${t('mat.status.missing')}`),
+            h('span', { className: 'wr-relate-when' }, [fmtDate(row.candidate.time), row.candidate.chapter === '' ? '' : `《${row.candidate.chapter}》`].filter((item) => item !== '').join(' · ')),
+          ),
+          h('p', { className: 'wr-relate-text' }, clip(row.candidate.text, 90)),
+          h('p', { className: 'wr-relate-why' }, `${t('relate.why')}${row.why}`),
+          h(
+            'div',
+            { className: 'wr-relate-labels' },
+            RELATION_LABELS.map(([label, key]) =>
+              h(
+                'button',
+                {
+                  className: 'wr-relate-label',
+                  key,
+                  type: 'button',
+                  'data-on': current && current.label === label ? 'true' : 'false',
+                  disabled: rowBusy !== '',
+                  onClick: (event) => {
+                    stop(event)
+                    saveRelation(row, label)
+                  },
+                },
+                t(key),
+              ),
+            ),
+            current
+              ? h(
+                  'button',
+                  {
+                    className: 'wr-relate-label',
+                    type: 'button',
+                    disabled: rowBusy !== '',
+                    onClick: (event) => {
+                      stop(event)
+                      dropRelation(row)
+                    },
+                  },
+                  t('relate.remove'),
+                )
+              : null,
+            current ? h('span', { className: 'wr-relate-saved' }, t('relate.saved')) : null,
+          ),
+        )
+      })
 
-      // authorType 目前没有活路径：能打开对话卡的只有摘录（note）与想法（thought）。
-      // 素材还打不开 AskCard，所以这条参数现在恒为 undefined —— 留着是为了「素材接追问」那天
-      // 由调用方直接传进来，别当死代码删掉；要不要让素材也能追问是产品决定，别在这里顺手改交互。
-      const kindLabel = packKindLabel(props.kind, props.type, props.authorType)
-      const chapter = String(
-        (props.kind === 'note' ? props.entry && props.entry.chapterTitle : props.entry && props.entry.chapterName) || '',
-      )
-      const book = String((props.entry && props.entry.bookTitle) || '')
+      const resultView = answer === ''
+        ? null
+        : h(
+            'div',
+            { className: 'wr-relate-list' },
+            parsed.prose === '' ? null : h('p', { className: 'wr-relate-answer' }, parsed.prose),
+            parsed.rows.length === 0
+              ? h(
+                  'div',
+                  null,
+                  h('p', { className: 'wr-relate-answer' }, t('relate.none')),
+                  h(
+                    'p',
+                    { className: 'wr-relate-why' },
+                    chapter === '' ? t('relate.noneNoChapter') : t('relate.noneHint', { chapter }),
+                  ),
+                )
+              : h('div', { className: 'wr-relate-list' }, h('p', { className: 'wr-relate-title' }, t('relate.together')), rowsView),
+          )
+
+      const asksView = parsed.asks.length === 0 || busy
+        ? null
+        : h(
+            'div',
+            { className: 'wr-relate-asks' },
+            h('p', { className: 'wr-relate-title' }, t('relate.followup')),
+            parsed.asks.map((text, index) =>
+              h(
+                'button',
+                {
+                  className: 'wr-relate-ask',
+                  key: `${index}-${text}`,
+                  type: 'button',
+                  onClick: (event) => {
+                    stop(event)
+                    run(text)
+                  },
+                },
+                `${t('relate.askPrefix')}${text}`,
+              ),
+            ),
+          )
 
       return h(
         'div',
         {
-          className: 'wr-ask',
-          // 就地展开：卡片是记录卡里的普通文档流元素，长回答只把页面撑高，不再浮在按钮上面。
-          'data-inline': 'true',
+          className: 'wr-relate-card',
+          'data-kind': kind,
           onClick: stop,
           onKeyDown: (event) => {
             if (event && event.key === 'Escape') close()
@@ -2687,18 +3007,13 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         },
         h(
           'div',
-          { className: 'wr-ask-head' },
-          h(
-            'div',
-            { className: 'wr-ask-meta' },
-            h('span', { className: 'wr-ask-kind' }, kindLabel),
-            h('strong', { className: 'wr-ask-book', title: book }, book === '' ? t('think.packUnknown') : `《${book}》`),
-            chapter === '' ? null : h('span', { className: 'wr-ask-chapter' }, chapter),
-          ),
+          { className: 'wr-relate-head' },
+          h('span', { className: 'wr-relate-kind' }, t(kind === 'thought' ? 'src.thought' : 'src.note')),
+          h('strong', { className: 'wr-relate-book', title: book }, book === '' ? t('think.packUnknown') : `《${book}》`),
           h(
             'button',
             {
-              className: 'wr-ask-close',
+              className: 'wr-relate-close',
               type: 'button',
               'aria-label': t('action.dismiss'),
               onClick: (event) => {
@@ -2709,74 +3024,64 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             '×',
           ),
         ),
-        h(
-          'div',
-          { className: 'wr-ask-tools' },
-          THINK_MODES.map(([id, labelKey, askKey]) =>
-            h(
-              'button',
-              {
-                className: 'wr-ask-chip',
-                key: id,
-                type: 'button',
-                'data-on': active === id ? 'true' : 'false',
-                disabled: busy,
-                onClick: (event) => {
-                  stop(event)
-                  fillMode(id, askKey)
-                },
-              },
-              t(labelKey),
-            ),
-          ),
-          h(
-            'button',
-            {
-              className: 'wr-ask-chip',
-              type: 'button',
-              'data-on': active === 'custom' ? 'true' : 'false',
-              disabled: busy,
-              onClick: (event) => {
-                stop(event)
-                setActive('custom')
-                setDraft('')
-                touchedRef.current = false
-              },
-            },
-            t('think.mode.custom'),
-          ),
-        ),
-        h(
-          'div',
-          { className: 'wr-ask-body', ref: bodyRef },
-          messages.length === 0 ? h('div', { className: 'wr-ask-empty' }, t('think.empty')) : null,
-          messages.map((msg, index) =>
-            h(
-              'div',
-              { className: 'wr-ask-msg', 'data-role': msg.role, key: `${msg.role}-${index}` },
-              msg.role === 'assistant' && msg.text === ''
-                ? h('span', { className: 'wr-ask-typing' }, t('think.thinking'))
-                : msg.text,
-            ),
-          ),
-        ),
-        h(AskAdopt, { answer: lastAnswer, entry: props.entry, kind: props.kind, model }),
-        // 请求真的失败了才说话：错误原文 + 一次重试，不靠预检猜「能不能用」。
-        error === ''
+        h('p', { className: 'wr-relate-summary' }, summary),
+        noBook
+          ? h('p', { className: 'wr-relate-offline' }, t('relate.noBook'))
+          : null,
+        tooFew && !noBook
+          ? h('p', { className: 'wr-relate-offline' }, t('relate.tooFew'))
+          : null,
+        noBook || tooFew
           ? null
           : h(
               'div',
-              { className: 'wr-ask-error' },
-              h('span', { className: 'wr-ask-error-text' }, `${t('error.prefix')}${error}`),
+              { className: 'wr-relate-ask-line' },
+              h('textarea', {
+                className: 'wr-relate-input',
+                rows: 2,
+                value: draft,
+                placeholder: t('relate.placeholder'),
+                disabled: busy,
+                onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
+                onKeyDown: (event) => {
+                  if (!event || event.key !== 'Enter' || event.shiftKey) return
+                  stop(event)
+                  run(draft)
+                },
+              }),
               h(
                 'button',
                 {
-                  className: 'wr-ask-retry',
+                  className: 'wr-relate-send',
                   type: 'button',
                   disabled: busy,
                   onClick: (event) => {
                     stop(event)
-                    retry()
+                    run(draft)
+                  },
+                },
+                busy ? t('relate.thinking') : t('relate.send'),
+              ),
+            ),
+        busy && answer === '' ? h('p', { className: 'wr-relate-offline' }, t('relate.thinking')) : null,
+        resultView,
+        asksView,
+        error === ''
+          ? null
+          : h(
+              'div',
+              { className: 'wr-relate-error' },
+              `${t('error.prefix')}${error}`,
+              h(
+                'button',
+                {
+                  className: 'wr-relate-ask',
+                  type: 'button',
+                  disabled: busy,
+                  style: { marginLeft: '8px' },
+                  onClick: (event) => {
+                    stop(event)
+                    run(lastQuestionRef.current)
                   },
                 },
                 t('think.retry'),
@@ -2784,246 +3089,82 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             ),
         h(
           'div',
-          { className: 'wr-ask-foot' },
-          h('textarea', {
-            className: 'wr-ask-input',
-            rows: 2,
-            value: draft,
-            placeholder: t('think.customPlaceholder'),
-            ref: inputRef,
-            onChange: (event) => {
-              touchedRef.current = true
-              setDraft(event ? String(event.target.value || '') : '')
-            },
-            onKeyDown: (event) => {
-              if (!event || event.key !== 'Enter') return
-              if (event.shiftKey) return
-              stop(event)
-              send(draft)
-            },
-          }),
+          { className: 'wr-relate-foot' },
+          kept === ''
+            ? null
+            : h('span', { className: 'wr-relate-notice' }, `${t('relate.kept')} · ${t('nav.responses')}`),
+          rowError === '' ? null : h('span', { className: 'wr-relate-error' }, rowError),
           h(
-            'button',
-            {
-              className: 'wr-ask-send',
-              type: 'button',
-              disabled: busy || draft.trim() === '',
-              onClick: (event) => {
-                stop(event)
-                send(draft)
-              },
-            },
-            busy ? t('think.thinking') : t('think.send'),
-          ),
-        ),
-        h('div', { className: 'wr-ask-note' }, model === '' ? t('think.aiNote') : `${t('think.aiNote')} · ${model}`),
-      )
-    }
-
-    /**
-     * Degradation ①: WeRead does not record which highlight a thought answered,
-     * so we cannot pick the source for the reader. Ask, and let them skip — a
-     * skipped thought keeps `thought:<id>` as its only source instead of a guess.
-     */
-    function MaterialPicker(props) {
-      const entry = props.entry || {}
-      const kind = props.kind === 'thought' ? 'thought' : 'note'
-      const [type, setType] = useState(kind === 'note' ? '金句' : '观点')
-      const [linkId, setLinkId] = useState('')
-      const [busy, setBusy] = useState(false)
-      const [error, setError] = useState('')
-      const ownId = `${kind}:${String(entry.id === undefined || entry.id === null ? '' : entry.id)}`
-      const text = String((kind === 'thought' ? entry.content : entry.text) || '')
-      const same = Array.isArray(props.context) ? props.context.filter((note) => note && note.id !== undefined && note.id !== null) : []
-
-      const save = () => {
-        const write = craftBridge.write
-        if (typeof write !== 'function') {
-          setError(t('craft.offline'))
-          return
-        }
-        const sourceIds = kind === 'thought' && linkId !== '' ? [`note:${linkId}`, ownId] : [ownId]
-        setBusy(true)
-        setError('')
-        write('material.add', { type, text, sourceIds, authorType: 'human', origin: 'craft' })
-          .then(() => {
-            setBusy(false)
-            if (typeof props.onClose === 'function') props.onClose(true)
-          })
-          .catch((thrown) => {
-            setBusy(false)
-            setError(thrown && thrown.message ? thrown.message : String(thrown))
-          })
-      }
-
-      return h(
-        'div',
-        { className: 'wr-modal-mask', onMouseDown: (event) => { if (event.target === event.currentTarget) props.onClose(false) }, onClick: (event) => { if (event && typeof event.stopPropagation === 'function') event.stopPropagation() } },
-        h(
-          'div',
-          {
-            className: 'wr-modal wr-picker',
-            role: 'dialog',
-            'aria-modal': 'true',
-            onKeyDown: (event) => {
-              if (event.key === 'Escape') props.onClose(false)
-            },
-          },
-          h('div', { className: 'wr-export-head' },
-            h('h3', null, t('mat.picker.title')),
-            h('span', { className: 'wr-muted' }, kind === 'thought' ? t('nav.thoughts') : t('nav.notes')),
-          ),
-          h('div', { className: 'wr-modal-body' },
-            h('p', { className: 'wr-item-text' }, clip(text, 160)),
-            h('div', { className: 'wr-export-opts' },
-              h('span', { className: 'wr-muted' }, t('ask.adoptType')),
-              MATERIAL_TYPES.map(([label, key]) =>
-                h(
-                  'button',
-                  { className: 'wr-chip', key: label, type: 'button', 'data-active': type === label ? 'true' : 'false', disabled: busy, onClick: () => setType(label) },
-                  t(key),
-                ),
-              ),
-            ),
-            kind !== 'thought'
-              ? null
-              : h(
-                  'div',
-                  { className: 'wr-picker-link' },
-                  h('p', { className: 'wr-notice-line' }, t('mat.picker.noteHint')),
-                  same.length === 0
-                    ? h('p', { className: 'wr-muted' }, t('mat.picker.empty'))
-                    : h(
-                        'div',
-                        { className: 'wr-picklist' },
-                        h(
-                          'button',
-                          { className: 'wr-pickrow', type: 'button', 'data-on': linkId === '' ? 'true' : 'false', disabled: busy, onClick: () => setLinkId('') },
-                          h('span', { className: 'wr-pickrow-mark' }, linkId === '' ? '✓' : ''),
-                          h('span', null, t('mat.picker.skip')),
-                        ),
-                        same.map((note) =>
-                          h(
-                            'button',
-                            {
-                              className: 'wr-pickrow',
-                              key: note.id,
-                              type: 'button',
-                              'data-on': linkId === String(note.id) ? 'true' : 'false',
-                              disabled: busy,
-                              onClick: () => setLinkId(String(note.id)),
-                            },
-                            h('span', { className: 'wr-pickrow-mark' }, linkId === String(note.id) ? '✓' : ''),
-                            h('span', null, clip(String(note.text || ''), 90)),
-                          ),
-                        ),
-                      ),
-                ),
-            error === '' ? null : h('p', { className: 'wr-adopt-error' }, t('mat.failed', { error })),
-          ),
-          h('div', { className: 'wr-modal-foot' },
-            h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => props.onClose(false) }, t('mat.picker.cancel')),
-            h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: save }, busy ? t('state.loading') : t('mat.picker.save')),
-          ),
-        ),
-      )
-    }
-
-    /** Four ways to keep thinking; each opens the conversation card in place. */
-    function ThinkingBar(props) {
-      const [open, setOpen] = useState(null)
-      const [pick, setPick] = useState(false)
-      const [saved, setSaved] = useState('')
-      const barRef = useRef(null)
-
-      const stop = (event) => {
-        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
-      }
-
-      const openCard = (mode, askKey) => {
-        const node = barRef.current
-        let anchor = { x: 40, y: 140 }
-        if (node && typeof node.getBoundingClientRect === 'function') {
-          const rect = node.getBoundingClientRect()
-          anchor = { x: rect.left, y: rect.bottom }
-        }
-        setOpen({ mode, question: askKey === null ? '' : t(askKey), anchor })
-      }
-
-      // 同 AskCard：authorType 现在没有活路径（ThinkingBar 只挂在摘录与想法上），
-      // 透传是为了素材将来接追问时不必再改一遍链路；没有为它新增任何交互。
-      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, type: props.type, authorType: props.authorType, context: props.context })
-
-      return h(
-        'div',
-        { className: 'wr-think', ref: barRef, 'data-open': open === null ? 'false' : 'true' },
-        h(
-          'div',
-          { className: 'wr-think-row' },
-          THINK_MODES.map(([id, labelKey, askKey]) =>
+            'div',
+            { className: 'wr-relate-actions' },
             h(
               'button',
               {
-                className: 'wr-think-btn',
-                key: id,
+                className: 'wr-btn wr-btn-ghost',
+                type: 'button',
+                disabled: rowBusy !== '' || answer === '',
+                onClick: (event) => {
+                  stop(event)
+                  keepThought()
+                },
+              },
+              t('relate.keepThought'),
+            ),
+            h(
+              'button',
+              {
+                className: 'wr-relate-ask',
                 type: 'button',
                 onClick: (event) => {
                   stop(event)
-                  openCard(id, askKey)
+                  close()
                 },
               },
-              t(labelKey),
+              t('relate.collapse'),
             ),
           ),
-          h(
-            'button',
-            {
-              className: 'wr-think-btn',
-              type: 'button',
-              onClick: (event) => {
-                stop(event)
-                openCard('', null)
-              },
-            },
-            t('think.mode.custom'),
-          ),
-          h(
-            'button',
-            {
-              className: 'wr-think-btn wr-think-take',
-              type: 'button',
-              onClick: (event) => {
-                stop(event)
-                setPick(true)
-              },
-            },
-            t('ask.adoptMaterial'),
-          ),
-          saved ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('mat.picker.saved')) : null,
         ),
-        pick
-          ? h(MaterialPicker, {
-              entry: props.entry,
-              kind: props.kind,
-              context: props.context,
-              onClose: (didSave) => {
-                setPick(false)
-                if (didSave === true) setSaved('material')
+      )
+    }
+
+    /** The one entry a record card shows: 「放回书里看」, and then the card in place. */
+    function RelateBar(props) {
+      const entry = props.entry || {}
+      const kind = props.kind === 'thought' ? 'thought' : 'note'
+      const open = Boolean(props.open)
+      const stop = (event) => {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+      }
+      return h(
+        'div',
+        { className: 'wr-relate', 'data-open': open ? 'true' : 'false' },
+        h(
+          'div',
+          { className: 'wr-relate-row' },
+          open
+            ? null
+            : h(
+                'button',
+                {
+                  className: 'wr-relate-go',
+                  type: 'button',
+                  onClick: (event) => {
+                    stop(event)
+                    if (typeof props.onToggle === 'function') props.onToggle(true)
+                  },
+                },
+                t('nav.relate'),
+              ),
+        ),
+        open
+          ? h(RelateCard, {
+              entry,
+              kind,
+              onToggle: (next) => {
+                if (typeof props.onToggle === 'function') props.onToggle(next)
               },
             })
           : null,
-        open === null
-          ? null
-          : h(AskCard, {
-              pack,
-              entry: props.entry,
-              kind: props.kind,
-              type: props.type,
-              question: open.question,
-              mode: open.mode,
-              anchor: open.anchor,
-              onClose: () => setOpen(null),
-            }),
       )
     }
 
@@ -3031,12 +3172,15 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const note = props.note
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
       const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
+      // The card itself widens while it is showing the relate card, so the rows have
+      // the full column instead of wrapping in a 300px tile.
+      const [relate, setRelate] = useState(false)
       return h(
         'div',
-        { className: 'wr-quote', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-quote', 'data-wide': relate ? 'true' : 'false', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: 'wr-quote-text', text: note.text, needle: props.needle }),
-        h(ThinkingBar, { entry: note, kind: 'note', context: [] }),
+        h(RelateBar, { entry: note, kind: 'note', open: relate, onToggle: setRelate }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -3066,12 +3210,13 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const clampable = Boolean(props.wall) && content.length > THOUGHT_CLAMP_CHARS
       const [expanded, setExpanded] = useState(false)
       const [threadOpen, setThreadOpen] = useState(false)
+      const [relate, setRelate] = useState(false)
       const context = Array.isArray(props.context) ? props.context : []
       const slice = context.slice(0, 6)
       const showClamped = clampable && !expanded
       return h(
         'div',
-        { className: 'wr-thought', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-thought', 'data-wide': relate ? 'true' : 'false', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: showClamped ? 'wr-quote-text wr-clamp' : 'wr-quote-text', text: content, needle: props.needle }),
         clampable
@@ -3088,7 +3233,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
               expanded ? t('thought.collapse') : t('thought.expand', { count: String(content.length - THOUGHT_CLAMP_CHARS) }),
             )
           : null,
-        h(ThinkingBar, { entry: thought, kind: 'thought', context: context }),
+        h(RelateBar, { entry: thought, kind: 'thought', open: relate, onToggle: setRelate }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -3145,8 +3290,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       thoughts: 'read',
       book: 'read',
       responses: 'think',
-      materials: 'create',
-      topics: 'create',
       works: 'create',
       timeline: 'grow',
       annual: 'grow',
@@ -3165,11 +3308,10 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         ['thoughts', 'nav.thoughts'],
       ],
       think: [['responses', 'nav.responses']],
-      create: [
-        ['materials', 'nav.materials'],
-        ['topics', 'nav.topics'],
-        ['works', 'nav.works'],
-      ],
+      // 1.2.2 §5.1: the material basket and the topic board left the interface. The
+      // data and the host routes stay (old works still cite materials), so nothing is
+      // lost — but CREATE now has exactly one page.
+      create: [['works', 'nav.works']],
       grow: [
         ['timeline', 'nav.timeline'],
         ['annual', 'nav.annual'],
@@ -3215,6 +3357,15 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         ids.map((id) => {
           const kind = sourceKind(id)
           const label = sourceLabel(id, props.lookup)
+          // 1.2.2 §5.6: materials left the interface, so their chips are plain text
+          // that says so, and stay that way even where other chips can be clicked.
+          if (kind === 'material') {
+            return h(
+              'span',
+              { className: 'wr-src', key: id, 'data-kind': 'material', 'data-retired': 'true', title: t('src.materialRetired') },
+              label,
+            )
+          }
           // F3: a source chip is the way back to what it came from. When the
           // excerpt or material has moved out of the window it stays clickable
           // and says so instead of silently looking like a dead label.
@@ -3341,7 +3492,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       )
     }
 
-    /** F-19: the six steps of one book, counted where the data actually lives. */
+    /** F-19: the four steps of one book that still have a page, counted where the data lives. */
     function BookChain(props) {
       const book = props.book || {}
       const craft = props.craft || EMPTY_CRAFT
@@ -3351,12 +3502,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const byBook = (list) =>
         (Array.isArray(list) ? list : []).filter((item) => String(item.bookId || '') === String(book.bookId || '')).length
       const pick = (key, list) => (host && typeof host[key] === 'number' ? host[key] : byBook(list))
+      // 素材 / 选题 left the interface in 1.2.2, so the chain no longer counts them:
+      // a step you cannot walk to is not a step.
       const rows = [
         ['notes', Number(book.noteCount) || 0, 'chain.notes'],
         ['thoughts', Number(book.reviewCount) || 0, 'chain.thoughts'],
         ['responses', pick('responses', craft.responses), 'chain.responses'],
-        ['materials', pick('materials', craft.materials), 'chain.materials'],
-        ['topics', pick('topics', craft.topics), 'chain.topics'],
         ['works', pick('works', craft.works), 'chain.works'],
       ]
       const cached = index ? index.cached !== false : true
@@ -3454,262 +3605,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       )
     }
 
-    function MaterialBoard(props) {
-      const craft = props.craft || EMPTY_CRAFT
-      const [type, setType] = useState('')
-      const scope = String(props.scopeBookId || '')
-      const rows = (Array.isArray(craft.materials) ? craft.materials : [])
-        .filter((item) => (type === '' || item.type === type) && (scope === '' || String(item.bookId) === scope))
-        .slice()
-        .sort((left, right) => (Number(right.createdAt) || 0) - (Number(left.createdAt) || 0))
-      const cachedOf = (bookId) => {
-        const index = (Array.isArray(craft.bookIndex) ? craft.bookIndex : []).find((row) => String(row.bookId) === String(bookId))
-        return index ? index.cached !== false : true
-      }
-      if (props.craftState === 'failed') {
-        return h(
-          'div',
-          { className: 'wr-empty' },
-          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
-          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
-          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
-        )
-      }
-      return h(
-        'div',
-        null,
-        h(
-          'div',
-          { className: 'wr-toolbar' },
-          h(
-            'div',
-            { className: 'wr-chips' },
-            h(
-              'button',
-              { className: 'wr-chip', type: 'button', 'data-active': type === '' ? 'true' : 'false', onClick: () => setType('') },
-              t('mat.filterAll'),
-            ),
-            MATERIAL_TYPES.map(([label, key]) =>
-              h(
-                'button',
-                { key: label, className: 'wr-chip', type: 'button', 'data-active': type === label ? 'true' : 'false', onClick: () => setType(label) },
-                t(key),
-              ),
-            ),
-          ),
-          h('span', { className: 'wr-muted' }, t('mat.count', { count: String(rows.length) })),
-        ),
-        rows.length === 0
-          ? h(CraftEmpty, { titleKey: 'mat.empty.title', nextKey: 'mat.empty.next', actionKey: 'mat.empty.action', onAction: props.onGoShelf })
-          : h(
-              'div',
-              { className: 'wr-stack' },
-              rows.map((item) =>
-                h(
-                  'div',
-                  { className: 'wr-item', key: item.id, 'data-focus': props.focusId === item.id ? 'true' : 'false' },
-                  h(
-                    'div',
-                    { className: 'wr-item-head' },
-                    h('span', { className: 'wr-tag' }, t(materialTypeKey(item.type))),
-                    h(
-                      'button',
-                      { className: 'wr-chip', type: 'button', onClick: () => props.onOpenBook(item.bookId, 'thoughts'), title: item.bookTitle },
-                      clip(String(item.bookTitle || bookTitleOf(item.bookId, props.data, craft) || '—'), 20),
-                    ),
-                    item.authorType === 'ai' || item.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('mat.aiTag')) : null,
-                    cachedOf(item.bookId) ? null : h('span', { className: 'wr-degraded' }, t('mat.cached')),
-                    item.verification && item.verification.status !== 'ok'
-                      ? h('span', { className: 'wr-tag', 'data-tone': item.verification.status }, t(`mat.status.${item.verification.status}`))
-                      : null,
-                  ),
-                  h('p', { className: 'wr-item-text' }, String(item.text || '')),
-                  h(
-                    'div',
-                    { className: 'wr-item-meta' },
-                    h(SourceTags, { sourceIds: item.sourceIds, lookup: props.lookup, onOpenSource: props.onOpenSource }),
-                    // B3: a material can be re-typed in place — type is the only
-                    // field the material board owns, so no separate editor.
-                    h(
-                      'select',
-                      {
-                        className: 'wr-select wr-type-switch',
-                        value: item.type,
-                        title: t('mat.type.switch'),
-                        'aria-label': t('mat.type.switch'),
-                        onChange: (event) => {
-                          const next = event && event.target ? String(event.target.value || '') : ''
-                          if (next === '' || next === item.type) return
-                          props.write('material.update', { id: item.id, type: next })
-                        },
-                      },
-                      MATERIAL_TYPES.map(([label, key]) => h('option', { key: label, value: label }, t(key))),
-                    ),
-                    h('span', null, fmtStamp(item.createdAt)),
-                    h(DangerButton, { onDelete: () => props.onDelete(item.id) }),
-                  ),
-                ),
-              ),
-            ),
-      )
-    }
-
-    function TopicBoard(props) {
-      const craft = props.craft || EMPTY_CRAFT
-      const materials = Array.isArray(craft.materials) ? craft.materials : []
-      const topics = (Array.isArray(craft.topics) ? craft.topics : []).slice().sort((left, right) => (Number(right.createdAt) || 0) - (Number(left.createdAt) || 0))
-      const scope = String(props.scopeBookId || '')
-      const shown = scope === '' ? topics : topics.filter((item) => (Array.isArray(item.bookIds) ? item.bookIds : []).map(String).includes(scope))
-      const [statement, setStatement] = useState('')
-      const [gapNote, setGapNote] = useState('')
-      const [picked, setPicked] = useState([])
-      const [busy, setBusy] = useState(false)
-      const [error, setError] = useState('')
-      const [open, setOpen] = useState(false)
-      const toggle = (id) => setPicked((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : prev.concat([id])))
-      const create = () => {
-        if (statement.trim() === '') {
-          setError(t('topic.needStatement'))
-          return
-        }
-        if (picked.length === 0) {
-          setError(t('topic.needMaterial'))
-          return
-        }
-        setBusy(true)
-        setError('')
-        Promise.resolve(props.write('topic.add', { statement: statement.trim(), materialIds: picked, gapNote: gapNote.trim() }))
-          .then(() => {
-            setBusy(false)
-            setStatement('')
-            setGapNote('')
-            setPicked([])
-            setOpen(false)
-          })
-          .catch((thrown) => {
-            setBusy(false)
-            setError(thrown && thrown.message ? thrown.message : String(thrown))
-          })
-      }
-      if (props.craftState === 'failed') {
-        return h(
-          'div',
-          { className: 'wr-empty' },
-          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
-          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
-          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
-        )
-      }
-      return h(
-        'div',
-        null,
-        h(
-          'div',
-          { className: 'wr-toolbar' },
-          h('span', { className: 'wr-muted' }, t('topic.count', { count: String(shown.length) })),
-          materials.length === 0
-            ? null
-            : h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: () => setOpen(!open) }, t('topic.new')),
-        ),
-        open
-          ? h(
-              'div',
-              { className: 'wr-form' },
-              h('input', {
-                className: 'wr-input',
-                value: statement,
-                placeholder: t('topic.statementPlaceholder'),
-                maxLength: 400,
-                onChange: (event) => setStatement(event ? String(event.target.value || '') : ''),
-              }),
-              h('input', {
-                className: 'wr-input',
-                value: gapNote,
-                placeholder: t('topic.gapPlaceholder'),
-                onChange: (event) => setGapNote(event ? String(event.target.value || '') : ''),
-              }),
-              h('span', { className: 'wr-muted' }, t('topic.pickMaterials')),
-              h(
-                'div',
-                { className: 'wr-picklist' },
-                materials.map((material) =>
-                  h(
-                    'button',
-                    {
-                      className: 'wr-pickrow',
-                      key: material.id,
-                      type: 'button',
-                      'data-on': picked.includes(material.id) ? 'true' : 'false',
-                      disabled: busy,
-                      onClick: () => toggle(material.id),
-                    },
-                    h('span', { className: 'wr-pickrow-mark' }, picked.includes(material.id) ? '✓' : ''),
-                    h('span', null, `${t(materialTypeKey(material.type))} · ${clip(String(material.text || ''), 70)}`),
-                  ),
-                ),
-              ),
-              error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
-              h(
-                'div',
-                { className: 'wr-form-row' },
-                h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: create }, busy ? t('state.loading') : t('topic.create')),
-                h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => setOpen(false) }, t('action.cancel')),
-              ),
-            )
-          : null,
-        shown.length === 0
-          ? h(CraftEmpty, {
-              titleKey: 'topic.empty.title',
-              nextKey: 'topic.empty.next',
-              actionKey: 'topic.empty.action',
-              onAction: props.onGoMaterials,
-            })
-          : h(
-              'div',
-              { className: 'wr-stack' },
-              shown.map((item) =>
-                h(
-                  'div',
-                  { className: 'wr-item', key: item.id },
-                  h('p', { className: 'wr-item-text' }, String(item.statement || '')),
-                  item.gapNote ? h('p', { className: 'wr-notice-line' }, `${t('topic.gap')}：${item.gapNote}`) : null,
-                  h(
-                    'div',
-                    { className: 'wr-item-meta' },
-                    (Array.isArray(item.bookIds) ? item.bookIds : []).map((bookId) =>
-                      // B5: a topic's books are entry points, not decoration.
-                      h(
-                        'button',
-                        {
-                          className: 'wr-chip',
-                          key: bookId,
-                          type: 'button',
-                          title: bookTitleOf(bookId, props.data, craft) || String(bookId),
-                          onClick: () => props.onOpenBook(bookId, 'thoughts'),
-                        },
-                        clip(bookTitleOf(bookId, props.data, craft) || String(bookId), 18),
-                      ),
-                    ),
-                    h('span', null, t('topic.materialCount', { count: String((item.materialIds || []).length) })),
-                    h(
-                      'button',
-                      { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => props.onDraft(item) },
-                      t('topic.draft'),
-                    ),
-                    h(SourceTags, { sourceIds: (item.materialIds || []).map((id) => `material:${id}`), lookup: props.lookup, onOpenSource: props.onOpenSource }),
-                    h(DangerButton, { onDelete: () => props.onDelete(item.id) }),
-                  ),
-                ),
-              ),
-            ),
-      )
-    }
-
-    /**
-     * F-23: draft one paragraph from the sources that paragraph already cites.
-     * The text stays a draft until it is kept — nothing is written while it
-     * streams, and a failed turn leaves no half paragraph behind.
-     */
     function ParagraphAI(props) {
       const [open, setOpen] = useState(false)
       const [stage, setStage] = useState('')
@@ -3876,7 +3771,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           { className: 'wr-paragraph-main' },
           editing
             ? h('textarea', {
-                className: 'wr-ask-input',
+                className: 'wr-line-input',
                 rows: 3,
                 value: text,
                 onChange: (event) => setText(event ? String(event.target.value || '') : ''),
@@ -4021,7 +3916,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             )
           : null,
         works.length === 0
-          ? h(CraftEmpty, { titleKey: 'work.empty.title', nextKey: 'work.empty.next', actionKey: 'work.empty.action', onAction: props.onGoTopics })
+          ? h(CraftEmpty, { titleKey: 'work.empty.title', nextKey: 'work.empty.next', actionKey: 'work.empty.actionShelf', onAction: props.onGoShelf })
           : h(
               'div',
               null,
@@ -4094,7 +3989,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                       'div',
                       { className: 'wr-form' },
                       h('textarea', {
-                        className: 'wr-ask-input',
+                        className: 'wr-line-input',
                         rows: 3,
                         value: draft,
                         placeholder: t('work.paragraphPlaceholder'),
@@ -4166,10 +4061,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
     function GrowTimeline(props) {
       const craft = props.craft || EMPTY_CRAFT
       const bookIdOf = typeof props.bookIdOf === 'function' ? props.bookIdOf : null
-      const materials = Array.isArray(craft.materials) ? craft.materials : []
       // B1: every event has to know which book it came from, so a timeline row
-      // can go back to the shelf instead of being decoration. Topics and works
-      // stop holding bookId on purpose — the books come from what they cite.
+      // can go back to the shelf instead of being decoration. Works stop holding
+      // bookId on purpose — the books come from what they cite.
+      //
+      // 1.2.2 §5.1: materials and topics left the interface, so their events are no
+      // longer shown. The records themselves stay in craft.json untouched.
       const booksOf = (sourceIds) => {
         const seen = []
         for (const sourceId of Array.isArray(sourceIds) ? sourceIds : []) {
@@ -4190,31 +4087,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           open: () => {
             if (typeof props.onOpenSource === 'function') props.onOpenSource(`response:${item.id}`)
           },
-        })
-      }
-      for (const item of materials) {
-        const bookId = String(item.bookId || '')
-        events.push({
-          key: `material:${item.id}`,
-          kind: 'material',
-          at: item.createdAt,
-          text: item.text,
-          bookIds: bookId === '' ? [] : [bookId],
-          open: () => {
-            if (typeof props.onOpenSource === 'function') props.onOpenSource(`material:${item.id}`)
-          },
-        })
-      }
-      for (const item of Array.isArray(craft.topics) ? craft.topics : []) {
-        const sourceIds = (Array.isArray(item.materialIds) ? item.materialIds : []).map((id) => `material:${id}`)
-        const bookIds = booksOf(sourceIds)
-        events.push({
-          key: `topic:${item.id}`,
-          kind: 'topic',
-          at: item.createdAt,
-          text: item.statement,
-          bookIds,
-          open: bookIds.length === 1 ? () => props.onOpenBook(bookIds[0], 'thoughts') : null,
         })
       }
       for (const item of Array.isArray(craft.works) ? craft.works : []) {
@@ -4456,7 +4328,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                 h(
                   'p',
                   { className: 'wr-notice-line' },
-                  `${t('grow.annual.craft')}：${t('nav.responses')} ${fmtCount(Number(craftCounts.responses) || 0)} · ${t('nav.materials')} ${fmtCount(Number(craftCounts.materials) || 0)} · ${t('nav.topics')} ${fmtCount(Number(craftCounts.topics) || 0)} · ${t('nav.works')} ${fmtCount(Number(craftCounts.works) || 0)}`,
+                  `${t('grow.annual.craft')}：${t('nav.responses')} ${fmtCount(Number(craftCounts.responses) || 0)} · ${t('nav.works')} ${fmtCount(Number(craftCounts.works) || 0)}`,
                 ),
                 h(
                   'div',
@@ -5564,8 +5436,10 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const journeyCounts = {
         read: (Number(counts.notes) || 0) + (Number(counts.thoughts) || 0),
         think: (craft.responses || []).length,
-        create: (craft.materials || []).length + (craft.topics || []).length + (craft.works || []).length,
-        grow: (craft.responses || []).length + (craft.materials || []).length + (craft.topics || []).length + (craft.works || []).length,
+        // 1.2.2 §5.1: materials and topics left the interface, so they no longer
+        // advertise themselves in the journey bar either.
+        create: (craft.works || []).length,
+        grow: (craft.responses || []).length + (craft.works || []).length,
       }
       const scopeTitle = scopeBookId === '' ? '' : bookTitleOf(scopeBookId, data, craft) || ''
       const openCraftView = (nextView, bookId) => {
@@ -5590,8 +5464,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           })
           .catch(() => {})
       }
-      // F3: every source chip walks back to the asset it names — a material
-      // opens in the basket, an excerpt or thought opens the book it sits in.
+      // F3: every source chip walks back to the asset it names — an excerpt or a
+      // thought opens the book it sits in, a kept reply opens in THINK. Materials
+      // are retired from the interface, so their chips stay inert (see SourceTags).
       const sourceFocus = useRef('')
       const openSource = (sourceId) => {
         const hit = craftSourceHit(sourceId, lookup)
@@ -5611,7 +5486,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           setView(tab)
           return
         }
-        openCraftView(kind === 'response' ? 'responses' : 'materials', hit.bookId)
+        if (kind === 'response') {
+          openCraftView('responses', hit.bookId)
+        }
       }
       // F2: a work carries no bookIds of its own; the answer comes from its
       // paragraphs' sources, which is also what the reader can verify.
@@ -5637,25 +5514,19 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           setScopeBookId('')
           setView('shelf')
         },
-        onGoMaterials: () => {
-          setScopeBookId('')
-          setView('materials')
-        },
-        onGoTopics: () => {
-          setScopeBookId('')
-          setView('topics')
-        },
         write: craftWrite,
-        onDraft: draftFromTopic,
         onDelete: (id) => {
-          const op = view === 'responses' ? 'response.delete' : view === 'materials' ? 'material.delete' : 'topic.delete'
-          craftWrite(op, { id }).catch(() => {})
+          craftWrite('response.delete', { id }).catch(() => {})
         },
       }
+      // The record cards read the same snapshot the journeys do, through one bridge:
+      // a card deep inside a list cannot be handed props by every parent in between.
+      relateBridge.data = data || {}
+      relateBridge.craft = craft
+      relateBridge.lookup = lookup
+      relateBridge.openSource = openSource
       const craftView = () => {
         if (view === 'responses') return h(ResponseList, craftProps)
-        if (view === 'materials') return h(MaterialBoard, craftProps)
-        if (view === 'topics') return h(TopicBoard, craftProps)
         if (view === 'works') return h(WorkBoard, craftProps)
         if (view === 'timeline') return h(GrowTimeline, craftProps)
         return h(GrowAnnual, { data: data || {}, craft, craftCounts: craft.counts, onGoShelf: craftProps.onGoShelf, onOpenBook: craftProps.onOpenBook })
@@ -5749,7 +5620,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         body = h(StreamView, { data: data || {}, kind: 'note', onOpenBook: openBookById })
       } else if (view === 'thoughts') {
         body = h(StreamView, { data: data || {}, kind: 'thought', onOpenBook: openBookById })
-      } else if (view === 'responses' || view === 'materials' || view === 'topics' || view === 'works' || view === 'timeline' || view === 'annual') {
+      } else if (view === 'responses' || view === 'works' || view === 'timeline' || view === 'annual') {
         body = craftView()
       } else {
         body = h(Overview, { data: data || {} })
@@ -5891,11 +5762,14 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         ThoughtRow,
         THOUGHT_CLAMP_CHARS,
         buildSourcePack,
-        ThinkingBar,
-        AskCard,
-        ASK_WIDTH,
-        AskAdopt,
-        MaterialPicker,
+        RelateBar,
+        RelateCard,
+        relateCandidates,
+        buildRelateAsk,
+        parseRelateAnswer,
+        storedRelation,
+        RELATION_LABELS,
+        relateBridge,
         ParagraphRow,
         ParagraphAI,
         buildParagraphPack,
@@ -5909,8 +5783,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         SubNav,
         BookChain,
         ResponseList,
-        MaterialBoard,
-        TopicBoard,
         WorkBoard,
         GrowTimeline,
         GrowAnnual,
