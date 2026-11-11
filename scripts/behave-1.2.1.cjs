@@ -1201,6 +1201,62 @@ async function main() {
   check('F-29 其他来源仍只要 3 条', !fourContext.includes('4. ') && fourContext.includes('think.packContextMixed'))
   eq('F-29 THINK_LIMITS 仍是 600/3/200', JSON.stringify(smoke.THINK_LIMITS), JSON.stringify({ body: 600, context: 3, contextEach: 200 }))
 
+  // --- 11.6b F-32：采纳 AI 回应整理成的素材，不能在包里冒充我自己的话 -------
+  // 两条同 type 的素材：一条 authorType='ai'（采纳 AI 回应后整理的），一条 'human'。
+  // 走真宿主写入，再用 buildParagraphPack 走完整链路取真实返回值。
+  const aiMaterial = host.craftOp('material.add', {
+    type: '金句',
+    text: '秩序感先给画面，再给判断。',
+    sourceIds: [`note:${NOTE_A1.id}`],
+    authorType: 'ai',
+  }).created.material
+  const humanMaterial = host.craftOp('material.add', {
+    type: '金句',
+    text: '我自己抄下来的一句。',
+    sourceIds: [`note:${NOTE_A1.id}`],
+    authorType: 'human',
+  }).created.material
+  const plainMaterial = host.craftOp('material.add', {
+    type: '金句',
+    text: '没有写作者身份的一句。',
+    sourceIds: [`note:${NOTE_A1.id}`],
+  }).created.material
+  eq('F-32 宿主把 AI 素材的身份存住了', aiMaterial.authorType, 'ai')
+  eq('F-32 自写素材身份是 human', humanMaterial.authorType, 'human')
+  const f32Lookup = {
+    note: lookup.note,
+    thought: lookup.thought,
+    response: lookup.response,
+    material: new Map([
+      [aiMaterial.id, aiMaterial],
+      [humanMaterial.id, humanMaterial],
+      [plainMaterial.id, plainMaterial],
+    ]),
+  }
+  const packOf = (ids) => smoke.buildParagraphPack({ sourceIds: ids, lookup: f32Lookup, titleOf: () => BOOK_A.title })
+  const kindLineOf = (pack) => pack.split('\n').find((line) => line.startsWith('think.packKind')) || ''
+  const numberedOf = (pack) => pack.split('\n').filter((line) => /^\d+\. /.test(line))
+  const aiKind = kindLineOf(packOf([`material:${aiMaterial.id}`]))
+  const humanKind = kindLineOf(packOf([`material:${humanMaterial.id}`]))
+  check('F-32 同 type 的两条素材标签不同', aiKind !== '' && humanKind !== '' && aiKind !== humanKind, `${aiKind} vs ${humanKind}`)
+  check('F-32 AI 素材的标签里有「AI」', aiKind.includes('AI'), aiKind)
+  check('F-32 自写素材的标签里没有「AI」', !humanKind.includes('AI'), humanKind)
+  has('F-32 AI 素材进包用独立正文抬头', packOf([`material:${aiMaterial.id}`]), 'think.packFiledAI')
+  check('F-32 自写素材进包不用 AI 抬头', !packOf([`material:${humanMaterial.id}`]).includes('think.packFiledAI'), humanKind)
+  // 上下文条目也要分身份：分别把对方放在第 1 条位置，逐条看标记。
+  const ctxWithAI = numberedOf(packOf([`material:${humanMaterial.id}`, `material:${aiMaterial.id}`]))
+  const ctxWithHuman = numberedOf(packOf([`material:${aiMaterial.id}`, `material:${humanMaterial.id}`]))
+  check('F-32 上下文第 1 条是 AI 素材时带 AI 标记', Boolean(ctxWithAI[0]) && ctxWithAI[0].includes('AI'), String(ctxWithAI[0]))
+  check('F-32 上下文第 1 条是自写素材时不带 AI 标记', Boolean(ctxWithHuman[0]) && !ctxWithHuman[0].includes('AI'), String(ctxWithHuman[0]))
+  check('F-32 同一段里 AI 与自写素材上下文标签不同', Boolean(ctxWithAI[0]) && Boolean(ctxWithHuman[0]) && ctxWithAI[0] !== ctxWithHuman[0], `${ctxWithAI[0]} vs ${ctxWithHuman[0]}`)
+  // 身份缺失按自写处理：宁可漏标，也不能把用户的话标成 AI。
+  const plainPack = packOf([`material:${plainMaterial.id}`])
+  check('F-32 没写 authorType 的素材按自写处理', !plainPack.includes('AI'), plainPack.split('\n').slice(0, 6).join(' / '))
+  for (const value of ['AI', 'Ai', 'ai ', 'human', '', null, undefined]) {
+    eq(`F-32 materialAuthorIsAI(${String(value)}) 不算 AI`, smoke.materialAuthorIsAI(value), false)
+  }
+  eq('F-32 materialAuthorIsAI(ai) 认出来', smoke.materialAuthorIsAI('ai'), true)
+
   // --- 11.7 F-28 配色：设置里选一套，根节点立刻换色 ------------------------
   const withPalette = (palette) => (palette === '' ? Object.assign({}, statePayload) : Object.assign({}, statePayload, { palette }))
   const palettePicks = []

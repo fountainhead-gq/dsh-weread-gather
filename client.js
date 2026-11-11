@@ -232,6 +232,10 @@ window.__ModuleLoader__.load({
       'think.packKindResponse': '我采纳的 AI 回应',
       'think.packKindMaterial': '我整理的素材',
       'think.packKindMaterialOf': '{role}（{type}）',
+      // F-32: 素材里有一类是「采纳 AI 回应后整理出来的」。它不是新角色，是「我整理的素材」在
+      // AI 语境下的细分——但必须与我自己写的素材分开，否则模型会把 AI 的话当成我的原话。
+      'think.packKindMaterialAI': '我采纳的 AI 回应整理成的素材',
+      'think.packFiledAI': '我采纳的 AI 回应整理成的素材：',
       'think.packTime': '阅读时间：',
       'think.packMine': '我的想法：',
       'think.packAdopted': '我采纳的 AI 回应：',
@@ -239,7 +243,7 @@ window.__ModuleLoader__.load({
       'think.packContext': '同章其他划线（{count} 条，供参考）：',
       'think.packContextMixed': '其他来源（{count} 条，供参考）：',
       'think.packOriginal': '原文：',
-      'think.packFoot': '—— 以上来自「数字书房」。标「书里的原文」的是书里的句子，其余三类（我的想法 / 我采纳的 AI 回应 / 我整理的素材）是我这一侧的记录，引用时请分清归属。',
+      'think.packFoot': '—— 以上来自「数字书房」。标「书里的原文」的是书里的句子，其余三类（我的想法 / 我采纳的 AI 回应 / 我整理的素材）是我这一侧的记录，引用时请分清归属。素材里带「AI」字样的，是我采纳过 AI 回应之后整理出来的，不是我亲手写的。',
       'think.empty': '想问什么？点上面的按钮，问题会先填进输入框，改完再发。',
       'think.thinking': '思考中…',
       'think.aiNote': 'AI 生成，仅供参考',
@@ -638,6 +642,8 @@ window.__ModuleLoader__.load({
       'think.packKindResponse': 'an AI reply I kept',
       'think.packKindMaterial': 'a source I filed',
       'think.packKindMaterialOf': '{role} ({type})',
+      'think.packKindMaterialAI': 'a source I filed from an AI reply I kept',
+      'think.packFiledAI': 'A source I filed from an AI reply I kept:',
       'think.packTime': 'Read on: ',
       'think.packMine': 'My thought:',
       'think.packAdopted': 'An AI reply I kept:',
@@ -645,7 +651,7 @@ window.__ModuleLoader__.load({
       'think.packContext': 'Other highlights in the same chapter ({count}, for context):',
       'think.packContextMixed': 'Other sources ({count}, for context):',
       'think.packOriginal': "The book's words:",
-      'think.packFoot': '— From Digital Study. What is marked as the book\'s words comes from the book; the other three kinds (my own thought / an AI reply I kept / a source I filed) are my own record — keep the ownership straight when you quote.',
+      'think.packFoot': '— From Digital Study. What is marked as the book\'s words comes from the book; the other three kinds (my own thought / an AI reply I kept / a source I filed) are my own record — keep the ownership straight when you quote. A source marked with "AI" is one I filed after keeping an AI reply: not written by me.',
       'think.empty': 'Pick a button above — the question lands in the box so you can edit it first.',
       'think.thinking': 'Thinking…',
       'think.aiNote': 'AI-generated, for reference',
@@ -2272,12 +2278,22 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       return MATERIAL_TYPES.some((item) => item[0] === name)
     }
 
-    function packKindLabel(kind, type) {
+    /**
+     * F-32: 素材有作者身份。`authorType === 'ai'` 表示这条素材是我采纳了 AI 回应之后整理出来的，
+     * 不是我自己敲的字；进模型时必须与自写素材分开，否则模型会把 AI 的话当我的观点复述。
+     * 只认严格的 'ai'：缺失、大小写不对、写错值，一律按我自己写的处理——宁可漏标，不能误标。
+     */
+    function materialAuthorIsAI(authorType) {
+      return String(authorType || '') === 'ai'
+    }
+
+    function packKindLabel(kind, type, authorType) {
       const name = packKindOf(kind)
       if (name !== 'material') return t(PACK_KIND_KEYS[name])
-      if (!materialTypeKnown(type)) return t(PACK_KIND_KEYS.material)
+      const role = t(materialAuthorIsAI(authorType) ? 'think.packKindMaterialAI' : PACK_KIND_KEYS.material)
+      if (!materialTypeKnown(type)) return role
       return t('think.packKindMaterialOf', {
-        role: t(PACK_KIND_KEYS.material),
+        role,
         type: t(materialTypeKey(String(type || ''))),
       })
     }
@@ -2286,6 +2302,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const entry = input && input.entry ? input.entry : {}
       const kind = packKindOf(input && input.kind)
       const type = String((input && input.type) || '')
+      // F-32: 只有素材需要区分作者身份；其余三类没有这个概念（回应本身就是 AI 的，标签已写明）。
+      const authorType = kind === 'material' && materialAuthorIsAI(input && input.authorType) ? 'ai' : ''
       const context = Array.isArray(input && input.context) ? input.context : []
       const question = String((input && input.question) || '').trim()
       const title = String(entry.bookTitle || '').trim()
@@ -2295,7 +2313,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       lines.push(`${t('think.packBook')}${title === '' ? t('think.packUnknown') : `《${title}》`}`)
       if (author !== '') lines.push(`${t('think.packAuthor')}${author}`)
       if (chapter !== '') lines.push(`${t('think.packChapter')}${chapter}`)
-      lines.push(`${t('think.packKind')}${packKindLabel(kind, type)}`)
+      lines.push(`${t('think.packKind')}${packKindLabel(kind, type, authorType)}`)
       if (entry.createTime) lines.push(`${t('think.packTime')}${fmtDateTime(entry.createTime)}`)
       lines.push('')
       if (kind === 'note') {
@@ -2308,7 +2326,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         lines.push(t('think.packAdopted'))
         lines.push(clip(String(entry.content || entry.text || '').trim(), THINK_LIMITS.body))
       } else {
-        lines.push(t('think.packFiled'))
+        // F-32: 「我整理的素材：」是自写素材的说法；AI 采纳来的素材要有自己的抬头，
+        // 否则正文与自写素材挤在同一个标签下，模型分不清哪句是它自己说的。
+        lines.push(t(authorType === 'ai' ? 'think.packFiledAI' : 'think.packFiled'))
         lines.push(clip(String(entry.content || entry.text || '').trim(), THINK_LIMITS.body))
       }
       const used = context.slice(0, THINK_LIMITS.context)
@@ -2323,7 +2343,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         for (let index = 0; index < used.length; index += 1) {
           const item = used[index] || {}
           const text = clip(String(item.text || item.content || '').trim(), THINK_LIMITS.contextEach)
-          lines.push(item.kind ? `${index + 1}. ${packKindLabel(item.kind, item.type)}：${text}` : `${index + 1}. ${text}`)
+          lines.push(item.kind ? `${index + 1}. ${packKindLabel(item.kind, item.type, item.authorType)}：${text}` : `${index + 1}. ${text}`)
         }
       }
       lines.push('')
@@ -2369,6 +2389,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       return {
         kind: 'material',
         type: String(hit.type || ''),
+        // F-32: 素材的作者身份一路透传到 pack，别在成包时抹掉。
+        authorType: materialAuthorIsAI(hit.authorType) ? 'ai' : '',
         entry: { content: hit.text, bookTitle: hit.bookTitle, author: hit.author, createTime: hit.createdAt },
       }
     }
@@ -2387,8 +2409,15 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         text: String(item.entry.content || item.entry.text || ''),
         kind: item.kind,
         type: item.type,
+        authorType: item.authorType,
       }))
-      return buildSourcePack({ entry: primary.entry, kind: primary.kind, type: primary.type, context })
+      return buildSourcePack({
+        entry: primary.entry,
+        kind: primary.kind,
+        type: primary.type,
+        authorType: primary.authorType,
+        context,
+      })
     }
 
 /**
@@ -2681,7 +2710,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
       }
 
-      const kindLabel = packKindLabel(props.kind, props.type)
+      const kindLabel = packKindLabel(props.kind, props.type, props.authorType)
       const chapter = String(
         (props.kind === 'note' ? props.entry && props.entry.chapterTitle : props.entry && props.entry.chapterName) || '',
       )
@@ -2944,7 +2973,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         setOpen({ mode, question: askKey === null ? '' : t(askKey), anchor })
       }
 
-      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, type: props.type, context: props.context })
+      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, type: props.type, authorType: props.authorType, context: props.context })
 
       return h(
         'div',
@@ -5898,6 +5927,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         paragraphSourceEntry,
         packKindLabel,
         packKindOf,
+        materialAuthorIsAI,
         PACK_KIND_KEYS,
         THINK_LIMITS,
         JourneyBar,

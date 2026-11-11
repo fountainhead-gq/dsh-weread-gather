@@ -219,6 +219,7 @@ if (!loaded) {
 
 // --- 注册 & 渲染 -------------------------------------------------------------
 const registrations = []
+let localeDictionaries = {}
 const drawCalls = []
 const ctx = {
   slots: {
@@ -231,7 +232,11 @@ const ctx = {
     },
   },
   locale: {
-    register() {},
+    register(namespace, dictionaries) {
+      // F-32：把真实字典留下来。渲染文本里出现的是 locale key，但「AI 那条含 AI」这句话
+      // 只有在真实文案上才有意义，所以这里既断言 pack 的返回值，也断言上架的那句中文。
+      if (dictionaries && typeof dictionaries === 'object') localeDictionaries = dictionaries
+    },
     bind() {
       return (key, params) => (params ? `${key}(${Object.values(params).join(',')})` : key)
     },
@@ -649,6 +654,120 @@ else {
     const limits = smoke.THINK_LIMITS
     if (!limits || limits.body !== 600 || limits.context !== 3 || limits.contextEach !== 200) {
       packGuards.push('THINK_LIMITS 变了（应仍是 600/3/200）')
+    }
+
+    // F-32：同 type 的两条素材，一条是采纳 AI 回应整理出来的、一条是自己写的，
+    // 进包以后标签必须不同，AI 那条必须带「AI」。取的是 buildSourcePack 的真实返回值。
+    const aiMaterialPack = smoke.buildSourcePack({
+      entry: { id: 'm-ai', bookTitle: '书名', text: 'AI 采纳来的金句' },
+      kind: 'material',
+      type: '金句',
+      authorType: 'ai',
+    })
+    const humanMaterialPack = smoke.buildSourcePack({
+      entry: { id: 'm-human', bookTitle: '书名', text: '自己写的金句' },
+      kind: 'material',
+      type: '金句',
+      authorType: 'human',
+    })
+    const kindLineOf = (pack) => pack.split('\n').find((line) => line.startsWith('think.packKind')) || ''
+    const aiKindLine = kindLineOf(aiMaterialPack)
+    const humanKindLine = kindLineOf(humanMaterialPack)
+    if (aiKindLine === '' || humanKindLine === '') packGuards.push('F-32: 素材 pack 没有内容类型行')
+    else if (aiKindLine === humanKindLine) packGuards.push(`F-32: AI 素材与自写素材同标签（${aiKindLine}）`)
+    if (aiKindLine.indexOf('AI') < 0) packGuards.push(`F-32: AI 素材标签不含「AI」（${aiKindLine}）`)
+    if (humanKindLine.indexOf('AI') >= 0) packGuards.push(`F-32: 自写素材被标成了 AI（${humanKindLine}）`)
+    if (!aiMaterialPack.includes('think.packFiledAI')) packGuards.push('F-32: AI 素材正文没有独立抬头')
+    if (humanMaterialPack.includes('think.packFiledAI')) packGuards.push('F-32: 自写素材正文用了 AI 抬头')
+    // 正文也不能挤在同一个标签下：两段正文各自跟随自己的抬头。
+    const aiBodyIndex = aiMaterialPack.indexOf('AI 采纳来的金句')
+    const aiHeadIndex = aiMaterialPack.indexOf('think.packFiledAI')
+    if (aiHeadIndex < 0 || aiBodyIndex < 0 || aiHeadIndex > aiBodyIndex) {
+      packGuards.push('F-32: AI 素材正文没跟在 AI 抬头后面')
+    }
+    // 缺字段 / 写错值一律按自写处理——宁可漏标，不能把用户的话标成 AI。
+    for (const value of [undefined, '', 'human', 'AI', 'model', null]) {
+      const label = smoke.packKindLabel('material', '金句', value)
+      if (String(label).indexOf('AI') >= 0) packGuards.push(`F-32: authorType=${String(value)} 被误标成 AI`)
+    }
+    if (smoke.packKindLabel('material', '金句', 'ai') === smoke.packKindLabel('material', '金句', undefined)) {
+      packGuards.push('F-32: 显式 ai 与缺省值没分开')
+    }
+    // 上下文条目也要分身份：同一条 pack 里 AI 素材与自写素材逐条带标。
+    const aiContextPack = smoke.buildSourcePack({
+      entry: note,
+      kind: 'note',
+      context: [
+        { text: 'AI 侧素材', kind: 'material', type: '金句', authorType: 'ai' },
+        { text: '自写侧素材', kind: 'material', type: '金句', authorType: 'human' },
+      ],
+    })
+    const numbered = aiContextPack.split('\n').filter((line) => /^\d+\. /.test(line))
+    if (numbered.length < 2) packGuards.push('F-32: 上下文条目没有逐条渲染')
+    else {
+      if (numbered[0].indexOf('AI') < 0) packGuards.push(`F-32: 上下文第 1 条（AI 素材）没有 AI 标记（${numbered[0]}）`)
+      if (numbered[1].indexOf('AI') >= 0) packGuards.push(`F-32: 上下文第 2 条（自写素材）被标成 AI（${numbered[1]}）`)
+      if (numbered[0] === numbered[1]) packGuards.push('F-32: 上下文中 AI 与自写素材同标签')
+    }
+    if (typeof smoke.materialAuthorIsAI !== 'function') packGuards.push('client module 未暴露 materialAuthorIsAI')
+    else {
+      if (smoke.materialAuthorIsAI('ai') !== true) packGuards.push('F-32: materialAuthorIsAI 认不出 ai')
+      for (const value of ['AI', 'ai ', 'human', '', undefined, null, 'Ai'])
+        if (smoke.materialAuthorIsAI(value) !== false) packGuards.push(`F-32: materialAuthorIsAI(${String(value)}) 误判为 true`)
+    }
+    // 上架的那句中文：AI 素材的说法里真的要出现「AI」，自写素材的说法里不能出现。
+    const zhDict = (localeDictionaries && localeDictionaries.zh) || {}
+    const enDict = (localeDictionaries && localeDictionaries.en) || {}
+    for (const [name, dict] of [['zh', zhDict], ['en', enDict]]) {
+      const aiText = String(dict['think.packKindMaterialAI'] || '')
+      const humanText = String(dict['think.packKindMaterial'] || '')
+      if (aiText === '') packGuards.push(`F-32: ${name} 缺 think.packKindMaterialAI`)
+      else if (aiText.indexOf('AI') < 0) packGuards.push(`F-32: ${name} 的 AI 素材标签里没有「AI」（${aiText}）`)
+      if (humanText.indexOf('AI') >= 0) packGuards.push(`F-32: ${name} 的自写素材标签里出现了「AI」（${humanText}）`)
+      if (String(dict['think.packFiledAI'] || '').indexOf('AI') < 0) packGuards.push(`F-32: ${name} 的 AI 素材正文抬头没写「AI」`)
+    }
+    // 包尾：写了「其余 N 类」，括号里就得正好列 N 个角色；新增标签不能把这句话变成错数。
+    const footZh = String(zhDict['think.packFoot'] || '')
+    const footMatch = footZh.match(/其余([一二三四五六])类（([^）]+)）/)
+    const countWord = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 }
+    if (footZh === '') packGuards.push('F-32: zh 缺 think.packFoot')
+    else if (!footMatch) packGuards.push('F-32: 包尾没有「其余 N 类（…）」句式，无法核对数量')
+    else if (footMatch[2].split('/').length !== countWord[footMatch[1]]) {
+      packGuards.push(`F-32: 包尾说「其余${footMatch[1]}类」但列了 ${footMatch[2].split('/').length} 个`)
+    }
+    if (footZh.indexOf('AI') < 0) packGuards.push('F-32: 包尾没有说明「带 AI 字样的素材来自采纳」')
+
+    // 真正的漏洞点在 paragraphSourceEntry：它曾经把 authorType 丢掉。这里走
+    // buildParagraphPack 的完整链路（sourceId → 素材 → pack），而不是直接调 buildSourcePack。
+    if (typeof smoke.buildParagraphPack !== 'function') packGuards.push('client module 未暴露 buildParagraphPack')
+    else {
+      // 正文别带「AI」两个字：这里要验的是标签，不是素材正文里的巧合。
+      const aiMat = { id: 'm_ai', type: '金句', text: '采纳来的金句', bookTitle: '书名', author: '作者', authorType: 'ai', createdAt: 1794193279 }
+      const humanMat = { id: 'm_h', type: '金句', text: '我自己写的金句', bookTitle: '书名', author: '作者', authorType: 'human', createdAt: 1794193279 }
+      const plainMat = { id: 'm_plain', type: '金句', text: '没写作者身份的素材', bookTitle: '书名', author: '作者', createdAt: 1794193279 }
+      const paraLookup = {
+        note: new Map(),
+        thought: new Map(),
+        response: new Map(),
+        material: new Map([[aiMat.id, aiMat], [humanMat.id, humanMat], [plainMat.id, plainMat]]),
+      }
+      const chainPack = smoke.buildParagraphPack({
+        sourceIds: [`material:${plainMat.id}`, `material:${humanMat.id}`, `material:${aiMat.id}`],
+        lookup: paraLookup,
+        titleOf: () => '书名',
+      })
+      const chainLines = chainPack.split('\n').filter((line) => /^\d+\. /.test(line))
+      if (chainLines.length < 2) packGuards.push('F-32: buildParagraphPack 没有带出两条上下文')
+      else {
+        if (chainLines[0].indexOf('AI') >= 0) packGuards.push(`F-32: buildParagraphPack 把自写素材标成了 AI（${chainLines[0]}）`)
+        if (chainLines[1].indexOf('AI') < 0) packGuards.push(`F-32: buildParagraphPack 丢了 AI 素材的身份（${chainLines[1]}）`)
+      }
+      // 段落只有一条 AI 素材时，正文抬头也得是 AI 那一句。
+      const aiOnly = smoke.buildParagraphPack({ sourceIds: [`material:${aiMat.id}`], lookup: paraLookup, titleOf: () => '书名' })
+      if (!aiOnly.includes('think.packFiledAI')) packGuards.push('F-32: 单条 AI 素材的段落没有 AI 正文抬头')
+      // 身份缺失的素材按自写处理。
+      const plainOnly = smoke.buildParagraphPack({ sourceIds: [`material:${plainMat.id}`], lookup: paraLookup, titleOf: () => '书名' })
+      if (plainOnly.indexOf('AI') >= 0) packGuards.push('F-32: 没写 authorType 的素材被标成了 AI')
     }
   }
 }
