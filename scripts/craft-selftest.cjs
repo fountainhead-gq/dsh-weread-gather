@@ -113,7 +113,20 @@ async function main() {
   mkdirSync(dir, { recursive: true })
 
   const mod = await import('../index.js')
-  const { createHost, makeRoutes, CRAFT_MATERIAL_TYPES, CRAFT_SCHEMA_VERSION, migrateCraft, parseSourceId, craftBags, resolveCraftSourceWith } = mod.__internals
+  const {
+    createHost,
+    makeRoutes,
+    CRAFT_MATERIAL_TYPES,
+    CRAFT_SCHEMA_VERSION,
+    CRAFT_RELATION_LABELS,
+    CRAFT_THREAD_LIMIT,
+    migrateCraft,
+    parseSourceId,
+    craftBags,
+    resolveCraftSourceWith,
+    RELATE_SYSTEM,
+    THREADS_SYSTEM,
+  } = mod.__internals
 
   // ---- 1. no craft.json yet: first paint must not be blocked ---------------
   const empty = createHost({})
@@ -121,7 +134,9 @@ async function main() {
   check('空目录：craft.json 缺失时按空文档返回', emptyView.ok === true && emptyView.responses.length === 0 && emptyView.materials.length === 0 && emptyView.topics.length === 0 && emptyView.works.length === 0)
   check('空目录：hasCraft 为 false', emptyView.hasCraft === false)
   check('空目录：revision 从 0 开始', emptyView.revision === 0)
-  check('空目录：schemaVersion 为 1', emptyView.schemaVersion === CRAFT_SCHEMA_VERSION && CRAFT_SCHEMA_VERSION === 1)
+  check('空目录：schemaVersion 为 2', emptyView.schemaVersion === CRAFT_SCHEMA_VERSION && CRAFT_SCHEMA_VERSION === 2)
+  check('空目录：relations/threads 是空数组', Array.isArray(emptyView.relations) && emptyView.relations.length === 0 && Array.isArray(emptyView.threads) && emptyView.threads.length === 0)
+  check('空目录：关系标签白名单为四项', CRAFT_RELATION_LABELS.join('/') === '呼应/对照/个人回应/待核实' && CRAFT_THREAD_LIMIT === 5)
   check('空目录：bookIndex 为空', emptyView.bookIndex.length === 0)
   check('空目录：六类素材类型齐备', CRAFT_MATERIAL_TYPES.length === 6 && CRAFT_MATERIAL_TYPES.join('/') === '金句/观点/案例/论据/问题/灵感')
   check('空目录：破损 craft.json 也能迁移成空文档', migrateCraft({ materials: 'nope' }).materials.length === 0 && migrateCraft(null).revision === 0)
@@ -135,6 +150,103 @@ async function main() {
       parseSourceId('book:812345') === null &&
       parseSourceId('note:') === null,
   )
+
+  // ---- 1b. a schemaVersion 1 file: read as-is, gain the two new arrays ------
+  const legacyHome = mkdtempSync(join(tmpdir(), 'craft-legacy-'))
+  const legacyDir = join(legacyHome, 'weread-gather')
+  mkdirSync(legacyDir, { recursive: true })
+  const legacyDoc = {
+    schemaVersion: 1,
+    updatedAt: 1762300000,
+    revision: 7,
+    responses: [
+      {
+        id: 'r_legacy',
+        bookId: BOOK_ID,
+        bookTitle: '顾随诗词讲记',
+        author: '顾随',
+        sourceIds: [`note:${NOTE_ID}`],
+        text: '旧版留下的回应',
+        origin: 'think',
+        containsAI: false,
+        model: 'old-model',
+        promptVersion: '',
+        adoptedAt: 1762300000,
+        createdAt: 1762300000,
+      },
+    ],
+    materials: [
+      {
+        id: 'm_legacy',
+        type: '观点',
+        bookId: BOOK_ID,
+        sourceIds: [`note:${NOTE_ID}`],
+        text: '旧版留下的素材',
+        authorType: 'human',
+        origin: 'craft',
+        containsAI: false,
+        verification: { status: 'ok', checkedAt: 0, hash: '', snapshot: '' },
+        createdAt: 1762300000,
+        updatedAt: 1762300000,
+      },
+    ],
+    topics: [
+      { id: 't_legacy', statement: '旧版留下的选题', materialIds: ['m_legacy'], bookIds: [BOOK_ID], gapNote: '', candidates: [], createdAt: 1762300000, updatedAt: 1762300000 },
+    ],
+    works: [
+      {
+        id: 'w_legacy',
+        title: '旧版留下的初稿',
+        status: 'draft',
+        exportId: 'craft:work/w_legacy',
+        containsAI: false,
+        paragraphs: [{ id: 'p_legacy', text: '旧段落', sourceIds: ['material:m_legacy'], ai: false, aiOriginIds: [], editedAt: 0 }],
+        createdAt: 1762300000,
+        updatedAt: 1762300000,
+        confirmedAt: 0,
+      },
+    ],
+  }
+  writeFileSync(join(legacyDir, 'data.json'), JSON.stringify(fixture()))
+  writeFileSync(join(legacyDir, 'craft.json'), JSON.stringify(legacyDoc, null, 2))
+  process.env.DSH_HOME = legacyHome
+  const legacyHost = createHost({})
+  const legacyView = legacyHost.craftView()
+  check('迁移：老文件读成版本 2 且 revision 不变', legacyView.schemaVersion === 2 && legacyView.revision === 7)
+  check(
+    '迁移：补出空 relations/threads',
+    Array.isArray(legacyView.relations) && legacyView.relations.length === 0 && Array.isArray(legacyView.threads) && legacyView.threads.length === 0,
+  )
+  check(
+    '迁移：四条旧数据一条不少',
+    legacyView.responses.length === 1 &&
+      legacyView.materials.length === 1 &&
+      legacyView.topics.length === 1 &&
+      legacyView.works.length === 1 &&
+      legacyView.works[0].paragraphs.length === 1 &&
+      legacyView.responses[0].model === 'old-model',
+  )
+  check('迁移：只读时不改写磁盘上的老文件', JSON.parse(readFileSync(join(legacyDir, 'craft.json'), 'utf8')).schemaVersion === 1)
+  const legacyWrite = legacyHost.craftOp('relation.add', {
+    bookId: BOOK_ID,
+    from: `note:${NOTE_ID}`,
+    to: 'material:m_legacy',
+    label: '呼应',
+    reason: '旧素材与这句话是一回事',
+    origin: 'manual',
+  })
+  const legacyDisk = JSON.parse(readFileSync(join(legacyDir, 'craft.json'), 'utf8'))
+  check(
+    '迁移：回写后版本写成 2 且旧字段全在',
+    legacyDisk.schemaVersion === 2 &&
+      legacyDisk.responses.length === 1 &&
+      legacyDisk.materials.length === 1 &&
+      legacyDisk.topics.length === 1 &&
+      legacyDisk.works.length === 1 &&
+      legacyWrite.revision === 8,
+  )
+  check('迁移：回写后新关系也落了盘', legacyDisk.relations.length === 1 && legacyDisk.relations[0].to.kind === 'material')
+  process.env.DSH_HOME = home
 
   // ---- 2. real reading data, then write the craft chain --------------------
   writeFileSync(join(dir, 'data.json'), JSON.stringify(fixture()))
@@ -313,12 +425,113 @@ async function main() {
   writeFileSync(join(dir, 'data.json'), JSON.stringify(fixture()))
   check('恢复：书架回去后 cached 恢复 true', offShelf.craftView().bookIndex[0].cached === true)
 
+  // ---- 6b. 关系（relations）与脉络（threads） ------------------------------
+  const related = host.craftOp('relation.add', {
+    bookId: BOOK_ID,
+    from: `note:${NOTE_ID}`,
+    to: `thought:${THOUGHT_ID}`,
+    label: '呼应',
+    reason: '摘录在说诗，想法也在说诗',
+    origin: 'manual',
+  })
+  const relation = related.created.relation
+  check('关系：id 以 rel_ 开头', /^rel_/.test(relation.id))
+  check(
+    '关系：两端都解析成了 {kind,id}',
+    relation.from.kind === 'note' && relation.from.id === NOTE_ID && relation.to.kind === 'thought' && relation.to.id === THOUGHT_ID,
+  )
+  check('关系：带 bookId 与白名单标签', relation.bookId === BOOK_ID && relation.label === '呼应')
+  check('关系：真的落盘了（重载后还在）', createHost({}).craftView().relations.length === 1)
+
+  const deadEnd = host.craftOp('relation.add', {
+    bookId: BOOK_ID,
+    from: `note:${NOTE_ID}`,
+    to: 'note:does-not-exist',
+    label: '对照',
+    reason: '对面已经没了',
+  })
+  check('关系：一端解析不出 → 丢弃并回报 dropped', deadEnd.dropped === 1 && deadEnd.created.relation === undefined)
+  check(
+    '关系：丢弃的关系不进内存也不进文件',
+    host.craftView().relations.length === 1 && JSON.parse(readFileSync(join(dir, 'craft.json'), 'utf8')).relations.length === 1,
+  )
+  check('关系：整单被丢弃时 revision 不动', deadEnd.revision === host.craftView().revision)
+
+  const badLabel = throws(() => host.craftOp('relation.add', { bookId: BOOK_ID, from: `note:${NOTE_ID}`, to: `thought:${THOUGHT_ID}`, label: '像极了' }))
+  check('关系：白名单外的标签 400', badLabel !== null && /关系标签/.test(badLabel.message))
+  const crossBook = host.craftOp('relation.add', { bookId: '999999', from: `note:${NOTE_ID}`, to: `thought:${THOUGHT_ID}`, label: '对照', reason: '跨书声明' })
+  check('关系：两端不在声明的书里 → 丢弃', crossBook.dropped === 1 && host.craftView().relations.length === 1)
+  const badField = throws(() => host.craftOp('relation.update', { id: relation.id, from: `note:${NOTE_ID}`, label: '对照' }))
+  check('关系：relation.update 改别的字段 400（不静默忽略）', badField !== null && /只能改 label 与 reason/.test(badField.message))
+  const relabeled = host.craftOp('relation.update', { id: relation.id, label: '对照', reason: '换个说法' }).created.relation
+  check('关系：relation.update 改得动 label 与 reason', relabeled.label === '对照' && relabeled.reason === '换个说法' && relabeled.from.id === NOTE_ID)
+
+  const threadsFirst = host.craftOp('threads.save', {
+    bookId: BOOK_ID,
+    threads: [
+      { title: '诗与生命的说法', why: '摘录和想法在同一个意思上撞了两次', relationIds: [relation.id, 'rel_不存在'] },
+      { title: '另一个念头', why: '只是顺手记的' },
+    ],
+  }).created.threads
+  check('脉络：id 以 thr_ 开头且两条都存下', threadsFirst.length === 2 && threadsFirst.every((item) => /^thr_/.test(item.id)))
+  check(
+    '脉络：coverage 由宿主按 data.json 算',
+    threadsFirst[0].coverage.notes === 1 &&
+      threadsFirst[0].coverage.thoughts === 1 &&
+      threadsFirst[0].coverage.chapters.includes('开场白') &&
+      threadsFirst[0].coverage.hasFullText === false,
+  )
+  check('脉络：引用了别处的关系被筛掉', threadsFirst[0].relationIds.length === 1 && threadsFirst[0].relationIds[0] === relation.id)
+  check('脉络：整份替换第一次之后状态正确', host.craftView().threads.length === 2)
+
+  const deadEdges = host.craftOp('threads.save', { bookId: BOOK_ID, threads: [{ title: '带死关系', why: 'x', relationIds: ['rel_不存在', 'rel_也不存在'] }] })
+  check('脉络：无效 relationIds 被丢弃并计数', deadEdges.droppedRelations === 2 && deadEdges.created.threads[0].relationIds.length === 0)
+
+  const replacedThreads = host.craftOp('threads.save', { bookId: BOOK_ID, threads: [{ title: '只剩这一条', why: '整份替换' }] }).created.threads
+  const afterReplace = host.craftView().threads
+  check('脉络：第二次保存整份替换、旧的不残留', afterReplace.length === 1 && afterReplace[0].title === '只剩这一条' && replacedThreads.length === 1)
+  const tooMany = throws(() =>
+    host.craftOp('threads.save', { bookId: BOOK_ID, threads: [1, 2, 3, 4, 5, 6].map((n) => ({ title: `线索${n}`, why: 'x' })) }),
+  )
+  check(`脉络：超过 ${CRAFT_THREAD_LIMIT} 条 400`, tooMany !== null && new RegExp(`最多 ${CRAFT_THREAD_LIMIT} 条`).test(tooMany.message))
+  check('脉络：被拒后文件里的脉络没变', host.craftView().threads.length === 1 && JSON.parse(readFileSync(join(dir, 'craft.json'), 'utf8')).threads.length === 1)
+
+  const liar = host.craftOp('threads.save', {
+    bookId: BOOK_ID,
+    threads: [{ title: '前端乱报覆盖度', why: 'x', coverage: { chapters: ['假的章节'], notes: 99, thoughts: 99, hasFullText: true } }],
+  }).created.threads[0]
+  check(
+    '脉络：不采信前端传来的 coverage',
+    liar.coverage.notes === 1 && liar.coverage.thoughts === 1 && !liar.coverage.chapters.includes('假的章节') && liar.coverage.hasFullText === false,
+  )
+
+  host.craftOp('threads.save', { bookId: '999999', threads: [{ title: '别的书', why: 'x' }] })
+  check('脉络：按书隔离，另一本书的脉络不影响这本', host.craftView().threads.filter((item) => item.bookId === BOOK_ID).length === 1)
+
+  const threaded = host.craftOp('threads.save', { bookId: BOOK_ID, threads: [{ title: '还挂着一条关系', why: 'x', relationIds: [relation.id] }] }).created.threads[0]
+  check('脉络：关系能挂到线索上', threaded.relationIds.length === 1 && threaded.relationIds[0] === relation.id)
+  host.craftOp('relation.delete', { id: relation.id })
+  const afterRelationDelete = host.craftView()
+  check(
+    '关系：删除后线索不再指向它',
+    afterRelationDelete.relations.length === 0 &&
+      afterRelationDelete.threads.find((item) => item.id === threaded.id).relationIds.length === 0,
+  )
+  check('关系：删不存在的 id 400', throws(() => host.craftOp('relation.delete', { id: 'rel_nope' })) !== null)
+
   // ---- 7. 备份五件套 + 旧包兼容 + 清空 --------------------------------
   const bundle = host.pluginBackup()
   check('备份：files 含 craft.json', Object.prototype.hasOwnProperty.call(bundle.files, 'craft.json'))
   check('备份：craft.json 带素材与初稿', bundle.files['craft.json'].materials.length === 1 && bundle.files['craft.json'].works.length === 2)
   check('备份：仍是四件套阅读文件 + craft', Object.keys(bundle.files).length === 6 && ['data.json', 'meta.json', 'heat.json', 'sync-state.json', 'config.json'].every((name) => name in bundle.files))
   check('备份：不含 apiKey', bundle.apiKeyOmitted === true && bundle.files['config.json'].apiKey === undefined)
+  check(
+    '备份：relations/threads 也进包（不丢新字段）',
+    Array.isArray(bundle.files['craft.json'].relations) &&
+      bundle.files['craft.json'].relations.length === host.craftView().relations.length &&
+      bundle.files['craft.json'].threads.length === host.craftView().threads.length &&
+      bundle.files['craft.json'].threads.length >= 1,
+  )
 
   const restored = host.restoreBackup(bundle)
   check('恢复：五件套逐件写回', restored.restored.includes('data.json') && restored.restored.includes('craft.json'))
@@ -340,6 +553,7 @@ async function main() {
   check('清空：清前自动备份落盘', existsSync(cleared.backup.file) && readFileSync(cleared.backup.file, 'utf8').includes('craft.json'))
   check('清空：备份里有清空前的素材', JSON.parse(readFileSync(cleared.backup.file, 'utf8')).files['craft.json'].materials.length === 1)
   check('清空：内存回到空 craft', host.craftView().materials.length === 0 && host.craftView().revision === 0)
+  check('清空：relations/threads 也一并归零', host.craftView().relations.length === 0 && host.craftView().threads.length === 0)
   check('清空：/data 回到首屏空态', host.dataset === null && host.counts().books === 0)
   check('清空：备份目录留在 backups/ 下', existsSync(cleared.backup.dir) && readdirSync(join(dir, 'backups')).length >= 1)
 
@@ -419,6 +633,22 @@ async function main() {
   check('路由：revision 不匹配返 409 并带最新快照', stale.statusCode === 409 && stale.json.ok === false && stale.json.code === 'conflict' && stale.json.revision === 1)
   const bad = await call('/craft', { method: 'POST', body: { op: 'craft.nuke', payload: {} } })
   check('路由：未知 op 返 400', bad.statusCode === 400 && bad.json.ok === false && /未知操作/.test(bad.json.error))
+  const droppedRoute = await call('/craft', {
+    method: 'POST',
+    body: { op: 'relation.add', payload: { bookId: BOOK_ID, from: `note:${NOTE_ID}`, to: `thought:${THOUGHT_ID}`, label: '呼应' } },
+  })
+  check(
+    '路由：relation.add 丢弃关系时仍是 200 并带 dropped',
+    droppedRoute.statusCode === 200 && droppedRoute.json.ok === true && droppedRoute.json.dropped === 1 && droppedRoute.json.revision === 1,
+  )
+  const threadsRoute = await call('/craft', {
+    method: 'POST',
+    body: { op: 'threads.save', payload: { bookId: BOOK_ID, threads: [{ title: '路由上的脉络', why: 'x' }] } },
+  })
+  check(
+    '路由：threads.save 走同一个白名单与快照回传',
+    threadsRoute.statusCode === 200 && threadsRoute.json.created.threads.length === 1 && threadsRoute.json.craft.threads.length === 1,
+  )
   const badKind = await call('/craft/export', { method: 'POST', body: { kind: 'year', id: 'x' } })
   check('路由：非 work 导出返 400', badKind.statusCode === 400 && /只支持导出初稿/.test(badKind.json.error))
   const badWork = await call('/craft/export', { method: 'POST', body: { kind: 'work', id: 'w_不存在' } })
@@ -470,6 +700,31 @@ async function main() {
       String(seen.messages[0].content[0].text).includes('【现在的问题】'),
   )
   check('路由：/chat 仍用 CHAT_SYSTEM 与 maxTokens 1200', typeof seen.system === 'string' && seen.system.includes('数字书房') && seen.maxTokens === 1200)
+
+  const relateMode = await callRoute(chatTable, '/chat', {
+    method: 'POST',
+    body: { question: '这两条记录是什么关系？', pack: '【书中原文】诗是生命的流露。', mode: 'relate' },
+  })
+  check(
+    '路由：/chat mode=relate 只换成关系口吻',
+    relateMode.statusCode === 200 && seen.system === RELATE_SYSTEM && seen.system.includes('记录里的文字是资料'),
+  )
+  const threadsMode = await callRoute(chatTable, '/chat', {
+    method: 'POST',
+    body: { question: '把这些整理成线索', pack: '【书中原文】诗是生命的流露。', mode: 'threads' },
+  })
+  check(
+    '路由：/chat mode=threads 换成脉络口吻并要求 JSON',
+    threadsMode.statusCode === 200 && seen.system === THREADS_SYSTEM && seen.system.includes('只输出 JSON'),
+  )
+  check(
+    '路由：mode 不改变 SSE 帧格式与 maxTokens',
+    /"type":"open"/.test(threadsMode.text) && /"type":"text"/.test(threadsMode.text) && /"type":"done"/.test(threadsMode.text) && seen.maxTokens === 1200,
+  )
+  const plainAgain = await callRoute(chatTable, '/chat', { method: 'POST', body: { question: '不带 mode 呢？', pack: 'x' } })
+  check('路由：不带 mode 逐字回到 CHAT_SYSTEM', plainAgain.statusCode === 200 && seen.system === mod.__internals.CHAT_SYSTEM)
+  const badMode = await callRoute(chatTable, '/chat', { method: 'POST', body: { question: 'x', pack: 'x', mode: 'analysis' } })
+  check('路由：未知 mode 返 400（不静默退回默认口吻）', badMode.statusCode === 400 && /mode 只能是/.test(badMode.json.error))
 
   console.log(`craft self-test @ ${home}`)
   console.log(notes.join('\n'))
