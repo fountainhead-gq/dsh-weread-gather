@@ -25,6 +25,18 @@ const SCHEMA_VERSION = 1
 const MAX_NOTEBOOK_PAGES = 30
 const MAX_SHELF_BOOKS = 400
 const DEFAULT_MAX_BOOKS = 60
+/**
+ * F-28: the six palettes the panel can paint itself in. `''` means "follow DSH", which is
+ * stored as *no field at all* so an untouched config looks exactly like it always did.
+ * The values are the ones documented in docs/backlog.md §2.5 — the client owns the colours,
+ * this list only decides what is legal to persist.
+ */
+const PALETTES = ['mint', 'night', 'cream', 'mist', 'glacier', 'iris']
+/** Anything that is not one of the six is `''`, i.e. "follow DSH" — never a guess. */
+function normalizePalette(value) {
+  const name = typeof value === 'string' ? value.trim() : ''
+  return PALETTES.indexOf(name) >= 0 ? name : ''
+}
 const DEFAULT_NOTES_PER_BOOK = 200
 const THOUGHT_PAGE_SIZE = 50
 const THOUGHT_MAX_PAGES = 6
@@ -1089,6 +1101,7 @@ function createHost(options) {
       notesPerBook: clampInt(config.notesPerBook, DEFAULT_NOTES_PER_BOOK, 20, 2000),
       metaLimit: clampInt(config.metaLimit, DEFAULT_META_LIMIT, 0, 2000),
       autoSync: config.autoSync === true,
+      palette: normalizePalette(config.palette),
     }
   }
 
@@ -1105,7 +1118,15 @@ function createHost(options) {
   }
 
   function saveConfig(patch) {
-    config = { ...config, ...patch }
+    const next = { ...config, ...patch }
+    // `palette` is never written as an empty/invalid value: "follow DSH" is the absence of the
+    // field, so an unknown value falls back to the default look instead of pinning junk.
+    if ('palette' in patch) {
+      const palette = normalizePalette(patch.palette)
+      if (palette === '') delete next.palette
+      else next.palette = palette
+    }
+    config = next
     writeJsonFile(configPath, config)
   }
 
@@ -2045,6 +2066,7 @@ function createHost(options) {
       maxBooks: current.maxBooks,
       notesPerBook: current.notesPerBook,
       metaLimit: current.metaLimit,
+      palette: current.palette,
       dir,
       exportDir: exportDirPath(),
       craft: craftSummary(),
@@ -2812,6 +2834,9 @@ function makeRoutes(host, ctx) {
         }
         if (body.maxBooks !== undefined) patch.maxBooks = body.maxBooks
         if (body.notesPerBook !== undefined) patch.notesPerBook = body.notesPerBook
+        // F-28: '' (or anything unknown) means "follow DSH" and is stored as the absence of the
+        // field, so an untouched config keeps looking exactly like a 1.2.1 config.
+        if (body.palette !== undefined) patch.palette = normalizePalette(body.palette)
         host.saveConfig(patch)
         host.settings()
         sendJson(res, 200, host.status())

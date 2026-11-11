@@ -60,3 +60,44 @@ console.log('[auth] guard=%s calls=%d ok=%s', guardOk, guardCalls, guardOk && gu
 if (!guardOk || guardCalls < 1) process.exitCode = 1
 
 if (!bucketOk || !usesGroup) process.exitCode = 1
+
+// 8) 配色（F-28）：客户端与宿主认同六套色板，且每套都写全了同一组 token。
+//    少一个 token 不会报错，只会在那套配色下悄悄用上一套的颜色 —— 所以在这里卡住。
+const PALETTE_TOKENS = [
+  '--wr-bg', '--wr-paper', '--wr-paper-soft', '--wr-wash', '--wr-ink', '--wr-ink-soft', '--wr-ink-mute',
+  '--wr-line', '--wr-line-2', '--wr-card-line', '--wr-divider', '--wr-surface', '--wr-scrim',
+  '--wr-accent', '--wr-accent-deep', '--wr-sage', '--wr-moss', '--wr-clay', '--wr-clay-soft',
+  '--wr-info', '--wr-info-soft', '--wr-gold', '--wr-progress', '--wr-track', '--wr-on-accent',
+  '--wr-glow', '--wr-radius',
+  '--wr-heat-0', '--wr-heat-1', '--wr-heat-2', '--wr-heat-3', '--wr-heat-4',
+]
+const clientPalettes = [...client.matchAll(/const PALETTES = \[([^\]]*)\]/g)]
+  .map((m) => [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]))
+  .filter((list) => list.length > 0)
+  .map((list) => list.filter((name) => name !== 'follow'))[0] || []
+const hostPalettes = (() => {
+  const block = host.match(/const PALETTES = \[([^\]]*)\]/)
+  return block ? [...block[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]) : []
+})()
+const blockOf = (name) => {
+  const at = client.indexOf(`.wr-root[data-palette="${name}"]{`)
+  if (at < 0) return ''
+  const end = client.indexOf('}', at)
+  return end > at ? client.slice(at, end) : ''
+}
+const baseBlock = (() => {
+  const at = client.indexOf('.wr-root{')
+  const end = client.indexOf('}', at)
+  return at >= 0 && end > at ? client.slice(at, end) : ''
+})()
+const tokenGaps = []
+for (const token of PALETTE_TOKENS) {
+  if (!baseBlock.includes(`${token}:`)) tokenGaps.push(`follow:${token}`)
+  for (const name of clientPalettes) {
+    if (!blockOf(name).includes(`${token}:`)) tokenGaps.push(`${name}:${token}`)
+  }
+}
+const palettesAligned = clientPalettes.length > 0 && clientPalettes.join(',') === hostPalettes.join(',')
+console.log('[palette] client=%s host=%s aligned=%s tokenGaps=%s',
+  clientPalettes.join(',') || 'none', hostPalettes.join(',') || 'none', palettesAligned, tokenGaps.slice(0, 8).join(',') || 'none')
+if (!palettesAligned || tokenGaps.length > 0) process.exitCode = 1

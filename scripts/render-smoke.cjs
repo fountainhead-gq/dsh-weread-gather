@@ -468,6 +468,11 @@ renderPanel('book-chain-degraded', seeds({
     bookIndex: [{ bookId: anyBook.bookId, bookTitle: anyBook.title, author: '', counts: { responses: 0, materials: 0, topics: 0, works: 0 }, cached: false }],
   }),
 }))
+// F-28 外观：默认不挂 data-palette（跟随 DSH），显式选了才挂，不认识的值回落默认。
+const paletteState = (palette) => Object.assign({}, statePayload, { palette })
+renderPanel('palette-follow', seeds({ view: 'overview', state: paletteState('') }))
+renderPanel('palette-night', seeds({ view: 'overview', state: paletteState('night') }))
+renderPanel('palette-unknown', seeds({ view: 'overview', state: paletteState('neon-bogus') }))
 
 // 导出面板只在点击之后才出现，所以直接拿模块里的组件挂载一次。
 function renderStandalone(label, component, props, hookSeeds) {
@@ -781,6 +786,63 @@ if (typeof smoke.ParagraphAI === 'function') {
   paragraphGuards.push('client module 未暴露 ParagraphAI')
 }
 
+// F-28 外观：设置里只有一支选择器，七个选项，选中的那套写进根节点 data-palette。
+// SettingsModal 的 useState 顺序：key, maxBooks, notesPerBook, busy, message, dir, dataMessage, pending, busyData
+const paletteGuards = []
+if (typeof smoke.SettingsModal !== 'function') {
+  paletteGuards.push('client module 未暴露 SettingsModal')
+} else {
+  renderStandalone('settings-palette', smoke.SettingsModal, {
+    state: Object.assign({}, statePayload, { palette: 'night' }),
+    onClose() {},
+    onChanged() {},
+    onDataChanged() {},
+    onSyncStarted() {},
+    onPalette() {},
+  }, ['', '60', '200', false, '', 'D:/tmp/exports', '', null, false])
+  const settingsDraw = byLabel0('settings-palette')
+  if (!settingsDraw) paletteGuards.push('settings-palette: 未渲染')
+  else {
+    for (const needle of ['appearance.title', 'appearance.hint', 'appearance.follow', 'appearance.night'])
+      if (!settingsDraw.text.includes(needle)) paletteGuards.push('settings-palette: 缺 ' + needle)
+    const selects = (settingsDraw.elements || []).filter((el) => el.tag === 'select' && String(el.props.className || '').indexOf('wr-palette-select') >= 0)
+    if (selects.length !== 1) paletteGuards.push(`settings-palette: 期望 1 支外观选择器，实际 ${selects.length}`)
+    else {
+      const options = (settingsDraw.elements || []).filter((el) => el.tag === 'option')
+      const values = [...new Set(options.map((el) => el.props.value))]
+      const expected = ['follow', 'mint', 'night', 'cream', 'mist', 'glacier', 'iris']
+      if (values.length !== expected.length || expected.some((name) => values.indexOf(name) < 0))
+        paletteGuards.push(`settings-palette: 选项不是七套（${values.join(',')}）`)
+      if (selects[0].props.value !== 'night') paletteGuards.push('settings-palette: 选择器没跟着 state.palette 走')
+      if (typeof selects[0].props.onChange !== 'function') paletteGuards.push('settings-palette: 选择器不可选')
+    }
+    // 除此之外不能再有第二个主题开关（深色/字重之类）。
+    const switches = (settingsDraw.elements || []).filter((el) => ['checkbox', 'radio'].indexOf(el.props.type) >= 0)
+    if (switches.length > 0) paletteGuards.push('settings-palette: 多出了第二个主题开关')
+  }
+}
+const paletteOf = smoke.paletteOf
+if (typeof paletteOf !== 'function') paletteGuards.push('client module 未暴露 paletteOf')
+else {
+  if (paletteOf('night') !== 'night') paletteGuards.push('paletteOf: 认不出 night')
+  if (paletteOf('neon-bogus') !== 'follow') paletteGuards.push('paletteOf: 未知值没有回落 follow')
+  if (paletteOf(undefined) !== 'follow') paletteGuards.push('paletteOf: 缺省不是 follow')
+}
+const rootOf = (label) => {
+  const draw = byLabel0(label)
+  if (!draw) return null
+  return (draw.elements || []).find((el) => String(el.props.className || '') === 'wr-root') || null
+}
+const followRoot = rootOf('palette-follow')
+if (!followRoot) paletteGuards.push('palette-follow: 没找到根节点')
+else if (followRoot.props['data-palette'] !== undefined) paletteGuards.push('palette-follow: 跟随 DSH 时不该挂 data-palette')
+const nightRoot = rootOf('palette-night')
+if (!nightRoot) paletteGuards.push('palette-night: 没找到根节点')
+else if (nightRoot.props['data-palette'] !== 'night') paletteGuards.push('palette-night: 根节点没有 data-palette=night')
+const unknownRoot = rootOf('palette-unknown')
+if (!unknownRoot) paletteGuards.push('palette-unknown: 没找到根节点')
+else if (unknownRoot.props['data-palette'] !== undefined) paletteGuards.push('palette-unknown: 未知配色没有回落 follow')
+
 // 四段旅程：二层导航、六个内页、三个空/失败态、书页链路块。
 // 这里只声明断言队列，真正的求值放到 guards 初始化之后（checkJourneys）。
 const journeyGuards = []
@@ -946,6 +1008,7 @@ for (const item of askGuards) guards.push(item)
 checkJourneys(guards, byLabel, bookDraw)
 for (const item of journeyGuards) guards.push(item)
 for (const item of paragraphGuards) guards.push(item)
+for (const item of paletteGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)

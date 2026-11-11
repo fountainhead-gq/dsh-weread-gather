@@ -271,6 +271,20 @@ async function main() {
         }
         return sseResponse(net.chatFrames)
       }
+      if (text.includes('/config')) {
+        let patch = {}
+        try {
+          patch = init && init.body ? JSON.parse(String(init.body)) : {}
+        } catch (error) {
+          patch = {}
+        }
+        const body = Object.assign({}, statePayload)
+        if ('palette' in patch) {
+          if (patch.palette) body.palette = patch.palette
+          else delete body.palette
+        }
+        return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }
+      }
       if (text.includes('/craft/export')) {
         const body = { ok: true, document: { markdown: '# 稿子', filename: '稿子 - 初稿.md', exportId: 'craft:work/w1', contentHash: 'sha256:0', containsAI: true } }
         return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }
@@ -1186,6 +1200,137 @@ async function main() {
   })
   check('F-29 其他来源仍只要 3 条', !fourContext.includes('4. ') && fourContext.includes('think.packContextMixed'))
   eq('F-29 THINK_LIMITS 仍是 600/3/200', JSON.stringify(smoke.THINK_LIMITS), JSON.stringify({ body: 600, context: 3, contextEach: 200 }))
+
+  // --- 11.7 F-28 配色：设置里选一套，根节点立刻换色 ------------------------
+  const withPalette = (palette) => (palette === '' ? Object.assign({}, statePayload) : Object.assign({}, statePayload, { palette }))
+  const palettePicks = []
+  const settingsDraw = renderComp('settings-palette', smoke.SettingsModal, {
+    state: withPalette(''),
+    onClose() {},
+    onChanged() {},
+    onDataChanged() {},
+    onSyncStarted() {},
+    onPalette: (name) => palettePicks.push(name),
+  }, ['', '60', '200', false, '', path.join(workDir, 'exports'), '', null, false])
+  has('F-28 设置里出现「外观」段', settingsDraw.text, 'appearance.title')
+  has('F-28 默认项是「跟随 DSH」', settingsDraw.text, 'appearance.follow')
+  has('F-28 六套色板都在选择器里', settingsDraw.text, 'appearance.night')
+  const paletteSelects = settingsDraw.elements.filter((el) => el.tag === 'select' && String(el.props.className || '').includes('wr-palette-select'))
+  eq('F-28 外观只有一支选择器', paletteSelects.length, 1)
+  eq('F-28 没有第二个主题开关', settingsDraw.elements.filter((el) => ['checkbox', 'radio'].includes(el.props.type)).length, 0)
+  const paletteValues = [...new Set(settingsDraw.elements.filter((el) => el.tag === 'option').map((el) => el.props.value))]
+  eq('F-28 选项就是七套', JSON.stringify(paletteValues), JSON.stringify(['follow', 'mint', 'night', 'cream', 'mist', 'glacier', 'iris']))
+  const beforeConfig = net.calls.length
+  if (paletteSelects.length === 1 && typeof paletteSelects[0].props.onChange === 'function') {
+    paletteSelects[0].props.onChange({ target: { value: 'night' } })
+    await new Promise((resolve) => setTimeout(resolve, 120))
+  }
+  eq('F-28 选了 night 就先通知外层换色', JSON.stringify(palettePicks), JSON.stringify(['night']))
+  const configCall = net.calls.slice(beforeConfig).find((call) => String(call.url).includes('/config'))
+  check('F-28 选完写回 config.json', Boolean(configCall), net.calls.slice(beforeConfig).map((call) => call.url).join(','))
+  if (configCall) {
+    let patched = {}
+    try {
+      patched = JSON.parse(configCall.body)
+    } catch (error) {
+      patched = {}
+    }
+    eq('F-28 写回的是 palette=night', patched.palette, 'night')
+  }
+  check('F-28 换配色不触发同步', net.calls.slice(beforeConfig).every((call) => !String(call.url).includes('/sync')),
+    net.calls.slice(beforeConfig).map((call) => call.url).join(','))
+
+  const rootOf = (draw) => draw.elements.find((el) => String(el.props.className || '') === 'wr-root')
+  const followDraw = get('palette-follow', { view: 'overview', state: withPalette('') })
+  const nightDraw = get('palette-night', { view: 'overview', state: withPalette('night') })
+  const unknownDraw = get('palette-unknown', { view: 'overview', state: withPalette('neon-bogus') })
+  const followRoot = rootOf(followDraw)
+  const nightRoot = rootOf(nightDraw)
+  const unknownRoot = rootOf(unknownDraw)
+  check('F-28 跟随 DSH 时根节点不挂 data-palette', Boolean(followRoot) && followRoot.props['data-palette'] === undefined,
+    followRoot ? String(followRoot.props['data-palette']) : 'no root')
+  eq('F-28 选了 night 根节点挂 data-palette=night', nightRoot && nightRoot.props['data-palette'], 'night')
+  check('F-28 未知配色回落跟随 DSH', Boolean(unknownRoot) && unknownRoot.props['data-palette'] === undefined,
+    unknownRoot ? String(unknownRoot.props['data-palette']) : 'no root')
+
+  // 关键 token 真的换了，而且不是「看起来可以」——下面按 WCAG 算对比度。
+  const styleOf = (draw) => {
+    const el = draw.elements.find((item) => item.tag === 'style')
+    const raw = el && el.props && el.props.dangerouslySetInnerHTML ? el.props.dangerouslySetInnerHTML.__html : ''
+    return String(raw || '')
+  }
+  const css = styleOf(nightDraw)
+  const blockOf = (selector) => {
+    const at = css.indexOf(selector)
+    if (at < 0) return ''
+    const end = css.indexOf('}', at)
+    return end > at ? css.slice(at, end) : ''
+  }
+  const baseBlock = blockOf('.wr-root{')
+  const nightBlock = blockOf('.wr-root[data-palette="night"]{')
+  const tokenOf = (block, name) => {
+    const match = block.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{3,8})`))
+    return match ? match[1] : ''
+  }
+  check('F-28 样式表里有 night 的 token 块', nightBlock.length > 0, String(nightBlock.length))
+  check('F-28 night 的背景/正文与默认不同',
+    tokenOf(nightBlock, '--wr-bg') !== '' && tokenOf(nightBlock, '--wr-bg') !== tokenOf(baseBlock, '--wr-bg') &&
+      tokenOf(nightBlock, '--wr-ink') !== tokenOf(baseBlock, '--wr-ink'),
+    `${tokenOf(nightBlock, '--wr-bg')} / ${tokenOf(nightBlock, '--wr-ink')} vs ${tokenOf(baseBlock, '--wr-bg')} / ${tokenOf(baseBlock, '--wr-ink')}`)
+
+  const hexOf = (hex) => {
+    const raw = String(hex || '').replace('#', '')
+    const full = raw.length === 3 ? raw.split('').map((c) => c + c).join('') : raw.slice(0, 6)
+    return [0, 2, 4].map((at) => parseInt(full.slice(at, at + 2), 16))
+  }
+  const luminance = (hex) => {
+    const [r, g, b] = hexOf(hex).map((value) => {
+      const channel = value / 255
+      return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4)
+    })
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  const contrast = (one, two) => {
+    const a = luminance(one)
+    const b = luminance(two)
+    const [hi, lo] = a > b ? [a, b] : [b, a]
+    return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100
+  }
+  const nightInk = tokenOf(nightBlock, '--wr-ink')
+  const nightBg = tokenOf(nightBlock, '--wr-bg')
+  const nightPaper = tokenOf(nightBlock, '--wr-paper')
+  const nightSoft = tokenOf(nightBlock, '--wr-ink-soft')
+  const nightAccent = tokenOf(nightBlock, '--wr-accent')
+  const bodyContrast = contrast(nightInk, nightPaper)
+  check('F-28 night 正文对比度 ≥4.5:1', bodyContrast >= 4.5, `${nightInk} on ${nightPaper} = ${bodyContrast}:1`)
+  check('F-28 night 次要文字对比度 ≥4.5:1', contrast(nightSoft, nightPaper) >= 4.5,
+    `${nightSoft} on ${nightPaper} = ${contrast(nightSoft, nightPaper)}:1`)
+  check('F-28 night 正文在页面底色上也 ≥4.5:1', contrast(nightInk, nightBg) >= 4.5,
+    `${nightInk} on ${nightBg} = ${contrast(nightInk, nightBg)}:1`)
+  check('F-28 night 图形/大字对比度 ≥3:1', contrast(nightAccent, nightPaper) >= 3,
+    `${nightAccent} on ${nightPaper} = ${contrast(nightAccent, nightPaper)}:1`)
+  const heat = [0, 1, 2, 3, 4].map((step) => tokenOf(nightBlock, `--wr-heat-${step}`))
+  eq('F-28 night 热力图五档都有值', heat.filter((hex) => hex !== '').length, 5)
+  eq('F-28 night 热力图五档互不相同', new Set(heat).size, 5)
+  const heatSteps = heat.slice(1).map((hex, index) => contrast(heat[index], hex))
+  check('F-28 night 热力图相邻两档可分辨（≥1.2:1）', heatSteps.every((step) => step >= 1.2), heatSteps.join(' / '))
+  check('F-28 浅色默认配色正文对比度 ≥4.5:1', contrast(tokenOf(baseBlock, '--wr-ink'), tokenOf(baseBlock, '--wr-paper')) >= 4.5,
+    `${tokenOf(baseBlock, '--wr-ink')} on ${tokenOf(baseBlock, '--wr-paper')} = ${contrast(tokenOf(baseBlock, '--wr-ink'), tokenOf(baseBlock, '--wr-paper'))}:1`)
+
+  // 持久化：写进 config.json，换一个宿主实例（= 刷新/重启）再读回来仍在。
+  const configFile = path.join(home, 'weread-gather', 'config.json')
+  const readConfig = () => JSON.parse(fs.readFileSync(configFile, 'utf8'))
+  host.saveConfig({ palette: 'night' })
+  eq('F-28 宿主记住 night', host.settings().palette, 'night')
+  eq('F-28 config.json 里写着 palette=night', readConfig().palette, 'night')
+  const reloaded = I.createHost({})
+  eq('F-28 重开宿主仍是 night（刷新后仍在）', reloaded.settings().palette, 'night')
+  host.saveConfig({ palette: 'follow' })
+  check('F-28 跟随 DSH 时 config.json 不留 palette 字段', !Object.prototype.hasOwnProperty.call(readConfig(), 'palette'),
+    JSON.stringify(readConfig()))
+  host.saveConfig({ palette: 'neon-bogus' })
+  check('F-28 非法配色不落盘', !Object.prototype.hasOwnProperty.call(readConfig(), 'palette'), JSON.stringify(readConfig()))
+  eq('F-28 非法配色读回来是跟随 DSH', host.settings().palette, '')
 
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
