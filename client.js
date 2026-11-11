@@ -353,6 +353,16 @@ window.__ModuleLoader__.load({
       'work.exported': '已导出：{path}',
       'work.paragraphDeleted': '已删除这一段',
       'work.pickFirst': '先建一篇初稿',
+      'work.aiWrite': 'AI 补写这一段',
+      'work.aiWriteHint': '用它挂着的出处补写，只在素材范围内写',
+      'work.aiPrompt': '请基于上面的出处，为这一段补写一段 120–200 字的正文：只使用出处里出现的事实、判断与措辞，不要新增书名、人名或数据；写成可以直接放进初稿的一段话。',
+      'work.aiDraft': 'AI 草稿（还没落盘）',
+      'work.aiAdopt': '采纳这段',
+      'work.aiRetry': '重新生成',
+      'work.aiDiscard': '不用了',
+      'work.aiNeedSource': '这一段还没有出处，先挑素材再让它补写',
+      'work.aiNoSource': '这一段挂着的出处都找不到了，先补出处再试',
+      'work.aiFailed': '没写出来：{error}',
       'chain.title': '这本书的读写链路',
       'chain.hint': '点哪一段，就带着这本书去那一段',
       'chain.notes': '摘录',
@@ -733,6 +743,16 @@ window.__ModuleLoader__.load({
       'work.exported': 'Exported: {path}',
       'work.paragraphDeleted': 'Paragraph deleted',
       'work.pickFirst': 'Create a draft first',
+      'work.aiWrite': 'AI draft this paragraph',
+      'work.aiWriteHint': 'Grounds the draft in this paragraph’s sources, nothing else',
+      'work.aiPrompt': 'Write one 120–200 word paragraph that continues this draft, using only the facts, judgements and wording found in the sources above. Do not add new titles, names or numbers. Make it read like a paragraph that can go straight into the draft.',
+      'work.aiDraft': 'AI draft (not saved yet)',
+      'work.aiAdopt': 'Keep this paragraph',
+      'work.aiRetry': 'Generate again',
+      'work.aiDiscard': 'Discard',
+      'work.aiNeedSource': 'This paragraph has no source yet — pick materials first',
+      'work.aiNoSource': 'None of this paragraph’s sources can be found any more — restore them first',
+      'work.aiFailed': 'Not written: {error}',
       'chain.title': "This book's read-write chain",
       'chain.hint': 'Tap a step to go there with this book',
       'chain.notes': 'Highlights',
@@ -1288,6 +1308,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-paragraph{display:flex;gap:10px;align-items:flex-start;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:12px;padding:11px 13px}
 .wr-paragraph-index{flex:none;font-size:11px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums;padding-top:2px;width:46px}
 .wr-paragraph-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.wr-ai{flex:0 0 auto;min-width:0}
+.wr-ai[data-open=true]{flex:1 0 100%;display:flex;flex-direction:column;gap:8px;background:var(--wr-wash);border:1px solid var(--wr-line);border-radius:10px;padding:10px 12px;margin-top:2px}
+.wr-ai-hint{font-size:11px;color:var(--wr-ink-mute);min-width:0}
+.wr-ai-draft{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.7;color:var(--wr-ink)}
+.wr-ai-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wr-ai-running{font-size:12px;color:var(--wr-ink-soft)}
 .wr-draft-export{background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:12px;padding:10px 12px;max-height:260px;overflow:auto;margin-top:10px}
 .wr-empty-next{margin:6px auto 12px;max-width:440px;font-size:12px;line-height:1.65;color:var(--wr-ink-soft)}
 .wr-notice-line{font-size:11.5px;color:var(--wr-ink-soft);margin:0 0 10px}
@@ -2191,6 +2217,57 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         lines.push(question)
       }
       return lines.join('\n')
+    }
+
+    /**
+     * F-23: one paragraph source -> the shape buildSourcePack understands. The
+     * pack is the only thing the model sees, so a material grounds the draft by
+     * its own text and a highlight keeps its chapter.
+     */
+    function paragraphSourceEntry(sourceId, ctx) {
+      const kind = sourceKind(sourceId)
+      const raw = sourceRawId(sourceId)
+      const lookup = (ctx && ctx.lookup) || {}
+      const table = lookup[kind]
+      const hit = table && typeof table.get === 'function' ? table.get(raw) : null
+      if (!hit) return null
+      const titleOf = ctx && typeof ctx.titleOf === 'function' ? ctx.titleOf : () => ''
+      if (kind === 'note') return { kind: 'note', entry: hit }
+      if (kind === 'thought') {
+        return {
+          kind: 'thought',
+          entry: {
+            content: hit.content,
+            bookTitle: titleOf(hit.bookId),
+            chapterName: hit.chapterName,
+            createTime: hit.createTime,
+          },
+        }
+      }
+      if (kind === 'response') {
+        return {
+          kind: 'thought',
+          entry: { content: hit.text, bookTitle: hit.bookTitle, author: hit.author, createTime: hit.adoptedAt },
+        }
+      }
+      return {
+        kind: 'thought',
+        entry: { content: hit.text, bookTitle: hit.bookTitle, author: hit.author, createTime: hit.createdAt },
+      }
+    }
+
+    /** The paragraph's own sources, in pack form. Empty when nothing resolves. */
+    function buildParagraphPack(input) {
+      const sourceIds = Array.isArray(input && input.sourceIds) ? input.sourceIds : []
+      const list = []
+      for (const sourceId of sourceIds) {
+        const hit = paragraphSourceEntry(sourceId, input)
+        if (hit) list.push(hit)
+      }
+      if (list.length === 0) return ''
+      const primary = list[0]
+      const context = list.slice(1).map((item) => ({ text: String(item.entry.content || item.entry.text || '') }))
+      return buildSourcePack({ entry: primary.entry, kind: primary.kind, context })
     }
 
 /**
@@ -3498,6 +3575,150 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       )
     }
 
+    /**
+     * F-23: draft one paragraph from the sources that paragraph already cites.
+     * The text stays a draft until it is kept — nothing is written while it
+     * streams, and a failed turn leaves no half paragraph behind.
+     */
+    function ParagraphAI(props) {
+      const chat = useChatAvailability()
+      const [open, setOpen] = useState(false)
+      const [stage, setStage] = useState('')
+      const [draft, setDraft] = useState('')
+      const [error, setError] = useState('')
+      const [busy, setBusy] = useState(false)
+      const abortRef = useRef(null)
+      const originRef = useRef('')
+      const offline = chat === 'offline'
+      const sourceIds = Array.isArray(props.sourceIds) ? props.sourceIds : []
+      const hasSource = sourceIds.length > 0
+      const disabled = offline || !hasSource || stage === 'running'
+      const title = !hasSource ? t('work.aiNeedSource') : offline ? t('think.offline') : t('work.aiWriteHint')
+
+      const run = () => {
+        if (disabled) return
+        const pack = buildParagraphPack({ sourceIds, lookup: props.lookup, titleOf: props.titleOf })
+        setOpen(true)
+        setStage('running')
+        setDraft('')
+        setError('')
+        if (pack === '') {
+          setStage('error')
+          setError(t('work.aiNoSource'))
+          return
+        }
+        const controller = typeof AbortController === 'function' ? new AbortController() : null
+        abortRef.current = controller
+        const workId = props.work && props.work.id ? String(props.work.id) : ''
+        originRef.current = `think:${workId}:${Date.now().toString(36)}`
+        let answer = ''
+        let failed = false
+        streamChat(
+          { pack, history: [], question: t('work.aiPrompt') },
+          (event) => {
+            if (!event) return
+            if (event.type === 'text') {
+              answer += String(event.text || '')
+              setDraft(answer)
+              return
+            }
+            if (event.type === 'error') {
+              failed = true
+              setStage('error')
+              setDraft('')
+              setError(t('work.aiFailed', { error: event.error || t('think.failed') }))
+            }
+          },
+          controller ? controller.signal : undefined,
+        )
+          .then(() => {
+            if (failed) return
+            if (answer.trim() === '') {
+              setStage('error')
+              setDraft('')
+              setError(t('work.aiFailed', { error: t('think.failed') }))
+            } else {
+              setStage('done')
+            }
+          })
+          .catch((thrown) => {
+            if (thrown && thrown.name === 'AbortError') return
+            setStage('error')
+            setDraft('')
+            setError(t('work.aiFailed', { error: thrown instanceof Error ? thrown.message : String(thrown) }))
+          })
+          .finally(() => {
+            abortRef.current = null
+          })
+      }
+
+      const keep = () => {
+        if (draft.trim() === '' || busy) return
+        // A draft that came back through a re-render still needs an id to point
+        // at its turn; the loaded one wins, otherwise stamp it now.
+        const workId = props.work && props.work.id ? String(props.work.id) : ''
+        const originId = originRef.current === '' ? `think:${workId}:${Date.now().toString(36)}` : originRef.current
+        setBusy(true)
+        setError('')
+        Promise.resolve(props.onAdopt(draft.trim(), originId, sourceIds))
+          .then(() => {
+            setBusy(false)
+            setStage('')
+            setDraft('')
+            setOpen(false)
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+
+      const stop = () => {
+        if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
+        setStage('')
+        setDraft('')
+        setOpen(false)
+      }
+
+      return h(
+        'div',
+        { className: 'wr-ai', 'data-open': open ? 'true' : 'false' },
+        h(
+          'button',
+          { className: 'wr-btn wr-btn-ghost wr-ai-trigger', type: 'button', disabled, title, onClick: run },
+          t('work.aiWrite'),
+        ),
+        !hasSource || offline ? h('span', { className: 'wr-ai-hint' }, title) : null,
+        open
+          ? h(
+              'div',
+              { className: 'wr-ai-actions' },
+              h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiDraft')),
+              stage === 'running' ? h('span', { className: 'wr-ai-running' }, t('state.loading')) : null,
+            )
+          : null,
+        open && draft !== '' ? h('p', { className: 'wr-ai-draft' }, draft) : null,
+        open && stage === 'done'
+          ? h(
+              'div',
+              { className: 'wr-ai-actions' },
+              h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: keep }, t('work.aiAdopt')),
+              h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: run }, t('work.aiRetry')),
+              h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: stop }, t('work.aiDiscard')),
+            )
+          : null,
+        open && stage === 'error'
+          ? h(
+              'div',
+              { className: 'wr-ai-actions' },
+              h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: run }, t('work.aiRetry')),
+              h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: stop }, t('work.aiDiscard')),
+            )
+          : null,
+        error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
+      )
+    }
+
     function ParagraphRow(props) {
       const paragraph = props.paragraph || {}
       const [editing, setEditing] = useState(false)
@@ -3540,6 +3761,14 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             editing
               ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: save }, t('action.save'))
               : h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => setEditing(true) }, t('action.edit')),
+            h(ParagraphAI, {
+              work: props.work,
+              paragraph,
+              sourceIds: paragraph.sourceIds,
+              lookup: props.lookup,
+              titleOf: props.titleOf,
+              onAdopt: props.onAdopt,
+            }),
             h(DangerButton, { onDelete: props.onDelete }),
           ),
           error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
@@ -3710,10 +3939,23 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                             key: paragraph.id,
                             paragraph,
                             index,
+                            work,
                             lookup: props.lookup,
+                            titleOf: (bookId) => bookTitleOf(bookId, props.data, craft),
                             focusId: props.focusId,
                             onOpenSource: props.onOpenSource,
                             onSave: (text) => call('work.paragraph.update', { id: work.id, paragraphId: paragraph.id, text: text.trim() }),
+                            // F-23: an AI paragraph lands right after the one it
+                            // continues, marked ai + the id of the turn that wrote it.
+                            onAdopt: (text, originId, sourceIds) =>
+                              call('work.paragraph.add', {
+                                id: work.id,
+                                text,
+                                sourceIds,
+                                ai: true,
+                                aiOriginIds: originId === '' ? [] : [originId],
+                                index: index + 1,
+                              }),
                             onDelete: () => {
                               call('work.paragraph.delete', { id: work.id, paragraphId: paragraph.id }).catch(() => {})
                             },
@@ -5493,6 +5735,10 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         ASK_WIDTH,
         AskAdopt,
         MaterialPicker,
+        ParagraphRow,
+        ParagraphAI,
+        buildParagraphPack,
+        paragraphSourceEntry,
         JourneyBar,
         SubNav,
         BookChain,

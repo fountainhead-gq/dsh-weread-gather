@@ -940,13 +940,19 @@ function buildWorkDocument(work, options) {
     const body = String(paragraph.text || '').trim()
     const lines = []
     if (body !== '') lines.push(body)
-    if (paragraph.sourceIds.length > 0) {
+    // A paragraph written by the model says so in the file itself, so the
+    // exported draft still shows which lines were not typed by hand.
+    const isAIParagraph = paragraphContainsAI(paragraph, isAISource)
+    const quotes = []
+    if (isAIParagraph) quotes.push('> [!ai]')
+    if (paragraph.sourceIds.length > 0) quotes.push(`> 来源：${paragraph.sourceIds.map(labelOf).join('；')}`)
+    if (quotes.length > 0) {
       if (lines.length > 0) lines.push('')
-      lines.push(`> 来源：${paragraph.sourceIds.map(labelOf).join('；')}`)
+      lines.push(quotes.join('\n'))
     }
     if (lines.length === 0) continue
     blocks.push(lines.join('\n'))
-    if (paragraphContainsAI(paragraph, isAISource)) aiParagraphs += 1
+    if (isAIParagraph) aiParagraphs += 1
     for (const sourceId of paragraph.sourceIds) {
       const hit = resolve(sourceId)
       if (!hit) continue

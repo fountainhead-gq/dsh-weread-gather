@@ -903,6 +903,169 @@ async function main() {
     }
   }
 
+  // --- 11.5 F-23：段落行上的「AI 补写这一段」（生成 → 采纳 → 落盘 AI 段 → 导出）---
+  const paraWork = host.craftView().works.find((item) => item.id === workA.id)
+  const paraOwn = paraWork.paragraphs[0]
+  const paraTitleOf = (bookId) => (String(bookId) === BOOK_A.bookId ? BOOK_A.title : '')
+  const paraBase = {
+    work: { id: workA.id, title: paraWork.title },
+    paragraph: paraOwn,
+    sourceIds: paraOwn.sourceIds,
+    lookup,
+    titleOf: paraTitleOf,
+    onAdopt: () => Promise.resolve(),
+  }
+  const paraPack = smoke.buildParagraphPack({ sourceIds: paraOwn.sourceIds, lookup, titleOf: paraTitleOf })
+  has('F-23 补写把段落自己的出处编成来源包', paraPack, '先给画面，再给判断')
+  has('F-23 来源包带书名', paraPack, '《诗经》')
+
+  const paraOffline = renderComp('para-ai-offline', smoke.ParagraphAI, paraBase, ['offline', false, '', '', '', false])
+  const offlineTrigger = (paraOffline.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+  check('F-23 无模型时补写入口置灰', Boolean(offlineTrigger) && offlineTrigger.props.disabled === true)
+  has('F-23 置灰复用 think.offline 文案', paraOffline.text, 'think.offline')
+
+  const paraNone = renderComp('para-ai-nosource', smoke.ParagraphAI, Object.assign({}, paraBase, { sourceIds: [] }), ['ready', false, '', '', '', false])
+  const noneTrigger = (paraNone.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+  check('F-23 段落没有出处时入口置灰', Boolean(noneTrigger) && noneTrigger.props.disabled === true)
+  has('F-23 没有出处时说清原因', paraNone.text, 'work.aiNeedSource')
+
+  net.modelsAvailable = true
+  net.chatStatus = 200
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: '秩序感先是从画面里' },
+    { type: 'text', text: '长出来的。' },
+    { type: 'done' },
+  ]
+  // ParagraphAI 的 useState 顺序：chat, open, stage, draft, error, busy
+  const liveSeeds = ['ready', false, '', '', '', false]
+  const revisionBefore = host.craftSummary().revision
+  const paraLive = renderComp('para-ai-live', smoke.ParagraphAI, paraBase, liveSeeds.slice())
+  const liveTrigger = (paraLive.elements || []).find((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+  check('F-23 有模型时补写入口可点', Boolean(liveTrigger) && liveTrigger.props.disabled !== true)
+  if (liveTrigger) {
+    liveTrigger.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const replayed = liveSeeds.slice()
+    for (const entry of setterLog) replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
+    has('F-23 流式草稿落在段落行上', String(replayed[3]), '秩序感先是从画面里')
+    has('F-23 第二段流式文本也到了', String(replayed[3]), '长出来的')
+    eq('F-23 生成完是草稿态', replayed[2], 'done')
+    eq('F-23 只生成不采纳时库里零变化', host.craftSummary().revision, revisionBefore)
+    const chatCall = net.calls.filter((item) => item.url.endsWith('/chat')).pop()
+    check('F-23 补写真的发了 /chat', Boolean(chatCall))
+    if (chatCall) {
+      const body = JSON.parse(chatCall.body || '{}')
+      has('F-23 请求体里带出处而不是空问题', String(body.pack || ''), '先给画面，再给判断')
+      eq('F-23 请求体里的问题是补写指令', String(body.question || ''), 'work.aiPrompt')
+      eq('F-23 补写不带历史（一次一段，不预取）', JSON.stringify(body.history || []), '[]')
+    }
+
+    const adopted = []
+    const paraDone = renderComp(
+      'para-ai-done',
+      smoke.ParagraphAI,
+      Object.assign({}, paraBase, {
+        onAdopt(text, originId, sourceIds) {
+          adopted.push({ text, originId, sourceIds })
+          return Promise.resolve()
+        },
+      }),
+      ['ready', true, 'done', '秩序感先是从画面里长出来的。', '', false],
+    )
+    const keepBtn = (paraDone.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiAdopt')
+    check('F-23 草稿有「采纳」出口', Boolean(keepBtn))
+    if (keepBtn) {
+      keepBtn.props.onClick({ stopPropagation() {} })
+      await new Promise((resolve) => setTimeout(resolve, 30))
+      check('F-23 采纳把草稿交出去', adopted.length === 1, JSON.stringify(adopted))
+      if (adopted.length === 1) {
+        eq('F-23 采纳的正文就是草稿', adopted[0].text, '秩序感先是从画面里长出来的。')
+        check('F-23 采纳带上那次生成的 id', String(adopted[0].originId || '').startsWith('think:'), adopted[0].originId)
+        eq('F-23 采纳带段落自己的出处', JSON.stringify(adopted[0].sourceIds), JSON.stringify(paraOwn.sourceIds))
+        // 真写一次宿主：客户端交出的三样东西必须被 index.js 接受并标成 AI 段。
+        const before = host.craftView().works.find((item) => item.id === workA.id).paragraphs.length
+        const written = host.craftOp(
+          'work.paragraph.add',
+          {
+            id: workA.id,
+            text: adopted[0].text,
+            sourceIds: adopted[0].sourceIds,
+            ai: true,
+            aiOriginIds: [adopted[0].originId],
+            index: 1,
+          },
+          host.craftSummary().revision,
+        ).created.paragraph
+        eq('F-23 落盘后这一段标为 AI', written.ai, true)
+        eq('F-23 落盘后记住那次生成', JSON.stringify(written.aiOriginIds), JSON.stringify([adopted[0].originId]))
+        const after = host.craftView().works.find((item) => item.id === workA.id)
+        eq('F-23 落盘后段落数 +1', after.paragraphs.length, before + 1)
+        eq('F-23 落盘后插在这一段之后', after.paragraphs.findIndex((item) => item.id === written.id), 1)
+        const aiRow = renderComp(
+          'para-ai-row',
+          smoke.ParagraphRow,
+          { paragraph: written, index: 1, work: { id: workA.id }, lookup, onSave: () => Promise.resolve(), onDelete() {}, onAdopt: () => Promise.resolve() },
+          [false, '', false, ''],
+        )
+        has('F-23 AI 段在界面上有标记', aiRow.text, 'work.aiTag')
+        const doc = host.exportCraftWork(workA.id, undefined).document
+        const fm = doc.markdown.split('---')[1] || ''
+        has('F-23 导出 front-matter 的 containsAI 为 true', fm, 'containsAI: true')
+        has('F-23 导出正文里有这段 AI 文字', doc.markdown, '秩序感先是从画面里长出来的。')
+      }
+    }
+  }
+
+  // 一篇「一段 AI + 一段手写」的稿子：标记必须只落在 AI 段上。
+  const mixedWork = write('work.add', { title: '混排稿' }).created.work
+  write('work.paragraph.add', { id: mixedWork.id, text: '手写的一段：先把自己放进去。', sourceIds: [`material:${materialA.id}`] })
+  write('work.paragraph.add', {
+    id: mixedWork.id,
+    text: '秩序感先给画面，再给判断。',
+    sourceIds: [`material:${materialA.id}`],
+    ai: true,
+    aiOriginIds: ['think:mixed:1'],
+  })
+  const mixed = host.exportCraftWork(mixedWork.id, undefined).document
+  const mixedBody = mixed.markdown.slice(mixed.markdown.indexOf('\n---\n') + 5)
+  const mixedBlocks = mixedBody.split('\n\n')
+  const handIndex = mixedBlocks.findIndex((block) => block.includes('先把自己放进去'))
+  const aiIndex = mixedBlocks.findIndex((block) => block.includes('秩序感先给画面'))
+  // 正文块与紧随其后的引用块是一段的两半。
+  const handBlock = handIndex < 0 ? '' : mixedBlocks[handIndex + 1] || ''
+  const aiBlock = aiIndex < 0 ? '' : mixedBlocks[aiIndex + 1] || ''
+  check('F-23 导出：AI 段正文后带 > [!ai]', aiBlock.includes('> [!ai]'), aiBlock)
+  check('F-23 导出：手写段不带 > [!ai]', handBlock !== '' && handBlock.indexOf('[!ai]') < 0, handBlock)
+  check('F-23 导出：标记与来源同属一个 blockquote', aiBlock.includes('> [!ai]\n> 来源：'), aiBlock)
+  has('F-23 导出：手写段仍保留来源行', handBlock, '> 来源：')
+  eq('F-23 导出：全文只出现一次标记', (mixedBody.match(/\[!ai\]/g) || []).length, 1)
+  eq('F-23 导出：aiParagraphCount 只数 AI 段', mixed.aiParagraphs, 1)
+  eq('F-23 导出：containsAI 为 true', mixed.containsAI, true)
+  const mixedAgain = host.exportCraftWork(mixedWork.id, undefined).document
+  eq('F-23 导出：同一份内容两次导出 contentHash 相同', mixedAgain.contentHash, mixed.contentHash)
+  eq('F-23 导出：同一份内容两次导出的正文相同', mixedAgain.markdown.split('\n---\n')[1], mixed.markdown.split('\n---\n')[1])
+
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: '半截文字' },
+    { type: 'error', error: '模型调用中断' },
+    { type: 'done' },
+  ]
+  const failSeeds = ['ready', false, '', '', '', false]
+  const paraFail = renderComp('para-ai-fail', smoke.ParagraphAI, paraBase, failSeeds.slice())
+  const failTrigger = (paraFail.elements || []).find((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+  if (failTrigger) {
+    failTrigger.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const replayed = failSeeds.slice()
+    for (const entry of setterLog) replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
+    eq('F-23 失败后不留半截草稿', String(replayed[3]), '')
+    has('F-23 失败有可见错误', String(replayed[4]), '模型调用中断')
+    eq('F-23 失败后停在错误态而不是草稿态', replayed[2], 'error')
+  }
+  net.modelsAvailable = false
+
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
   const banned = ['打卡', '排行榜', '徽章', '进度环', '连续天数']

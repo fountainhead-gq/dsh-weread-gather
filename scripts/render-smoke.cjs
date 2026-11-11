@@ -672,6 +672,61 @@ if (typeof smoke.MaterialPicker === 'function') {
   askGuards.push('client module 未暴露 MaterialPicker')
 }
 
+// F-23：段落行上的「AI 补写这一段」。三种状态都要能一眼看出：能写、无模型、
+// 没有出处；草稿在采纳之前只是草稿（带 AI 标记与三个出口）。
+const paragraphGuards = []
+if (typeof smoke.ParagraphAI === 'function') {
+  const aiCraft = smokeCraft()
+  const aiMaterial = aiCraft.materials[0]
+  const aiLookup = {
+    note: new Map(),
+    thought: new Map(),
+    response: new Map(),
+    material: new Map([[aiMaterial.id, aiMaterial]]),
+  }
+  const aiProps = {
+    work: { id: aiCraft.works[0].id, title: aiCraft.works[0].title },
+    paragraph: aiCraft.works[0].paragraphs[0],
+    sourceIds: [`material:${aiMaterial.id}`],
+    lookup: aiLookup,
+    titleOf: () => aiMaterial.bookTitle,
+    onAdopt: () => Promise.resolve(),
+  }
+  renderStandalone('paragraph-ai', smoke.ParagraphAI, aiProps, ['ready', true, 'done', '秩序感先给画面，再给判断。', '', false])
+  renderStandalone('paragraph-ai-offline', smoke.ParagraphAI, aiProps, ['offline', false, '', '', '', false])
+  renderStandalone('paragraph-ai-nosource', smoke.ParagraphAI, Object.assign({}, aiProps, { sourceIds: [] }), ['ready', false, '', '', '', false])
+  const aiDraw = byLabel0('paragraph-ai')
+  if (!aiDraw) paragraphGuards.push('paragraph-ai: 未渲染')
+  else {
+    for (const needle of ['work.aiDraft', 'work.aiAdopt', 'work.aiRetry', 'work.aiDiscard', '秩序感先给画面'])
+      if (!aiDraw.text.includes(needle)) paragraphGuards.push('paragraph-ai: 缺 ' + needle)
+    const triggers = (aiDraw.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    if (triggers.length === 0) paragraphGuards.push('paragraph-ai: 缺「AI 补写这一段」入口')
+    else if (triggers.some((el) => el.tag !== 'button' || typeof el.props.onClick !== 'function'))
+      paragraphGuards.push('paragraph-ai: 入口不是可点的 button')
+    const keeps = (aiDraw.elements || []).filter((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiAdopt')
+    if (keeps.length === 0) paragraphGuards.push('paragraph-ai: 草稿没有「采纳」出口')
+  }
+  const aiOffline = byLabel0('paragraph-ai-offline')
+  if (!aiOffline) paragraphGuards.push('paragraph-ai-offline: 未渲染')
+  else {
+    const triggers = (aiOffline.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    if (triggers.length === 0) paragraphGuards.push('paragraph-ai-offline: 缺入口')
+    else if (!triggers.every((el) => el.props.disabled === true)) paragraphGuards.push('paragraph-ai-offline: 无模型时入口没有置灰（F-23）')
+    if (!aiOffline.text.includes('think.offline')) paragraphGuards.push('paragraph-ai-offline: 置灰没有说明原因')
+  }
+  const aiNoSource = byLabel0('paragraph-ai-nosource')
+  if (!aiNoSource) paragraphGuards.push('paragraph-ai-nosource: 未渲染')
+  else {
+    const triggers = (aiNoSource.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    if (triggers.length === 0) paragraphGuards.push('paragraph-ai-nosource: 缺入口')
+    else if (!triggers.every((el) => el.props.disabled === true)) paragraphGuards.push('paragraph-ai-nosource: 没出处时入口没有置灰')
+    if (!aiNoSource.text.includes('work.aiNeedSource')) paragraphGuards.push('paragraph-ai-nosource: 没出处时没有说明')
+  }
+} else {
+  paragraphGuards.push('client module 未暴露 ParagraphAI')
+}
+
 // 四段旅程：二层导航、六个内页、三个空/失败态、书页链路块。
 // 这里只声明断言队列，真正的求值放到 guards 初始化之后（checkJourneys）。
 const journeyGuards = []
@@ -836,6 +891,7 @@ for (const item of packGuards) guards.push(item)
 for (const item of askGuards) guards.push(item)
 checkJourneys(guards, byLabel, bookDraw)
 for (const item of journeyGuards) guards.push(item)
+for (const item of paragraphGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)
