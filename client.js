@@ -1049,7 +1049,12 @@ window.__ModuleLoader__.load({
     }
     function fmtDateTime(seconds) {
       if (!seconds) return ''
-      const date = new Date(seconds * 1000)
+      // 微读给的是秒，但真出现过毫秒级的 createTime（pack 里会写出「55840-11-09」这种年份）。
+      // 这里只做单位归一化：大于 1e11 当毫秒，否则当秒。别把秒级的 1.79e9 当毫秒。
+      const value = Number(seconds)
+      if (!Number.isFinite(value) || value <= 0) return ''
+      const millis = value > 1e11 ? value : value * 1000
+      const date = new Date(millis)
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
     }
     function contains(haystack, needle) {
@@ -2710,6 +2715,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
       }
 
+      // authorType 目前没有活路径：能打开对话卡的只有摘录（note）与想法（thought）。
+      // 素材还打不开 AskCard，所以这条参数现在恒为 undefined —— 留着是为了「素材接追问」那天
+      // 由调用方直接传进来，别当死代码删掉；要不要让素材也能追问是产品决定，别在这里顺手改交互。
       const kindLabel = packKindLabel(props.kind, props.type, props.authorType)
       const chapter = String(
         (props.kind === 'note' ? props.entry && props.entry.chapterTitle : props.entry && props.entry.chapterName) || '',
@@ -2973,6 +2981,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         setOpen({ mode, question: askKey === null ? '' : t(askKey), anchor })
       }
 
+      // 同 AskCard：authorType 现在没有活路径（ThinkingBar 只挂在摘录与想法上），
+      // 透传是为了素材将来接追问时不必再改一遍链路；没有为它新增任何交互。
       const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, type: props.type, authorType: props.authorType, context: props.context })
 
       return h(

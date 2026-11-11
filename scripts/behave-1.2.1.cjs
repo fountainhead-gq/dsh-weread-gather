@@ -336,6 +336,20 @@ async function main() {
   check('client.js 调用了 __ModuleLoader__.load', Boolean(clientModule))
 
   const registrations = []
+  // 默认把 locale key 原样返回（断言好写），但真实中文文案里包尾那句「素材里带「AI」字样的是…」
+  // 本身就含「AI」——所以凡是要断「这段文字里有没有 AI」的用例，都得能切到真实文案再验一遍。
+  // 这里把注册时的真字典留下来，并允许用 localeText 临时切到真文案。
+  let localeDictionaries = {}
+  let localeText = false
+  const fillParams = (text, params) =>
+    String(text).replace(/\{(\w+)\}/g, (all, name) => (params && Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : all))
+  const renderLocale = (key, params) => {
+    if (localeText) {
+      const dict = (localeDictionaries && localeDictionaries.zh) || {}
+      if (Object.prototype.hasOwnProperty.call(dict, key)) return fillParams(dict[key], params)
+    }
+    return params ? `${key}(${Object.values(params).join(',')})` : key
+  }
   const ctx = {
     slots: {
       inject(name, factory) {
@@ -347,9 +361,11 @@ async function main() {
       },
     },
     locale: {
-      register() {},
+      register(namespace, dictionaries) {
+        if (dictionaries && typeof dictionaries === 'object' && dictionaries.zh) localeDictionaries = dictionaries
+      },
       bind() {
-        return (key, params) => (params ? `${key}(${Object.values(params).join(',')})` : key)
+        return renderLocale
       },
       current: 'zh',
     },
@@ -1250,8 +1266,74 @@ async function main() {
   check('F-32 上下文第 1 条是自写素材时不带 AI 标记', Boolean(ctxWithHuman[0]) && !ctxWithHuman[0].includes('AI'), String(ctxWithHuman[0]))
   check('F-32 同一段里 AI 与自写素材上下文标签不同', Boolean(ctxWithAI[0]) && Boolean(ctxWithHuman[0]) && ctxWithAI[0] !== ctxWithHuman[0], `${ctxWithAI[0]} vs ${ctxWithHuman[0]}`)
   // 身份缺失按自写处理：宁可漏标，也不能把用户的话标成 AI。
+  // 别拿整包做 includes('AI')：真实文案的包尾本来就写着「素材里带「AI」字样的是…」，
+  // 那样在真文案下会假红、在 key 化 stub 下又只是碰巧绿。这里只断类型行与正文抬头。
   const plainPack = packOf([`material:${plainMaterial.id}`])
-  check('F-32 没写 authorType 的素材按自写处理', !plainPack.includes('AI'), plainPack.split('\n').slice(0, 6).join(' / '))
+  const plainKindLine = kindLineOf(plainPack)
+  const plainHeadLine = plainPack.split('\n').find((line) => line.startsWith('think.packFiled')) || ''
+  check(
+    'F-32 没写 authorType 的素材按自写处理',
+    plainKindLine.includes('think.packKindMaterialOf') && !plainKindLine.includes('think.packKindMaterialAI') && plainHeadLine === 'think.packFiled',
+    `${plainKindLine} / ${plainHeadLine}`,
+  )
+  check('F-32 没写 authorType 的素材不用 AI 抬头', !plainPack.includes('think.packFiledAI'), plainHeadLine)
+  // 再拿真实中文文案跑一遍：真文案里「我整理的素材（金句）」与「我采纳的 AI 回应整理成的素材（金句）」
+  // 才是用户与模型真正看到的东西；包尾那句自带「AI」，正好证明整包判断不可信。
+  const PLAIN_ROLE = '我整理的素材（金句）'
+  const AI_ROLE = '我采纳的 AI 回应整理成的素材（金句）'
+  const AI_HEAD = '我采纳的 AI 回应整理成的素材：'
+  localeText = true
+  let plainText = ''
+  let aiText = ''
+  let dirtyText = ''
+  let dirtyUpperText = ''
+  try {
+    plainText = packOf([`material:${plainMaterial.id}`])
+    aiText = packOf([`material:${aiMaterial.id}`])
+    // 脏值：'ai ' 带尾空格，不得被当成 AI。
+    dirtyText = smoke.buildSourcePack({
+      entry: { bookTitle: BOOK_A.title, text: '脏值素材' },
+      kind: 'material',
+      type: '金句',
+      authorType: 'ai ',
+    })
+    // 大写变体：'AI' 只是大小写不同，也不能被当成「我采纳的 AI 回应整理成的素材」。
+    dirtyUpperText = smoke.buildSourcePack({
+      entry: { bookTitle: BOOK_A.title, text: '大写脏值素材' },
+      kind: 'material',
+      type: '金句',
+      authorType: 'AI',
+    })
+  } finally {
+    localeText = false
+  }
+  check('F-32 真实文案：未标身份用「我整理的素材（金句）」', plainText.includes(PLAIN_ROLE), plainText.split('\n').slice(0, 4).join(' / '))
+  check('F-32 真实文案：未标身份不出现「我采纳的 AI 回应整理成的素材」', !plainText.includes(AI_ROLE) && !plainText.includes(AI_HEAD), plainText.split('\n').slice(0, 4).join(' / '))
+  check('F-32 真实文案：AI 素材用「我采纳的 AI 回应整理成的素材（金句）」', aiText.includes(AI_ROLE), aiText.split('\n').slice(0, 4).join(' / '))
+  check('F-32 真实文案：包尾本身就含「AI」（所以整包判断不可信）', plainText.includes('AI'), plainText.split('\n').slice(-2).join(' / '))
+  check('F-32 真实文案：脏值「ai␠」仍按自写处理', dirtyText.includes(PLAIN_ROLE) && !dirtyText.includes(AI_ROLE) && !dirtyText.includes(AI_HEAD), dirtyText.split('\n').slice(0, 4).join(' / '))
+  check(
+    'F-32 真实文案：大写「AI」仍按自写处理',
+    dirtyUpperText.includes(PLAIN_ROLE) && !dirtyUpperText.includes(AI_ROLE) && !dirtyUpperText.includes(AI_HEAD),
+    dirtyUpperText.split('\n').slice(0, 4).join(' / '),
+  )
+
+  // 时间戳单位归一化：微读给的是秒，但真出现毫秒 createTime 时不能写出「55840-11-09」。
+  const msStamp = Date.UTC(2025, 10, 9, 12, 30, 0)
+  const secStamp = Math.floor(msStamp / 1000)
+  const packWithStamp = (stamp) =>
+    smoke.buildSourcePack({ entry: { bookTitle: BOOK_A.title, text: '同一时刻', createTime: stamp }, kind: 'note' })
+  const packSeconds = packWithStamp(secStamp)
+  const packMillis = packWithStamp(msStamp)
+  const timeLineOf = (pack) => pack.split('\n').find((line) => line.startsWith('think.packTime')) || ''
+  const dateOf = (pack) => (timeLineOf(pack).match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/) || [''])[0]
+  check('时间戳：秒级 createTime 正常解析', /^20\d{2}-/.test(dateOf(packSeconds)), timeLineOf(packSeconds))
+  check(
+    '时间戳：毫秒级 createTime 不会写出五位数年份',
+    dateOf(packMillis) !== '' && !/\d{5}-/.test(timeLineOf(packMillis)),
+    timeLineOf(packMillis),
+  )
+  eq('时间戳：毫秒与秒指向同一分钟', dateOf(packMillis), dateOf(packSeconds))
   for (const value of ['AI', 'Ai', 'ai ', 'human', '', null, undefined]) {
     eq(`F-32 materialAuthorIsAI(${String(value)}) 不算 AI`, smoke.materialAuthorIsAI(value), false)
   }
