@@ -217,13 +217,19 @@ window.__ModuleLoader__.load({
       'think.packAuthor': '作者：',
       'think.packChapter': '章节：',
       'think.packKind': '内容类型：',
-      'think.packKindNote': '原文划线',
+      'think.packKindNote': '书里的原文',
       'think.packKindThought': '我的想法',
+      'think.packKindResponse': '我采纳的 AI 回应',
+      'think.packKindMaterial': '我整理的素材',
+      'think.packKindMaterialOf': '{role}（{type}）',
       'think.packTime': '阅读时间：',
       'think.packMine': '我的想法：',
+      'think.packAdopted': '我采纳的 AI 回应：',
+      'think.packFiled': '我整理的素材：',
       'think.packContext': '同章其他划线（{count} 条，供参考）：',
+      'think.packContextMixed': '其他来源（{count} 条，供参考）：',
       'think.packOriginal': '原文：',
-      'think.packFoot': '—— 以上来自「数字书房」。引文属于书，想法是我写的。',
+      'think.packFoot': '—— 以上来自「数字书房」。标「书里的原文」的是书里的句子，其余三类（我的想法 / 我采纳的 AI 回应 / 我整理的素材）是我这一侧的记录，引用时请分清归属。',
       'think.empty': '想问什么？点上面的按钮，问题会先填进输入框，改完再发。',
       'think.thinking': '思考中…',
       'think.aiNote': 'AI 生成，仅供参考',
@@ -608,12 +614,18 @@ window.__ModuleLoader__.load({
       'think.packChapter': 'Chapter: ',
       'think.packKind': 'Content: ',
       'think.packKindNote': "the book's words",
-      'think.packKindThought': 'my thought',
+      'think.packKindThought': 'my own thought',
+      'think.packKindResponse': 'an AI reply I kept',
+      'think.packKindMaterial': 'a source I filed',
+      'think.packKindMaterialOf': '{role} ({type})',
       'think.packTime': 'Read on: ',
       'think.packMine': 'My thought:',
+      'think.packAdopted': 'An AI reply I kept:',
+      'think.packFiled': 'A source I filed:',
       'think.packContext': 'Other highlights in the same chapter ({count}, for context):',
+      'think.packContextMixed': 'Other sources ({count}, for context):',
       'think.packOriginal': "The book's words:",
-      'think.packFoot': '— From Digital Study. The quoted words belong to the book; the thought is mine.',
+      'think.packFoot': '— From Digital Study. What is marked as the book\'s words comes from the book; the other three kinds (my own thought / an AI reply I kept / a source I filed) are my own record — keep the ownership straight when you quote.',
       'think.empty': 'Pick a button above — the question lands in the box so you can edit it first.',
       'think.thinking': 'Thinking…',
       'think.aiNote': 'AI-generated, for reference',
@@ -2180,9 +2192,43 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       ['deeper', 'think.mode.deeper', 'think.ask.deeper'],
     ]
 
+    /**
+     * F-29: what a source IS. A 金句 material is the book's words, not mine — the
+     * pack has to say so, or the model writes in my voice about someone else's line.
+     */
+    const PACK_KIND_KEYS = {
+      note: 'think.packKindNote',
+      thought: 'think.packKindThought',
+      response: 'think.packKindResponse',
+      material: 'think.packKindMaterial',
+    }
+
+    /** Anything we cannot classify degrades to 「我整理的素材」: never pose as the book or as me. */
+    function packKindOf(kind) {
+      const name = String(kind || '')
+      return PACK_KIND_KEYS[name] ? name : 'material'
+    }
+
+    /** Only the six real types get a parenthesised name; a made-up type stays neutral. */
+    function materialTypeKnown(type) {
+      const name = String(type || '')
+      return MATERIAL_TYPES.some((item) => item[0] === name)
+    }
+
+    function packKindLabel(kind, type) {
+      const name = packKindOf(kind)
+      if (name !== 'material') return t(PACK_KIND_KEYS[name])
+      if (!materialTypeKnown(type)) return t(PACK_KIND_KEYS.material)
+      return t('think.packKindMaterialOf', {
+        role: t(PACK_KIND_KEYS.material),
+        type: t(materialTypeKey(String(type || ''))),
+      })
+    }
+
     function buildSourcePack(input) {
       const entry = input && input.entry ? input.entry : {}
-      const kind = input && input.kind === 'note' ? 'note' : 'thought'
+      const kind = packKindOf(input && input.kind)
+      const type = String((input && input.type) || '')
       const context = Array.isArray(input && input.context) ? input.context : []
       const question = String((input && input.question) || '').trim()
       const title = String(entry.bookTitle || '').trim()
@@ -2192,23 +2238,36 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       lines.push(`${t('think.packBook')}${title === '' ? t('think.packUnknown') : `《${title}》`}`)
       if (author !== '') lines.push(`${t('think.packAuthor')}${author}`)
       if (chapter !== '') lines.push(`${t('think.packChapter')}${chapter}`)
-      lines.push(`${t('think.packKind')}${kind === 'note' ? t('think.packKindNote') : t('think.packKindThought')}`)
+      lines.push(`${t('think.packKind')}${packKindLabel(kind, type)}`)
       if (entry.createTime) lines.push(`${t('think.packTime')}${fmtDateTime(entry.createTime)}`)
       lines.push('')
-      if (kind === 'thought') {
-        lines.push(t('think.packMine'))
-        lines.push(clip(String(entry.content || '').trim(), THINK_LIMITS.body))
-        const used = context.slice(0, THINK_LIMITS.context)
-        if (used.length > 0) {
-          lines.push('')
-          lines.push(t('think.packContext', { count: String(used.length) }))
-          for (let index = 0; index < used.length; index += 1) {
-            lines.push(`${index + 1}. ${clip(String(used[index].text || '').trim(), THINK_LIMITS.contextEach)}`)
-          }
-        }
-      } else {
+      if (kind === 'note') {
         lines.push(t('think.packOriginal'))
         lines.push(`> ${clip(String(entry.text || '').trim(), THINK_LIMITS.body)}`)
+      } else if (kind === 'thought') {
+        lines.push(t('think.packMine'))
+        lines.push(clip(String(entry.content || '').trim(), THINK_LIMITS.body))
+      } else if (kind === 'response') {
+        lines.push(t('think.packAdopted'))
+        lines.push(clip(String(entry.content || entry.text || '').trim(), THINK_LIMITS.body))
+      } else {
+        lines.push(t('think.packFiled'))
+        lines.push(clip(String(entry.content || entry.text || '').trim(), THINK_LIMITS.body))
+      }
+      const used = context.slice(0, THINK_LIMITS.context)
+      if (used.length > 0) {
+        lines.push('')
+        const labelled = used.some((item) => item && item.kind)
+        lines.push(
+          labelled
+            ? t('think.packContextMixed', { count: String(used.length) })
+            : t('think.packContext', { count: String(used.length) }),
+        )
+        for (let index = 0; index < used.length; index += 1) {
+          const item = used[index] || {}
+          const text = clip(String(item.text || item.content || '').trim(), THINK_LIMITS.contextEach)
+          lines.push(item.kind ? `${index + 1}. ${packKindLabel(item.kind, item.type)}：${text}` : `${index + 1}. ${text}`)
+        }
       }
       lines.push('')
       lines.push(t('think.packFoot'))
@@ -2246,12 +2305,13 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       }
       if (kind === 'response') {
         return {
-          kind: 'thought',
+          kind: 'response',
           entry: { content: hit.text, bookTitle: hit.bookTitle, author: hit.author, createTime: hit.adoptedAt },
         }
       }
       return {
-        kind: 'thought',
+        kind: 'material',
+        type: String(hit.type || ''),
         entry: { content: hit.text, bookTitle: hit.bookTitle, author: hit.author, createTime: hit.createdAt },
       }
     }
@@ -2266,8 +2326,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       }
       if (list.length === 0) return ''
       const primary = list[0]
-      const context = list.slice(1).map((item) => ({ text: String(item.entry.content || item.entry.text || '') }))
-      return buildSourcePack({ entry: primary.entry, kind: primary.kind, context })
+      const context = list.slice(1).map((item) => ({
+        text: String(item.entry.content || item.entry.text || ''),
+        kind: item.kind,
+        type: item.type,
+      }))
+      return buildSourcePack({ entry: primary.entry, kind: primary.kind, type: primary.type, context })
     }
 
 /**
@@ -2560,7 +2624,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
       }
 
-      const kindLabel = props.kind === 'note' ? t('think.packKindNote') : t('think.packKindThought')
+      const kindLabel = packKindLabel(props.kind, props.type)
       const chapter = String(
         (props.kind === 'note' ? props.entry && props.entry.chapterTitle : props.entry && props.entry.chapterName) || '',
       )
@@ -2823,7 +2887,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         setOpen({ mode, question: askKey === null ? '' : t(askKey), anchor })
       }
 
-      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, context: props.context })
+      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, type: props.type, context: props.context })
 
       return h(
         'div',
@@ -2889,6 +2953,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
               pack,
               entry: props.entry,
               kind: props.kind,
+              type: props.type,
               question: open.question,
               mode: open.mode,
               anchor: open.anchor,
@@ -5739,6 +5804,10 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         ParagraphAI,
         buildParagraphPack,
         paragraphSourceEntry,
+        packKindLabel,
+        packKindOf,
+        PACK_KIND_KEYS,
+        THINK_LIMITS,
         JourneyBar,
         SubNav,
         BookChain,

@@ -592,6 +592,60 @@ else {
   const bare = smoke.buildSourcePack({ entry: { id: 'n2', text: '没有书名的划线' }, kind: 'note' })
   if (!bare.includes('think.packUnknown')) packGuards.push('bare pack: 缺书名时没有写明未记录')
   if (bare.includes('undefined') || bare.includes('null')) packGuards.push('bare pack: 出现了 undefined/null')
+
+  // F-29：来源包按类型标角色——金句是书里的原文，不是我的想法。
+  if (typeof smoke.packKindLabel !== 'function') packGuards.push('client module 未暴露 packKindLabel')
+  else {
+    const labels = ['note', 'thought', 'response', 'material'].map((kind) => smoke.packKindLabel(kind, '金句'))
+    if (new Set(labels).size !== 4) packGuards.push(`角色标签有重复：${labels.join(' | ')}`)
+    if (smoke.packKindLabel('note', '') !== 'think.packKindNote') packGuards.push('note 没落到「书里的原文」')
+    if (smoke.packKindLabel('thought', '') !== 'think.packKindThought') packGuards.push('thought 没落到「我的想法」')
+    if (smoke.packKindLabel('response', '') !== 'think.packKindResponse') packGuards.push('response 没落到「我采纳的 AI 回应」')
+    const quoteLabel = smoke.packKindLabel('material', '金句')
+    if (quoteLabel === 'think.packKindThought') packGuards.push('金句素材被标成了「我的想法」')
+    for (const needle of ['think.packKindMaterialOf', 'think.packKindMaterial']) {
+      if (!quoteLabel.includes(needle)) packGuards.push(`金句素材标签缺 ${needle}`)
+    }
+    if (!quoteLabel.includes('mat.type.quote')) packGuards.push('金句素材标签没带类型键')
+    if (smoke.packKindLabel('mystery', '') !== smoke.packKindLabel('material', '')) {
+      packGuards.push('判不出来的来源没有降级为「我整理的素材」')
+    }
+    const bogusLabel = smoke.packKindLabel('material', '读书笔记')
+    if (bogusLabel !== 'think.packKindMaterial') packGuards.push(`未知素材类型没走中性标签：${bogusLabel}`)
+    if (bogusLabel.includes('think.packKindMaterialOf')) packGuards.push('未知素材类型仍带了括号类型')
+    if (smoke.packKindLabel('material', '观点').indexOf('mat.type.idea') < 0) packGuards.push('真「观点」素材反而丢了类型键')
+    const quotePack = smoke.buildSourcePack({
+      entry: { id: 'm1', bookTitle: '书名', text: '金句正文' },
+      kind: 'material',
+      type: '金句',
+    })
+    for (const needle of ['think.packKindMaterialOf', 'mat.type.quote', 'think.packFiled', '金句正文', 'think.packFoot']) {
+      if (!quotePack.includes(needle)) packGuards.push(`金句 pack: 缺 ${needle}`)
+    }
+    if (quotePack.includes('think.packMine') || quotePack.includes('think.packOriginal')) {
+      packGuards.push('金句 pack: 冒充了「我的想法」或「原文」')
+    }
+    const adoptedPack = smoke.buildSourcePack({ entry: { content: '采纳的回应的正文', bookTitle: '书名' }, kind: 'response' })
+    for (const needle of ['think.packKindResponse', 'think.packAdopted']) {
+      if (!adoptedPack.includes(needle)) packGuards.push(`回应 pack: 缺 ${needle}`)
+    }
+    if (adoptedPack.includes('think.packMine')) packGuards.push('回应 pack: 被标成了「我的想法」')
+    const mixedPack = smoke.buildSourcePack({
+      entry: note,
+      kind: 'note',
+      context: [
+        { text: '同章想法', kind: 'thought' },
+        { text: '金句素材', kind: 'material', type: '金句' },
+      ],
+    })
+    if (!mixedPack.includes('think.packContextMixed')) packGuards.push('混合来源 pack: 缺「其他来源」抬头')
+    if (!mixedPack.includes('1. think.packKindThought')) packGuards.push('混合来源 pack: 第 1 条没标角色')
+    if (!mixedPack.includes('2. think.packKindMaterialOf')) packGuards.push('混合来源 pack: 第 2 条没标角色')
+    const limits = smoke.THINK_LIMITS
+    if (!limits || limits.body !== 600 || limits.context !== 3 || limits.contextEach !== 200) {
+      packGuards.push('THINK_LIMITS 变了（应仍是 600/3/200）')
+    }
+  }
 }
 
 // 内联对话卡：原地弹出、带上下文、有 ×、有输入框、等待态有提示。

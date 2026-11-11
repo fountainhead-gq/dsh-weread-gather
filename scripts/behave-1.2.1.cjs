@@ -1066,11 +1066,134 @@ async function main() {
   }
   net.modelsAvailable = false
 
+  // --- 11.6 F-29：来源包按类型标角色（金句不再冒充「我的想法」）-----------------
+  // 四种来源各取一条真数据（素材现造一条 type=金句 的），把它们塞进同一个 pack，
+  // 断言取的是 buildParagraphPack / buildSourcePack 的真实返回值。
+  const quoteMaterial = host.craftOp('material.add', {
+    type: '金句',
+    text: '诗是生命的流露，不是文字的堆砌。',
+    sourceIds: [`note:${NOTE_A1.id}`],
+  }).created.material
+  const packLookup = {
+    note: lookup.note,
+    thought: lookup.thought,
+    response: lookup.response,
+    material: new Map([[quoteMaterial.id, quoteMaterial]]),
+  }
+  const fourSourceIds = [
+    `note:${NOTE_A1.id}`,
+    `thought:${THOUGHT_A.id}`,
+    `response:${responseA.id}`,
+    `material:${quoteMaterial.id}`,
+  ]
+  const fourPack = smoke.buildParagraphPack({ sourceIds: fourSourceIds, lookup: packLookup, titleOf: () => BOOK_A.title })
+  const roleLabels = ['note', 'thought', 'response', 'material'].map((kind) => smoke.packKindLabel(kind, '金句'))
+  check('F-29 四种角色标签互不相同', new Set(roleLabels).size === 4, roleLabels.join(' | '))
+  for (const label of roleLabels) has(`F-29 pack 里出现 ${label}`, fourPack, label)
+  eq('F-29 书里的原文不代表我的想法', roleLabels[0] !== roleLabels[1], true)
+  if (/think\.packKindMaterialOf\([^)]*mat\.type\.quote/.test(fourPack)) check('F-29 金句素材带了自己的六类类型', true)
+  else check('F-29 金句素材带了自己的六类类型', false, fourPack.slice(0, 220))
+  check('F-29 金句不落「我的想法」', !fourPack.includes('think.packMine'), fourPack.slice(0, 220))
+  const quoteOnly = smoke.buildSourcePack({
+    entry: { bookTitle: BOOK_A.title, text: quoteMaterial.text },
+    kind: 'material',
+    type: '金句',
+  })
+  has('F-29 单条金句 pack 用「我整理的素材」正文标签', quoteOnly, 'think.packFiled')
+  check('F-29 单条金句 pack 不冒充「原文」', !quoteOnly.includes('think.packOriginal'), quoteOnly.slice(0, 220))
+  check('F-29 单条金句 pack 不冒充「我的想法」', !quoteOnly.includes('think.packMine'), quoteOnly.slice(0, 220))
+  // L1: compare the same kind reached through two different call sites (body vs
+  // context entry), so a broken label actually shows up as a difference.
+  const materialAsBody = smoke.buildSourcePack({
+    entry: { bookTitle: BOOK_A.title, text: quoteMaterial.text },
+    kind: 'material',
+    type: '金句',
+  })
+  const materialAsContext = smoke.buildSourcePack({
+    entry: NOTE_A1,
+    kind: 'note',
+    context: [{ text: quoteMaterial.text, kind: 'material', type: '金句' }],
+  })
+  const bodyLabel = (materialAsBody.split('\n').find((line) => line.startsWith('think.packKind')) || '').replace(
+    /^think\.packKind/,
+    '',
+  )
+  const contextRow = materialAsContext.split('\n').find((line) => line.startsWith('1. ')) || ''
+  const contextLabel = contextRow.replace(/^1\. /, '').split('：')[0]
+  check(
+    'F-29 正文与上下文里的同类素材标签都取到了',
+    bodyLabel !== '' && contextLabel !== '',
+    `body=${bodyLabel} ctx=${contextLabel}`,
+  )
+  eq('F-29 同一类素材在正文与上下文落同一标签', bodyLabel, contextLabel)
+  eq(
+    'F-29 金句标签的稳定形态（正文与上下文共用同一形态）',
+    bodyLabel,
+    'think.packKindMaterialOf(think.packKindMaterial,mat.type.quote)',
+  )
+  const bogus = smoke.buildSourcePack({ entry: { bookTitle: BOOK_A.title, text: '伪类型素材' }, kind: 'material', type: '读书笔记' })
+  has('F-29 未知素材类型仍标「我整理的素材」', bogus, 'think.packKindMaterial')
+  check('F-29 未知素材类型不冒充「观点」', !bogus.includes('mat.type.idea'), bogus.split('\n').slice(0, 6).join(' / '))
+  eq('F-29 判不出来的来源降级为「我整理的素材」', smoke.packKindLabel('mystery', ''), smoke.packKindLabel('material', ''))
+  // L3: the ThinkingBar path must forward type, same as the paragraph path.
+  const barDraw = renderComp(
+    'think-bar-material',
+    smoke.ThinkingBar,
+    { entry: { bookTitle: BOOK_A.title, text: quoteMaterial.text }, kind: 'material', type: '金句', context: [] },
+    [{ mode: '', question: '', anchor: { x: 40, y: 140 } }, false, '', [], '写点什么', false, '', '', '', 'ready'],
+  )
+  has('F-29 ThinkingBar 把 type 透传到 pack', barDraw.text, 'mat.type.quote')
+  check(
+    'F-29 ThinkingBar 链路不把金句标成「我的想法」',
+    !barDraw.text.includes('think.packMine'),
+    barDraw.text.slice(0, 200),
+  )
+  const barLabel = 'think.packKindMaterialOf(think.packKindMaterial,mat.type.quote)'
+  eq(
+    'F-29 ThinkingBar 把 type 透传给 AskCard（卡片头部同口径）',
+    (barDraw.text.match(new RegExp(barLabel.replace(/[.()]/g, '\\$&'), 'g')) || []).length >= 1,
+    true,
+  )
+  const barSend = (barDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
+  check('F-29 ThinkingBar 的卡片能发出请求', Boolean(barSend), barDraw.text.slice(0, 160))
+  if (barSend) {
+    const beforeBar = net.calls.length
+    barSend.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const barCall = net.calls.slice(beforeBar).find((call) => String(call.url).indexOf('/chat') >= 0 && String(call.url).indexOf('/chat/models') < 0)
+    check(
+      'F-29 ThinkingBar 把 type 透传给 buildSourcePack（发出的 pack 里带类型）',
+      String(barCall && barCall.body).includes(barLabel),
+      `pack 里没有类型标签：${String(barCall && barCall.body).slice(0, 220)}`,
+    )
+  }
+  const longMaterial = smoke.buildSourcePack({
+    entry: { bookTitle: BOOK_A.title, text: '露'.repeat(900) },
+    kind: 'material',
+    type: '金句',
+  })
+  const longBody = longMaterial.split('\n').find((line) => line.startsWith('露')) || ''
+  check('F-29 素材正文仍被截到 600 字', longBody.length === 600 && longBody.endsWith('…'), `len=${longBody.length}`)
+  const fourContext = smoke.buildSourcePack({
+    entry: NOTE_A1,
+    kind: 'note',
+    context: [
+      { text: '想法一', kind: 'thought' },
+      { text: '回应一', kind: 'response' },
+      { text: '素材一', kind: 'material', type: '金句' },
+      { text: '第四条', kind: 'thought' },
+    ],
+  })
+  check('F-29 其他来源仍只要 3 条', !fourContext.includes('4. ') && fourContext.includes('think.packContextMixed'))
+  eq('F-29 THINK_LIMITS 仍是 600/3/200', JSON.stringify(smoke.THINK_LIMITS), JSON.stringify({ body: 600, context: 3, contextEach: 200 }))
+
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
   const banned = ['打卡', '排行榜', '徽章', '进度环', '连续天数']
   const hits = banned.filter((word) => sources.includes(word))
   check('防回潮：代码与文案里没有阅读挑战字样', hits.length === 0, hits.join(','))
+  check('防回潮：包尾不再说「想法是我写的」', !sources.includes('想法是我写的'))
+  has('防回潮：包尾改成了按角色说明归属', sources, '是我这一侧的记录，引用时请分清归属')
 
   // --- 汇总 ------------------------------------------------------------------
   const failed = results.filter((item) => !item.ok)
