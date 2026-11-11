@@ -43,6 +43,7 @@ window.__ModuleLoader__.load({
       'action.retry': '重试',
       'action.loadMore': '加载更多',
       'action.copy': '复制',
+      'action.edit': '编辑',
       'action.copied': '已复制',
       'action.openBook': '点击查看这本书',
       'pager.prev': '上一页',
@@ -210,6 +211,196 @@ window.__ModuleLoader__.load({
       'search.typeBooks': '书籍',
       'count.notes': '{count} 条',
       'error.prefix': '出错了：',
+      'think.packHead': '【书房来源包】',
+      'think.packBook': '书名：',
+      'think.packUnknown': '（未记录）',
+      'think.packAuthor': '作者：',
+      'think.packChapter': '章节：',
+      'think.packKind': '内容类型：',
+      'think.packKindNote': '原文划线',
+      'think.packKindThought': '我的想法',
+      'think.packTime': '阅读时间：',
+      'think.packMine': '我的想法：',
+      'think.packContext': '同章其他划线（{count} 条，供参考）：',
+      'think.packOriginal': '原文：',
+      'think.packFoot': '—— 以上来自「数字书房」。引文属于书，想法是我写的。',
+      'think.empty': '想问什么？点上面的按钮，问题会先填进输入框，改完再发。',
+      'think.thinking': '思考中…',
+      'think.aiNote': 'AI 生成，仅供参考',
+      'think.offline': '未配置可用模型，AI 对话暂时置灰；去设置里填 API Key 后重试',
+      'think.mode.explain': '解释',
+      'think.mode.reframe': '换角度',
+      'think.mode.deeper': '深想',
+      'think.mode.custom': '自己问',
+      'think.ask.explain': '这段话在说什么？先用直白的话解释一遍，再指出它成立的前提，以及它在什么情况下会不成立。',
+      'think.ask.reframe': '换一个角度：如果反过来看，这段话会变成什么样？给我 2-3 个不同的视角，并说明各自的前提。',
+      'think.ask.deeper': '顺着这条想法继续往下想：它背后更根本的问题是什么？把它拆成几个可以一步步想下去的问题。',
+      'think.customPlaceholder': '你想问什么？',
+      'think.send': '放入对话',
+      'think.failed': '没能打开对话，来源包也没复制成功',
+      'nav.read': '阅读',
+      'nav.think': '思考',
+      'nav.create': '创作',
+      'nav.grow': '积累',
+      'nav.responses': '回应',
+      'nav.materials': '素材',
+      'nav.topics': '选题',
+      'nav.works': '初稿',
+      'nav.timeline': '时间线',
+      'nav.annual': '年度回顾',
+      'journey.read.hint': '摘录与想法，按书看',
+      'journey.think.hint': '把读到的东西问明白',
+      'journey.create.hint': '素材 → 选题 → 初稿',
+      'journey.grow.hint': '走过的路，与这一年',
+      'craft.loading': '正在读创作数据…',
+      'craft.failed': '创作数据没读出来：{error}',
+      'craft.retry': '重试',
+      'craft.offline': '创作数据暂时读不到；阅读、书架、笔记、想法都不受影响。',
+      'craft.count.responses': '{count} 条',
+      'craft.count.materials': '{count} 条',
+      'craft.count.topics': '{count} 个',
+      'craft.count.works': '{count} 篇',
+      'ask.adopt': '想留下哪一句？',
+      'ask.adoptThought': '记成想法',
+      'ask.adoptMaterial': '收为素材',
+      'ask.adoptType': '素材类型',
+      'ask.adoptSave': '存下',
+      'ask.adoptCancel': '取消',
+      'ask.adoptDone': '已存下',
+      'ask.adoptHint': '对话本身不落盘，只有你存下的这一句会留下。',
+      'ask.adoptFailed': '没存下：{error}',
+      'mat.type.quote': '金句',
+      'mat.type.idea': '观点',
+      'mat.type.case': '案例',
+      'mat.type.evidence': '论据',
+      'mat.type.question': '问题',
+      'mat.type.spark': '灵感',
+      'mat.picker.title': '存为素材',
+      'mat.picker.noteHint': '想法没有记录对应哪条划线；选一条同章摘录，出处会更准。',
+      'mat.picker.skip': '不指定摘录',
+      'mat.picker.save': '存为素材',
+      'mat.picker.cancel': '取消',
+      'mat.picker.empty': '这一章没有其他划线',
+      'mat.picker.saved': '已存为素材',
+      'mat.empty.title': '还没有素材',
+      'mat.empty.next': '在思考里把一句回应收为素材，或从想法上直接存一条。',
+      'mat.empty.action': '去书里找',
+      'mat.sourceLabel': '出处',
+      'mat.status.ok': '来源还在',
+      'mat.status.changed': '来源已改',
+      'mat.status.missing': '来源没找到',
+      'mat.type.switch': '改类型',
+      'mat.cached': '不在书架缓存',
+      'mat.delete': '删除',
+      'mat.sure': '确认删除？',
+      'mat.added': '已收为素材',
+      'mat.count': '共 {count} 条',
+      'mat.fromThink': '来自回应',
+      'mat.aiTag': 'AI 参与',
+      'mat.failed': '没存下：{error}',
+      'mat.filterAll': '全部',
+      'src.note': '摘录',
+      'src.thought': '想法',
+      'src.response': '回应',
+      'src.material': '素材',
+      'topic.empty.title': '还没有选题',
+      'topic.empty.next': '挑几条素材，写成一句话。',
+      'topic.empty.action': '去素材篮',
+      'topic.new': '立一个选题',
+      'topic.statement': '一句话选题',
+      'topic.statementPlaceholder': '例如：为什么记住的总是细节',
+      'topic.gap': '还缺什么',
+      'topic.gapPlaceholder': '还缺的关键一环（可空）',
+      'topic.pickMaterials': '引用素材',
+      'topic.pickNone': '还没有素材可引，先去素材篮',
+      'topic.create': '立题',
+      'topic.created': '已立题',
+      'topic.needStatement': '先写一句话',
+      'topic.needMaterial': '至少选一条素材',
+      'topic.books': '涉及书目',
+      'topic.materialCount': '{count} 条素材',
+      'topic.draft': '去写初稿',
+      'topic.delete': '删除',
+      'topic.failed': '没立成：{error}',
+      'topic.count': '共 {count} 个',
+      'work.empty.title': '还没有初稿',
+      'work.empty.next': '选一个选题，把素材写成段落。',
+      'work.empty.action': '去选题',
+      'work.new': '新建初稿',
+      'work.titlePlaceholder': '初稿标题',
+      'work.create': '建这篇',
+      'work.count': '共 {count} 篇',
+      'work.paragraph': '第 {index} 段',
+      'work.paragraphPlaceholder': '用自己的话写这一段',
+      'work.attach': '挂来源',
+      'work.noSource': '不挂来源',
+      'work.addParagraph': '加这一段',
+      'work.deleteParagraph': '删除这一段',
+      'work.confirm': '确认初稿',
+      'work.confirmed': '已确认',
+      'work.export': '导出',
+      'work.exportPreview': '预览 Markdown',
+      'work.exportFile': '写进导出目录',
+      'work.exportPreviewLabel': '预览',
+      'work.needParagraph': '先写一段再确认',
+      'work.failed': '没存下：{error}',
+      'work.emptyParagraphs': '还没有段落',
+      'work.aiTag': 'AI 参与',
+      'work.frontMatter': 'front-matter 带 workId / bookIds / containsAI',
+      'work.saved': '已保存',
+      'work.delete': '删除',
+      'work.hint': '段落挂着出处，导出时可回溯。',
+      'work.exported': '已导出：{path}',
+      'work.paragraphDeleted': '已删除这一段',
+      'work.pickFirst': '先建一篇初稿',
+      'chain.title': '这本书的读写链路',
+      'chain.hint': '点哪一段，就带着这本书去那一段',
+      'chain.notes': '摘录',
+      'chain.thoughts': '想法',
+      'chain.responses': '回应',
+      'chain.materials': '素材',
+      'chain.topics': '选题',
+      'chain.works': '初稿',
+      'chain.cached': '不在书架缓存',
+      'chain.craftDown': '创作数据没读出来，后四段暂时为 0',
+      'thinkView.title': '留下的回应',
+      'thinkView.hint': '对话本身不落盘；只有你采纳的那一句留在这里，并带着出处。',
+      'thinkView.empty.title': '这里还空着',
+      'thinkView.empty.next': '在阅读里对一条划线或想法点「追问」，把想留的那一句存下来。',
+      'thinkView.empty.action': '去书架',
+      'thinkView.scope': '只看这本书',
+      'thinkView.all': '看全部',
+      'thinkView.count': '共 {count} 条',
+      'thinkView.adoptedAt': '采纳于',
+      'thinkView.source': '出处',
+      'thinkView.backBook': '回到《{title}》',
+      'thinkView.ai': 'AI 参与',
+      'grow.event.response': '采纳了一条回应',
+      'grow.event.material': '收了一条素材',
+      'grow.event.topic': '立了一个选题',
+      'grow.event.work': '写了一篇初稿',
+      'grow.empty.title': '还没有可回顾的事',
+      'grow.empty.next': '走一遍阅读 → 思考 → 创作，这里就会长出记录。',
+      'grow.empty.action': '去阅读',
+      'grow.monthLabel': '{year} 年 {month} 月',
+      'grow.monthCount': '本月 {count} 条',
+      'grow.total': '共 {count} 条',
+      'grow.annual.title': '这一年读过的',
+      'grow.annual.hint': '只用已有的年度阅读数据，不做评分，也不催更。',
+      'grow.annual.empty': '这一年还没有阅读时长记录',
+      'grow.annual.emptyNext': '先同步一次微读，再回来看看这一年留下了什么。',
+      'grow.annual.emptyAction': '去看书架',
+      'grow.annual.notes': '划线',
+      'grow.annual.thoughts': '想法',
+      'grow.annual.craft': '创作',
+      'grow.annual.books': '这一年读过的书',
+      'grow.annual.noBooks': '这一年没有书目记录',
+      'grow.annual.export': '导出这一年',
+      'grow.cross': '跨书',
+      'grow.annual.note': '年度回顾只统计阅读，不代表产出。',
+      'grow.annual.total': '全年阅读',
+      'grow.annual.days': '有阅读的天',
+      'synced.craftAt': '创作更新于 {time}',
     }
     const en = {
       'entry.label': 'Digital Study',
@@ -232,6 +423,7 @@ window.__ModuleLoader__.load({
       'action.retry': 'Retry',
       'action.loadMore': 'Load more',
       'action.copy': 'Copy',
+      'action.edit': 'Edit',
       'action.copied': 'Copied',
       'action.openBook': 'Open this book',
       'pager.prev': 'Prev',
@@ -399,7 +591,203 @@ window.__ModuleLoader__.load({
       'search.typeBooks': 'Books',
       'count.notes': '{count}',
       'error.prefix': 'Something went wrong: ',
+      'think.packHead': '[Digital Study source pack]',
+      'think.packBook': 'Book: ',
+      'think.packUnknown': '(not recorded)',
+      'think.packAuthor': 'Author: ',
+      'think.packChapter': 'Chapter: ',
+      'think.packKind': 'Content: ',
+      'think.packKindNote': "the book's words",
+      'think.packKindThought': 'my thought',
+      'think.packTime': 'Read on: ',
+      'think.packMine': 'My thought:',
+      'think.packContext': 'Other highlights in the same chapter ({count}, for context):',
+      'think.packOriginal': "The book's words:",
+      'think.packFoot': '— From Digital Study. The quoted words belong to the book; the thought is mine.',
+      'think.empty': 'Pick a button above — the question lands in the box so you can edit it first.',
+      'think.thinking': 'Thinking…',
+      'think.aiNote': 'AI-generated, for reference',
+      'think.offline': 'No usable model is configured, so chat is greyed out; add an API key in Settings and retry',
+      'think.mode.explain': 'Explain',
+      'think.mode.reframe': 'Reframe',
+      'think.mode.deeper': 'Go deeper',
+      'think.mode.custom': 'Ask',
+      'think.ask.explain': 'What is this passage saying? Explain it plainly first, then name its premises and the cases where it stops holding.',
+      'think.ask.reframe': 'Reframe it: if you reversed the claim, what would it become? Give me two or three different angles and the premise behind each.',
+      'think.ask.deeper': 'Keep going from this thought: what is the more fundamental question underneath it? Break it into several questions I can think through step by step.',
+      'think.customPlaceholder': 'What do you want to ask?',
+      'think.send': 'Put in chat',
+      'think.failed': 'Could not open a conversation, and copying failed',
+      'nav.read': 'Read',
+      'nav.think': 'Think',
+      'nav.create': 'Create',
+      'nav.grow': 'Grow',
+      'nav.responses': 'Answers',
+      'nav.materials': 'Material',
+      'nav.topics': 'Topics',
+      'nav.works': 'Drafts',
+      'nav.timeline': 'Timeline',
+      'nav.annual': 'Yearly review',
+      'journey.read.hint': 'Highlights and thoughts, book by book',
+      'journey.think.hint': 'Ask until it is clear',
+      'journey.create.hint': 'Material → topic → draft',
+      'journey.grow.hint': 'The path walked, and the year',
+      'craft.loading': 'Loading your writing…',
+      'craft.failed': 'Could not load your writing: {error}',
+      'craft.retry': 'Retry',
+      'craft.offline': 'Writing data is unavailable right now; reading, shelf, notes and thoughts are unaffected.',
+      'craft.count.responses': '{count} kept',
+      'craft.count.materials': '{count} items',
+      'craft.count.topics': '{count} topics',
+      'craft.count.works': '{count} drafts',
+      'ask.adopt': 'Keep something?',
+      'ask.adoptThought': 'Save as thought',
+      'ask.adoptMaterial': 'Save as material',
+      'ask.adoptType': 'Material type',
+      'ask.adoptSave': 'Save',
+      'ask.adoptCancel': 'Cancel',
+      'ask.adoptDone': 'Saved',
+      'ask.adoptHint': 'The conversation itself is not saved; only what you keep here stays.',
+      'ask.adoptFailed': 'Not saved: {error}',
+      'mat.type.quote': 'Quote',
+      'mat.type.idea': 'Viewpoint',
+      'mat.type.case': 'Case',
+      'mat.type.evidence': 'Evidence',
+      'mat.type.question': 'Question',
+      'mat.type.spark': 'Spark',
+      'mat.picker.title': 'Save as material',
+      'mat.picker.noteHint': 'A thought does not record which highlight it answered; pick one to be precise.',
+      'mat.picker.skip': 'Skip the highlight',
+      'mat.picker.save': 'Save material',
+      'mat.picker.cancel': 'Cancel',
+      'mat.picker.empty': 'No other highlight in this chapter',
+      'mat.picker.saved': 'Saved as material',
+      'mat.empty.title': 'No material yet',
+      'mat.empty.next': 'Keep an answer from THINK, or save one from a thought.',
+      'mat.empty.action': 'Go to the books',
+      'mat.sourceLabel': 'Source',
+      'mat.status.ok': 'Source intact',
+      'mat.status.changed': 'Source changed',
+      'mat.status.missing': 'Source missing',
+      'mat.type.switch': 'Change type',
+      'mat.cached': 'Not in shelf cache',
+      'mat.delete': 'Delete',
+      'mat.sure': 'Delete?',
+      'mat.added': 'Saved',
+      'mat.count': '{count} items',
+      'mat.fromThink': 'From an answer',
+      'mat.aiTag': 'AI-assisted',
+      'mat.failed': 'Not saved: {error}',
+      'mat.filterAll': 'All',
+      'src.note': 'Highlight',
+      'src.thought': 'Thought',
+      'src.response': 'Answer',
+      'src.material': 'Material',
+      'topic.empty.title': 'No topic yet',
+      'topic.empty.next': 'Pick a few materials and turn them into one sentence.',
+      'topic.empty.action': 'Go to material',
+      'topic.new': 'Start a topic',
+      'topic.statement': 'One-sentence topic',
+      'topic.statementPlaceholder': 'e.g. why we remember the details',
+      'topic.gap': 'What is missing',
+      'topic.gapPlaceholder': 'The missing piece (optional)',
+      'topic.pickMaterials': 'Materials',
+      'topic.pickNone': 'No material to cite yet',
+      'topic.create': 'Create',
+      'topic.created': 'Created',
+      'topic.needStatement': 'Write the sentence first',
+      'topic.needMaterial': 'Pick at least one material',
+      'topic.books': 'Books',
+      'topic.materialCount': '{count} materials',
+      'topic.draft': 'Draft it',
+      'topic.delete': 'Delete',
+      'topic.failed': 'Not created: {error}',
+      'topic.count': '{count} topics',
+      'work.empty.title': 'No draft yet',
+      'work.empty.next': 'Pick a topic and turn material into paragraphs.',
+      'work.empty.action': 'Go to topics',
+      'work.new': 'New draft',
+      'work.titlePlaceholder': 'Draft title',
+      'work.create': 'Create',
+      'work.count': '{count} drafts',
+      'work.paragraph': 'Paragraph {index}',
+      'work.paragraphPlaceholder': 'Write this paragraph in your own words',
+      'work.attach': 'Attach sources',
+      'work.noSource': 'No source',
+      'work.addParagraph': 'Add paragraph',
+      'work.deleteParagraph': 'Delete paragraph',
+      'work.confirm': 'Confirm draft',
+      'work.confirmed': 'Confirmed',
+      'work.export': 'Export',
+      'work.exportPreview': 'Preview Markdown',
+      'work.exportFile': 'Write file',
+      'work.exportPreviewLabel': 'Preview',
+      'work.needParagraph': 'Write a paragraph first',
+      'work.failed': 'Not saved: {error}',
+      'work.emptyParagraphs': 'No paragraph yet',
+      'work.aiTag': 'AI-assisted',
+      'work.frontMatter': 'front-matter carries workId / bookIds / containsAI',
+      'work.saved': 'Saved',
+      'work.delete': 'Delete',
+      'work.hint': 'Paragraphs carry their sources, so the export stays traceable.',
+      'work.exported': 'Exported: {path}',
+      'work.paragraphDeleted': 'Paragraph deleted',
+      'work.pickFirst': 'Create a draft first',
+      'chain.title': "This book's read-write chain",
+      'chain.hint': 'Tap a step to go there with this book',
+      'chain.notes': 'Highlights',
+      'chain.thoughts': 'Thoughts',
+      'chain.responses': 'Answers',
+      'chain.materials': 'Material',
+      'chain.topics': 'Topics',
+      'chain.works': 'Drafts',
+      'chain.cached': 'Not in shelf cache',
+      'chain.craftDown': 'Writing data is unavailable; the last four steps show 0 for now',
+      'thinkView.title': 'Kept answers',
+      'thinkView.hint': 'Conversations are not saved; only the answer you kept stays here, with its source.',
+      'thinkView.empty.title': 'Nothing kept yet',
+      'thinkView.empty.next': 'In READ, ask about a highlight or thought and keep the line worth keeping.',
+      'thinkView.empty.action': 'Go to the shelf',
+      'thinkView.scope': 'This book only',
+      'thinkView.all': 'All books',
+      'thinkView.count': '{count} kept',
+      'thinkView.adoptedAt': 'Kept',
+      'thinkView.source': 'Source',
+      'thinkView.backBook': 'Back to {title}',
+      'thinkView.ai': 'AI-assisted',
+      'grow.event.response': 'Kept an answer',
+      'grow.event.material': 'Saved a material',
+      'grow.event.topic': 'Started a topic',
+      'grow.event.work': 'Wrote a draft',
+      'grow.empty.title': 'Nothing to look back on yet',
+      'grow.empty.next': 'Read, think, write once and the timeline starts growing.',
+      'grow.empty.action': 'Go read',
+      'grow.monthLabel': '{month}/{year}',
+      'grow.monthCount': '{count} in this month',
+      'grow.total': '{count} events',
+      'grow.annual.title': 'The year in reading',
+      'grow.annual.hint': 'Reuses the yearly reading data only — no scoring, no streak pressure.',
+      'grow.annual.empty': 'No reading time in this year',
+      'grow.annual.emptyNext': 'Sync WeRead once, then come back and see what the year left behind.',
+      'grow.annual.emptyAction': 'Open the shelf',
+      'grow.annual.notes': 'Highlights',
+      'grow.annual.thoughts': 'Thoughts',
+      'grow.annual.craft': 'Writing',
+      'grow.annual.books': 'Books read this year',
+      'grow.annual.noBooks': 'No books recorded for this year',
+      'grow.annual.export': 'Export this year',
+      'grow.cross': 'Across books',
+      'grow.annual.note': 'This review counts reading only, not output.',
+      'grow.annual.total': 'Total reading',
+      'grow.annual.days': 'Days read',
+      'synced.craftAt': 'Writing updated {time}',
     }
+
+    /**
+     * The plugin's own client context, kept for the one capability the UI
+     * needs outside a component tree: opening a conversation with a source
+     * pack. Null until `apply` runs, which is why every use is guarded.
+     */
 
     /** Translate through the runtime dictionary; falls back to the key. */
     let translate = null
@@ -438,6 +826,120 @@ window.__ModuleLoader__.load({
     const apiSetExportDir = (dir) => jsonPost('/export/dir', { dir })
     const apiBackup = () => request('/backup')
     const apiRestore = (bundle) => jsonPost('/restore', { bundle })
+    /** The writing side of the study lives in its own file: one request, never mixed into /data. */
+    const apiCraft = () => request('/craft')
+    const apiCraftWrite = (op, payload, revision) => jsonPost('/craft', revision === undefined || revision === null ? { op, payload } : { op, payload, revision })
+    const apiCraftExport = (id, mode) => jsonPost('/craft/export', { kind: 'work', id, mode })
+
+    // ---------------------------------------------------------- chat probe
+    /**
+     * F1: whether this host can talk to a model at all is a fact we ask for up
+     * front, not something the reader should discover by pressing a button and
+     * reading a 400. One probe is shared by every AI entry point, and a failed
+     * probe counts as "no model here" — a dead endpoint must not look clickable.
+     */
+    const chatAvailability = { state: 'unknown' }
+    const chatWatchers = new Set()
+    let chatProbe = null
+    function setChatAvailability(next) {
+      chatAvailability.state = next
+      chatWatchers.forEach((notify) => {
+        try {
+          notify(next)
+        } catch (issue) {
+          /* a stale component must never break the probe */
+        }
+      })
+    }
+    function probeChat() {
+      if (chatProbe) return chatProbe
+      chatProbe = request('/chat/models')
+        .then((payload) => {
+          const providers = payload && Array.isArray(payload.providers) ? payload.providers : []
+          const usable = Boolean(payload && payload.available) && providers.length > 0
+          setChatAvailability(usable ? 'ready' : 'offline')
+          return chatAvailability.state
+        })
+        .catch(() => {
+          setChatAvailability('offline')
+          return chatAvailability.state
+        })
+      return chatProbe
+    }
+    /** Settings may add a key later, so the answer is allowed to change. */
+    function forgetChatProbe() {
+      chatProbe = null
+      setChatAvailability('unknown')
+      return probeChat()
+    }
+    function useChatAvailability() {
+      const [value, setValue] = useState(chatAvailability.state)
+      useEffect(() => {
+        chatWatchers.add(setValue)
+        if (chatAvailability.state === 'unknown') probeChat()
+        return () => {
+          chatWatchers.delete(setValue)
+        }
+      }, [])
+      return value
+    }
+
+    // ---------------------------------------------------------------- craft
+    /** First element is the exact value the host stores; the second is the locale key. */
+    const MATERIAL_TYPES = [
+      ['金句', 'mat.type.quote'],
+      ['观点', 'mat.type.idea'],
+      ['案例', 'mat.type.case'],
+      ['论据', 'mat.type.evidence'],
+      ['问题', 'mat.type.question'],
+      ['灵感', 'mat.type.spark'],
+    ]
+    const EMPTY_CRAFT = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
+    const SOURCE_PREFIX = { note: 'note:', thought: 'thought:', response: 'response:', material: 'material:' }
+    /** Whatever the host sends back, the client only ever reads these fields. */
+    function asCraft(payload) {
+      const source = payload && typeof payload === 'object' ? payload : {}
+      const list = (value) => (Array.isArray(value) ? value : [])
+      return {
+        hasCraft: source.hasCraft === true,
+        revision: Number(source.revision) || 0,
+        updatedAt: Number(source.updatedAt) || 0,
+        counts: Object.assign({}, EMPTY_CRAFT.counts, source.counts || {}),
+        responses: list(source.responses),
+        materials: list(source.materials),
+        topics: list(source.topics),
+        works: list(source.works),
+        bookIndex: list(source.bookIndex),
+      }
+    }
+    function materialTypeKey(type) {
+      const hit = MATERIAL_TYPES.find((item) => item[0] === type)
+      return hit ? hit[1] : 'mat.type.idea'
+    }
+    /** 'note:123' → 'note'; anything unexpected degrades to a neutral chip instead of throwing. */
+    function sourceKind(sourceId) {
+      const value = String(sourceId || '')
+      const at = value.indexOf(':')
+      if (at <= 0) return ''
+      const kind = value.slice(0, at)
+      return SOURCE_PREFIX[kind] ? kind : ''
+    }
+    function sourceRawId(sourceId) {
+      const value = String(sourceId || '')
+      const at = value.indexOf(':')
+      return at < 0 ? value : value.slice(at + 1)
+    }
+    /** Seconds-or-milliseconds tolerant date, because craft timestamps travel through JSON. */
+    function fmtStamp(value) {
+      const seconds = Number(value) || 0
+      if (!seconds) return ''
+      return fmtDateTime(seconds > 1e12 ? Math.floor(seconds / 1000) : seconds)
+    }
+    function monthKeyOf(seconds) {
+      const date = new Date((Number(seconds) || 0) * 1000)
+      if (Number.isNaN(date.getTime())) return ''
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`
+    }
 
     // --------------------------------------------------------------- helpers
     function pad(value) {
@@ -626,6 +1128,48 @@ window.__ModuleLoader__.load({
 .wr-thread-item{font-size:12.5px;line-height:1.7;padding:6px 0;border-top:1px dashed var(--wr-divider)}
 .wr-thread-item:first-of-type{border-top:0;padding-top:0}
 .wr-thread-date{display:block;font-size:10.5px;color:var(--wr-ink-mute);margin-top:2px}
+.wr-think{margin-top:8px;opacity:0;transition:opacity .14s ease}
+.wr-quote:hover .wr-think,.wr-thought:hover .wr-think,.wr-cols .wr-thought:hover .wr-think,.wr-think:focus-within,.wr-think[data-busy=true]{opacity:1}
+@media (hover:none){.wr-think{opacity:1}}
+.wr-think-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wr-think-btn{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:5px 10px;border-radius:999px;cursor:pointer;transition:border-color .14s ease,color .14s ease,background .14s ease}
+.wr-think-btn:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
+.wr-think-btn[data-active=true]{border-color:var(--wr-moss);color:var(--wr-moss);background:var(--wr-wash)}
+.wr-think-btn:disabled{opacity:.5;cursor:default}
+.wr-think-custom{display:flex;gap:6px;align-items:center;margin-top:6px}
+.wr-think-input{flex:1;min-width:0;font:inherit;font-size:12px;line-height:1.5;padding:5px 10px;border-radius:999px;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink)}
+.wr-think-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(79,146,116,.14)}
+.wr-think-go{border-color:var(--wr-moss);color:#fff;background:var(--wr-moss)}
+.wr-think-go:hover{background:var(--wr-moss);color:#fff;border-color:var(--wr-moss);filter:brightness(1.04)}
+.wr-think-msg{margin-top:6px;font-size:11px;line-height:1.5;color:var(--wr-ink-mute)}
+.wr-think[data-open=true]{opacity:1}
+.wr-ask{position:fixed;z-index:60;display:flex;flex-direction:column;max-height:min(72vh,640px);background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;box-shadow:0 18px 48px rgba(38,60,52,.16),0 2px 8px rgba(38,60,52,.06);overflow:hidden}
+.wr-ask-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--wr-divider)}
+.wr-ask-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;min-width:0;flex:1}
+.wr-ask-kind{font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft)}
+.wr-ask-book{font-size:12.5px;color:var(--wr-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.wr-ask-chapter{font-size:11px;color:var(--wr-ink-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-ask-close{appearance:none;flex:none;width:24px;height:24px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:16px;line-height:1;cursor:pointer;transition:background .12s ease,color .12s ease}
+.wr-ask-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
+.wr-ask-tools{display:flex;flex-wrap:wrap;gap:6px;padding:9px 14px 0}
+.wr-ask-chip{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer}
+.wr-ask-chip:hover{border-color:var(--wr-moss);color:var(--wr-ink)}
+.wr-ask-chip[data-on=true]{border-color:var(--wr-sage);background:var(--wr-wash);color:var(--wr-ink)}
+.wr-ask-chip:disabled{opacity:.5;cursor:default}
+.wr-ask-body{flex:0 1 auto;min-height:0;max-height:52vh;overflow:auto;resize:vertical;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.wr-ask-empty{font-size:11.5px;line-height:1.6;color:var(--wr-ink-mute)}
+.wr-ask-msg{max-width:92%;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.wr-ask-msg[data-role=user]{align-self:flex-end;padding:7px 11px;border-radius:12px 12px 4px 12px;background:var(--wr-wash);color:var(--wr-ink)}
+.wr-ask-msg[data-role=assistant]{align-self:flex-start;padding:2px 0;color:var(--wr-ink)}
+.wr-ask-typing{color:var(--wr-ink-mute);font-size:11.5px}
+.wr-ask-error{margin:0 14px;padding:7px 10px;border-radius:10px;background:color-mix(in srgb, var(--dsw-alias-state-error) 10%, var(--wr-paper-soft));color:var(--dsw-alias-state-error);font-size:11.5px;line-height:1.5}
+.wr-ask-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 14px 8px;border-top:1px solid var(--wr-divider)}
+.wr-ask-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:9px 12px;min-height:52px;max-height:132px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
+.wr-ask-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px rgba(79,146,116,.14)}
+.wr-ask-send{appearance:none;flex:none;align-self:flex-end;border:1px solid var(--wr-moss);background:var(--wr-moss);color:#fff;font:inherit;font-size:11.5px;line-height:1;padding:9px 14px;border-radius:999px;cursor:pointer}
+.wr-ask-send:disabled{opacity:.45;cursor:default}
+.wr-ask-note{padding:0 14px 10px;font-size:10px;line-height:1.4;color:var(--wr-ink-mute)}
+.wr-ask-offline{margin:8px 14px 0;padding:6px 9px;border:1px solid var(--wr-line-2);border-radius:8px;background:var(--wr-wash);font-size:11px;line-height:1.5;color:var(--wr-ink-soft)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
 .wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;opacity:0;transition:opacity .14s ease,color .14s ease,border-color .14s ease}
@@ -678,6 +1222,91 @@ window.__ModuleLoader__.load({
 .wr-body::-webkit-scrollbar-track{background:transparent}
 .wr-heat-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
 .wr-setup{background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:18px;padding:26px 28px;box-shadow:0 1px 2px rgba(38,60,52,.04)}
+.wr-journey{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--wr-wash);border:1px solid var(--wr-line);flex-wrap:nowrap;flex:none}
+.wr-journey-tab{appearance:none;display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--wr-ink-soft);font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.04em;padding:6px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .16s ease,color .16s ease}
+.wr-journey-tab:hover{color:var(--wr-ink);background:var(--wr-paper-soft)}
+.wr-journey-tab[data-active=true],.wr-journey-tab[data-active=true]:hover{background:var(--dsw-alias-brand-primary);color:#fff}
+.wr-journey-count{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;opacity:.72;background:rgba(38,60,52,.08);border-radius:999px;padding:1px 5px}
+.wr-journey-tab[data-active=true] .wr-journey-count{background:rgba(255,255,255,.24);opacity:.92}
+.wr-subnav{flex:none;display:flex;align-items:center;gap:12px;padding:9px 26px;border-bottom:1px solid var(--wr-line);background:rgba(255,255,255,.7);flex-wrap:wrap}
+.wr-subnav-hint{font-size:11.5px;color:var(--wr-ink-mute);margin-left:auto;letter-spacing:.02em}
+@media (max-width:640px){.wr-journey-tab{padding:6px 9px;font-size:12px}.wr-journey-count{display:none}.wr-subnav{padding:8px 16px}}
+.wr-chain{margin-top:18px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:14px 16px}
+.wr-chain-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.wr-chain-head strong{font-size:13px}
+.wr-chain-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:920px){.wr-chain-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.wr-chain-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wr-chain-step{appearance:none;text-align:left;font:inherit;cursor:pointer;border:1px solid var(--wr-line);background:var(--wr-wash);border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:3px;min-width:0;transition:border-color .14s ease,background .14s ease}
+.wr-chain-step:hover{border-color:var(--wr-sage);background:var(--wr-paper-soft)}
+.wr-chain-step[data-empty=true] .wr-chain-count{color:var(--wr-ink-mute)}
+.wr-chain-count{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.wr-chain-label{font-size:11px;color:var(--wr-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-degraded{font-size:10.5px;line-height:1.4;padding:2px 7px;border-radius:999px;background:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 12%, var(--wr-paper-soft));color:var(--dsw-alias-state-warn-primary);border:1px solid color-mix(in srgb, var(--dsw-alias-state-warn-primary) 34%, transparent);white-space:nowrap}
+.wr-srcs{display:inline-flex;flex-wrap:wrap;gap:4px;min-width:0;max-width:100%}
+.wr-src{font-size:10.5px;line-height:1.5;padding:2px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft);border:1px solid var(--wr-line);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-family:inherit}
+.wr-src[data-missing=true]{border-style:dashed;color:var(--wr-ink-mute)}
+button.wr-src{cursor:pointer}
+button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-moss)}
+.wr-src[data-kind=thought]{border-color:var(--wr-sage)}
+.wr-src[data-kind=response]{border-color:color-mix(in srgb, var(--wr-moss) 40%, transparent)}
+.wr-src[data-kind=material]{border-color:color-mix(in srgb, var(--wr-clay) 40%, transparent)}
+.wr-src-empty{color:var(--wr-ink-mute);border-style:dashed;background:transparent}
+.wr-item{background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.wr-item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.wr-item-text{margin:0;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.wr-item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--wr-ink-mute);min-width:0}
+.wr-tag{font-size:10px;line-height:1.6;padding:1px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft);border:1px solid var(--wr-line);white-space:nowrap;flex:none}
+.wr-tag[data-tone=ai]{background:color-mix(in srgb, var(--wr-moss) 12%, var(--wr-paper-soft));color:var(--wr-moss);border-color:color-mix(in srgb, var(--wr-moss) 32%, transparent)}
+.wr-tag[data-tone=ok]{color:var(--dsw-alias-state-success-primary);border-color:color-mix(in srgb, var(--dsw-alias-state-success-primary) 32%, transparent)}
+.wr-tag[data-tone=changed]{color:var(--dsw-alias-state-warn-primary);border-color:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 32%, transparent)}
+.wr-tag[data-tone=missing]{color:var(--dsw-alias-state-error-primary);border-color:color-mix(in srgb, var(--dsw-alias-state-error-primary) 32%, transparent)}
+.wr-stack{display:flex;flex-direction:column;gap:10px}
+.wr-form{display:flex;flex-direction:column;gap:8px;background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:14px;padding:13px 15px;margin-bottom:12px}
+.wr-form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wr-form-row .wr-input{flex:1;min-width:180px}
+.wr-picklist{display:flex;flex-direction:column;gap:2px;max-height:184px;overflow:auto;border:1px solid var(--wr-line);border-radius:10px;padding:4px}
+.wr-pickrow{display:flex;align-items:flex-start;gap:8px;padding:5px 7px;border-radius:8px;font-size:12px;line-height:1.55;color:var(--wr-ink-soft);cursor:pointer;text-align:left;border:0;background:transparent;font:inherit;width:100%}
+.wr-pickrow:hover{background:var(--wr-wash);color:var(--wr-ink)}
+.wr-pickrow[data-on=true]{background:var(--wr-wash);color:var(--wr-ink)}
+.wr-pickrow-mark{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--wr-line-2);display:grid;place-items:center;font-size:9px;line-height:1;margin-top:2px}
+.wr-pickrow[data-on=true] .wr-pickrow-mark{background:var(--wr-moss);border-color:var(--wr-moss);color:#fff}
+.wr-tl{display:flex;flex-direction:column;gap:18px}
+.wr-tl-month{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.03em}
+.wr-tl-items{display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--wr-line);padding-left:14px}
+.wr-tl-item{display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.6;min-width:0;position:relative}
+.wr-tl-item{background:none;border:0;border-radius:6px;padding:0 6px 0 0;margin:0;font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}
+.wr-tl-item:not(:disabled):hover{background:var(--wr-wash)}
+.wr-tl-item:disabled{cursor:default;opacity:.72}
+.wr-tl-cross{flex:none;font-size:10px;padding:0 5px}
+.wr-tl-book{flex:none;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-type-switch{flex:none;height:24px;font-size:11px;padding:0 4px}
+.wr-tl-item:before{content:'';position:absolute;left:-19px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--wr-sage)}
+.wr-tl-kind{flex:none;font-size:10.5px;color:var(--wr-ink-mute);white-space:nowrap}
+.wr-tl-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-draft{display:flex;flex-direction:column;gap:8px}
+.wr-paragraph{display:flex;gap:10px;align-items:flex-start;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:12px;padding:11px 13px}
+.wr-paragraph-index{flex:none;font-size:11px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums;padding-top:2px;width:46px}
+.wr-paragraph-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.wr-draft-export{background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:12px;padding:10px 12px;max-height:260px;overflow:auto;margin-top:10px}
+.wr-empty-next{margin:6px auto 12px;max-width:440px;font-size:12px;line-height:1.65;color:var(--wr-ink-soft)}
+.wr-notice-line{font-size:11.5px;color:var(--wr-ink-soft);margin:0 0 10px}
+.wr-adopt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--wr-divider);background:var(--wr-surface)}
+.wr-adopt-hint{font-size:10.5px;color:var(--wr-ink-mute);line-height:1.45;flex:1 1 150px;min-width:0}
+.wr-adopt-actions{display:flex;gap:6px;flex-wrap:wrap}
+.wr-adopt-actions .wr-btn{font-size:11px;padding:3px 9px}
+.wr-adopt-types{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%}
+.wr-adopt-types .wr-chip{font-size:11px;padding:3px 8px}
+.wr-adopt-error{font-size:10.5px;color:var(--dsw-alias-state-error-primary);width:100%}
+.wr-btn[data-active=true]{border-color:var(--wr-moss);color:var(--wr-moss)}
+.wr-think-take{border-style:dashed;color:var(--wr-ink-soft)}
+.wr-modal-body{display:flex;flex-direction:column;gap:10px;padding:4px 1px 8px;min-height:0;overflow:auto}
+.wr-picker{max-width:520px}
+.wr-picker-link{display:flex;flex-direction:column;gap:6px}
+.wr-picker-list{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto}
+.wr-picker-row{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;font:inherit;font-size:12px;line-height:1.55;color:var(--wr-ink-soft);background:transparent;border:1px solid var(--wr-line);border-radius:9px;padding:6px 9px;cursor:pointer}
+.wr-picker-row:hover{border-color:var(--wr-sage);color:var(--wr-ink)}
+.wr-picker-row[data-on=true]{background:var(--wr-wash);border-color:var(--wr-moss);color:var(--wr-ink)}
 `
 
     // ------------------------------------------------------------ components
@@ -1511,15 +2140,696 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // --------------------------------------------------------------- thinking
+    /**
+     * The source pack: everything the model needs to answer well, and nothing
+     * else. Labels say what each part IS, so the reply can tell the book's
+     * words from mine.
+     */
+    const THINK_LIMITS = { body: 600, context: 3, contextEach: 200 }
+
+    const THINK_MODES = [
+      ['explain', 'think.mode.explain', 'think.ask.explain'],
+      ['reframe', 'think.mode.reframe', 'think.ask.reframe'],
+      ['deeper', 'think.mode.deeper', 'think.ask.deeper'],
+    ]
+
+    function buildSourcePack(input) {
+      const entry = input && input.entry ? input.entry : {}
+      const kind = input && input.kind === 'note' ? 'note' : 'thought'
+      const context = Array.isArray(input && input.context) ? input.context : []
+      const question = String((input && input.question) || '').trim()
+      const title = String(entry.bookTitle || '').trim()
+      const author = String(entry.author || '').trim()
+      const chapter = String((kind === 'note' ? entry.chapterTitle : entry.chapterName) || '').trim()
+      const lines = [t('think.packHead')]
+      lines.push(`${t('think.packBook')}${title === '' ? t('think.packUnknown') : `《${title}》`}`)
+      if (author !== '') lines.push(`${t('think.packAuthor')}${author}`)
+      if (chapter !== '') lines.push(`${t('think.packChapter')}${chapter}`)
+      lines.push(`${t('think.packKind')}${kind === 'note' ? t('think.packKindNote') : t('think.packKindThought')}`)
+      if (entry.createTime) lines.push(`${t('think.packTime')}${fmtDateTime(entry.createTime)}`)
+      lines.push('')
+      if (kind === 'thought') {
+        lines.push(t('think.packMine'))
+        lines.push(clip(String(entry.content || '').trim(), THINK_LIMITS.body))
+        const used = context.slice(0, THINK_LIMITS.context)
+        if (used.length > 0) {
+          lines.push('')
+          lines.push(t('think.packContext', { count: String(used.length) }))
+          for (let index = 0; index < used.length; index += 1) {
+            lines.push(`${index + 1}. ${clip(String(used[index].text || '').trim(), THINK_LIMITS.contextEach)}`)
+          }
+        }
+      } else {
+        lines.push(t('think.packOriginal'))
+        lines.push(`> ${clip(String(entry.text || '').trim(), THINK_LIMITS.body)}`)
+      }
+      lines.push('')
+      lines.push(t('think.packFoot'))
+      if (question !== '') {
+        lines.push('')
+        lines.push(question)
+      }
+      return lines.join('\n')
+    }
+
+/**
+     * One chat turn: the host picks the model and streams text back as SSE.
+     * A turn carries the source pack plus the earlier turns itself, so nothing
+     * needs to be persisted between opens and every card stays independent.
+     */
+    async function streamChat(payload, onEvent, signal) {
+      const response = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal,
+      })
+      if (!response.ok) {
+        let message = ''
+        try {
+          const data = await response.json()
+          message = String((data && data.error) || '')
+        } catch {
+          message = ''
+        }
+        throw new Error(message || `HTTP ${response.status}`)
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      for (;;) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        let cut = buffer.indexOf('\n\n')
+        while (cut >= 0) {
+          const frame = buffer.slice(0, cut)
+          buffer = buffer.slice(cut + 2)
+          const line = frame.split('\n').find((item) => item.startsWith('data: '))
+          if (line) {
+            try {
+              onEvent(JSON.parse(line.slice(6)))
+            } catch {
+              // A half frame is not worth failing an answer over.
+            }
+          }
+          cut = buffer.indexOf('\n\n')
+        }
+      }
+    }
+
+    const ASK_WIDTH = 480
+
+    /** Where the card sits: just under the buttons, or above them near the bottom edge. */
+    function askPosition(anchor) {
+      const viewportW = typeof window !== 'undefined' ? window.innerWidth : 1200
+      const viewportH = typeof window !== 'undefined' ? window.innerHeight : 900
+      const width = Math.min(ASK_WIDTH, Math.max(300, viewportW - 28))
+      const x = Math.min(Math.max(8, (anchor && anchor.x) || 40), Math.max(8, viewportW - width - 12))
+      const y = (anchor && anchor.y) || 120
+      if (viewportH - y < 400) {
+        return { left: `${x}px`, bottom: `${Math.max(8, viewportH - y + 10)}px`, width: `${width}px` }
+      }
+      return { left: `${x}px`, top: `${y + 10}px`, width: `${width}px` }
+    }
+
+    /**
+     * The conversation card that opens right where the reader is. The card it
+     * belongs to stays visible, so the question and the passage are on screen
+     * together; × closes it and the turns leave with it.
+     */
+    /* The writing side belongs to the study, but the ask card needs exactly two
+       things from it: somewhere to write, and a way to read the craft snapshot.
+       A tiny bridge keeps AskCard free of props it otherwise never uses. */
+    const craftBridge = { write: null, craft: null }
+
+    /** F-20: the only thing that survives a conversation is the line you keep. */
+    function AskAdopt(props) {
+      const [saved, setSaved] = useState('')
+      const [panel, setPanel] = useState('')
+      const [type, setType] = useState('观点')
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const answer = String(props.answer || '').trim()
+      if (answer === '') return null
+      const entry = props.entry || {}
+      const prefix = props.kind === 'thought' ? 'thought' : 'note'
+      const sourceId = `${prefix}:${String(entry.id === undefined || entry.id === null ? '' : entry.id)}`
+      const bookId = String(entry.bookId || '')
+
+      const save = (op, payload) => {
+        const write = craftBridge.write
+        if (typeof write !== 'function') {
+          setError(t('craft.offline'))
+          return
+        }
+        setBusy(true)
+        setError('')
+        write(op, payload)
+          .then(() => {
+            setBusy(false)
+            setPanel('')
+            setSaved(op === 'response.add' ? 'thought' : 'material')
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      const keepThought = () =>
+        save('response.add', {
+          text: answer,
+          sourceIds: [sourceId],
+          // A thought entry has no bookId of its own; a highlight carries the
+          // book, so the payload can name it and the host can cross-check.
+          bookId: bookId === '' ? undefined : bookId,
+          containsAI: true,
+          model: props.model || '',
+          origin: 'think',
+        })
+      const keepMaterial = () =>
+        save('material.add', {
+          type,
+          text: answer,
+          sourceIds: [sourceId],
+          bookId: bookId === '' ? undefined : bookId,
+          containsAI: true,
+          authorType: 'ai',
+          origin: 'craft',
+        })
+
+      return h(
+        'div',
+        { className: 'wr-adopt' },
+        h('span', { className: 'wr-adopt-hint' }, t('ask.adoptHint')),
+        saved === ''
+          ? h(
+              'div',
+              { className: 'wr-adopt-actions' },
+              h(
+                'button',
+                { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: keepThought },
+                t('ask.adoptThought'),
+              ),
+              h(
+                'button',
+                {
+                  className: 'wr-btn wr-btn-ghost',
+                  type: 'button',
+                  disabled: busy,
+                  'data-active': panel === 'material' ? 'true' : 'false',
+                  onClick: () => setPanel(panel === 'material' ? '' : 'material'),
+                },
+                t('ask.adoptMaterial'),
+              ),
+            )
+          : h('span', { className: 'wr-tag', 'data-tone': 'ai' }, `${t('ask.adoptDone')} · ${t(saved === 'thought' ? 'nav.responses' : 'nav.materials')}`),
+        saved !== '' || panel !== 'material'
+          ? null
+          : h(
+              'div',
+              { className: 'wr-adopt-types' },
+              h('span', { className: 'wr-muted' }, t('ask.adoptType')),
+              MATERIAL_TYPES.map(([label, key]) =>
+                h(
+                  'button',
+                  {
+                    className: 'wr-chip',
+                    key: label,
+                    type: 'button',
+                    'data-active': type === label ? 'true' : 'false',
+                    disabled: busy,
+                    onClick: () => setType(label),
+                  },
+                  t(key),
+                ),
+              ),
+              h('button', { className: 'wr-chip', type: 'button', disabled: busy, onClick: keepMaterial }, t('ask.adoptSave')),
+              h('button', { className: 'wr-chip', type: 'button', disabled: busy, onClick: () => setPanel('') }, t('ask.adoptCancel')),
+            ),
+        error === '' ? null : h('span', { className: 'wr-adopt-error' }, t('ask.adoptFailed', { error })),
+      )
+    }
+
+    function AskCard(props) {
+      const [messages, setMessages] = useState([])
+      const [draft, setDraft] = useState('')
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const [model, setModel] = useState('')
+      const [active, setActive] = useState('')
+      // F1: an entry the host cannot serve is greyed before it is pressed.
+      const chat = useChatAvailability()
+      const offline = chat === 'offline'
+      const abortRef = useRef(null)
+      const bodyRef = useRef(null)
+      const inputRef = useRef(null)
+      const touchedRef = useRef(false)
+      const turnsRef = useRef([])
+      // The last answer with any text in it is what an adoption can keep.
+      const lastAnswer = (() => {
+        for (let at = messages.length - 1; at >= 0; at -= 1) {
+          const msg = messages[at]
+          if (msg && msg.role === 'assistant' && String(msg.text || '').trim() !== '') return String(msg.text)
+        }
+        return ''
+      })()
+
+      const scrollBody = () => {
+        const node = bodyRef.current
+        if (node && typeof node.scrollHeight === 'number') node.scrollTop = node.scrollHeight
+      }
+      useEffect(() => {
+        scrollBody()
+      }, [messages, busy])
+      // The box grows with what is typed in it, then scrolls instead of pushing
+      // the answer off screen.
+      useEffect(() => {
+        const node = inputRef.current
+        if (!node || !node.style) return
+        node.style.height = 'auto'
+        const next = typeof node.scrollHeight === 'number' ? node.scrollHeight : 0
+        node.style.height = `${Math.min(Math.max(next || 52, 52), 132)}px`
+      }, [draft])
+
+      const appendText = (text) => {
+        setMessages((prev) => {
+          if (prev.length === 0) return prev
+          const next = prev.slice()
+          const last = next[next.length - 1]
+          next[next.length - 1] = { role: 'assistant', text: `${(last && last.text) || ''}${text}` }
+          return next
+        })
+      }
+
+      const send = (raw) => {
+        const question = String(raw || '').trim()
+        if (question === '' || busy) return
+        setDraft('')
+        setError('')
+        setBusy(true)
+        setMessages((prev) => prev.concat([{ role: 'user', text: question }, { role: 'assistant', text: '' }]))
+        const history = turnsRef.current.slice(-6)
+        const controller = typeof AbortController === 'function' ? new AbortController() : null
+        abortRef.current = controller
+        let answer = ''
+        streamChat(
+          { pack: props.pack, history, question },
+          (event) => {
+            if (!event) return
+            if (event.type === 'open') {
+              setModel(event.model || '')
+              return
+            }
+            if (event.type === 'text') {
+              answer += event.text
+              appendText(event.text)
+              return
+            }
+            if (event.type === 'error') setError(event.error || t('think.failed'))
+          },
+          controller ? controller.signal : undefined,
+        )
+          .catch((thrown) => {
+            if (thrown && thrown.name === 'AbortError') return
+            setError(thrown instanceof Error ? thrown.message : String(thrown))
+          })
+          .finally(() => {
+            setBusy(false)
+            abortRef.current = null
+            turnsRef.current = turnsRef.current.concat([{ question, answer }]).slice(-6)
+          })
+      }
+
+      // 打开时只把问题放进输入框，让读者先改再发；一旦他自己动过输入框，就不再覆盖。
+      useEffect(() => {
+        if (props.question) setDraft(String(props.question))
+        setActive(props.mode || '')
+      }, [])
+
+      const fillMode = (id, askKey) => {
+        setActive(id)
+        if (touchedRef.current) return
+        setDraft(t(askKey))
+      }
+
+      const close = () => {
+        if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
+        if (typeof props.onClose === 'function') props.onClose()
+      }
+
+      const stop = (event) => {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+      }
+
+      const kindLabel = props.kind === 'note' ? t('think.packKindNote') : t('think.packKindThought')
+      const chapter = String(
+        (props.kind === 'note' ? props.entry && props.entry.chapterTitle : props.entry && props.entry.chapterName) || '',
+      )
+      const book = String((props.entry && props.entry.bookTitle) || '')
+
+      return h(
+        'div',
+        {
+          className: 'wr-ask',
+          style: askPosition(props.anchor),
+          onClick: stop,
+          onKeyDown: (event) => {
+            if (event && event.key === 'Escape') close()
+          },
+        },
+        h(
+          'div',
+          { className: 'wr-ask-head' },
+          h(
+            'div',
+            { className: 'wr-ask-meta' },
+            h('span', { className: 'wr-ask-kind' }, kindLabel),
+            h('strong', { className: 'wr-ask-book', title: book }, book === '' ? t('think.packUnknown') : `《${book}》`),
+            chapter === '' ? null : h('span', { className: 'wr-ask-chapter' }, chapter),
+          ),
+          h(
+            'button',
+            {
+              className: 'wr-ask-close',
+              type: 'button',
+              'aria-label': t('action.dismiss'),
+              onClick: (event) => {
+                stop(event)
+                close()
+              },
+            },
+            '×',
+          ),
+        ),
+        h(
+          'div',
+          { className: 'wr-ask-tools' },
+          THINK_MODES.map(([id, labelKey, askKey]) =>
+            h(
+              'button',
+              {
+                className: 'wr-ask-chip',
+                key: id,
+                type: 'button',
+                'data-on': active === id ? 'true' : 'false',
+                disabled: busy || offline,
+                onClick: (event) => {
+                  stop(event)
+                  fillMode(id, askKey)
+                },
+              },
+              t(labelKey),
+            ),
+          ),
+          h(
+            'button',
+            {
+              className: 'wr-ask-chip',
+              type: 'button',
+              'data-on': active === 'custom' ? 'true' : 'false',
+              disabled: offline,
+              onClick: (event) => {
+                stop(event)
+                setActive('custom')
+                setDraft('')
+                touchedRef.current = false
+              },
+            },
+            t('think.mode.custom'),
+          ),
+        ),
+        h(
+          'div',
+          { className: 'wr-ask-body', ref: bodyRef },
+          messages.length === 0 ? h('div', { className: 'wr-ask-empty' }, t('think.empty')) : null,
+          messages.map((msg, index) =>
+            h(
+              'div',
+              { className: 'wr-ask-msg', 'data-role': msg.role, key: `${msg.role}-${index}` },
+              msg.role === 'assistant' && msg.text === ''
+                ? h('span', { className: 'wr-ask-typing' }, t('think.thinking'))
+                : msg.text,
+            ),
+          ),
+        ),
+        h(AskAdopt, { answer: lastAnswer, entry: props.entry, kind: props.kind, model }),
+        error === '' ? null : h('div', { className: 'wr-ask-error' }, `${t('error.prefix')}${error}`),
+        h(
+          'div',
+          { className: 'wr-ask-foot' },
+          h('textarea', {
+            className: 'wr-ask-input',
+            rows: 2,
+            value: draft,
+            placeholder: t('think.customPlaceholder'),
+            ref: inputRef,
+            onChange: (event) => {
+              touchedRef.current = true
+              setDraft(event ? String(event.target.value || '') : '')
+            },
+            onKeyDown: (event) => {
+              if (!event || event.key !== 'Enter') return
+              if (event.shiftKey) return
+              stop(event)
+              send(draft)
+            },
+          }),
+          h(
+            'button',
+            {
+              className: 'wr-ask-send',
+              type: 'button',
+              disabled: busy || offline || draft.trim() === '',
+              title: offline ? t('think.offline') : undefined,
+              onClick: (event) => {
+                stop(event)
+                send(draft)
+              },
+            },
+            busy ? t('think.thinking') : t('think.send'),
+          ),
+        ),
+        offline ? h('div', { className: 'wr-ask-offline' }, t('think.offline')) : null,
+        h('div', { className: 'wr-ask-note' }, model === '' ? t('think.aiNote') : `${t('think.aiNote')} · ${model}`),
+      )
+    }
+
+    /**
+     * Degradation ①: WeRead does not record which highlight a thought answered,
+     * so we cannot pick the source for the reader. Ask, and let them skip — a
+     * skipped thought keeps `thought:<id>` as its only source instead of a guess.
+     */
+    function MaterialPicker(props) {
+      const entry = props.entry || {}
+      const kind = props.kind === 'thought' ? 'thought' : 'note'
+      const [type, setType] = useState(kind === 'note' ? '金句' : '观点')
+      const [linkId, setLinkId] = useState('')
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const ownId = `${kind}:${String(entry.id === undefined || entry.id === null ? '' : entry.id)}`
+      const text = String((kind === 'thought' ? entry.content : entry.text) || '')
+      const same = Array.isArray(props.context) ? props.context.filter((note) => note && note.id !== undefined && note.id !== null) : []
+
+      const save = () => {
+        const write = craftBridge.write
+        if (typeof write !== 'function') {
+          setError(t('craft.offline'))
+          return
+        }
+        const sourceIds = kind === 'thought' && linkId !== '' ? [`note:${linkId}`, ownId] : [ownId]
+        setBusy(true)
+        setError('')
+        write('material.add', { type, text, sourceIds, authorType: 'human', origin: 'craft' })
+          .then(() => {
+            setBusy(false)
+            if (typeof props.onClose === 'function') props.onClose(true)
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+
+      return h(
+        'div',
+        { className: 'wr-modal-mask', onMouseDown: (event) => { if (event.target === event.currentTarget) props.onClose(false) }, onClick: (event) => { if (event && typeof event.stopPropagation === 'function') event.stopPropagation() } },
+        h(
+          'div',
+          {
+            className: 'wr-modal wr-picker',
+            role: 'dialog',
+            'aria-modal': 'true',
+            onKeyDown: (event) => {
+              if (event.key === 'Escape') props.onClose(false)
+            },
+          },
+          h('div', { className: 'wr-export-head' },
+            h('h3', null, t('mat.picker.title')),
+            h('span', { className: 'wr-muted' }, kind === 'thought' ? t('nav.thoughts') : t('nav.notes')),
+          ),
+          h('div', { className: 'wr-modal-body' },
+            h('p', { className: 'wr-item-text' }, clip(text, 160)),
+            h('div', { className: 'wr-export-opts' },
+              h('span', { className: 'wr-muted' }, t('ask.adoptType')),
+              MATERIAL_TYPES.map(([label, key]) =>
+                h(
+                  'button',
+                  { className: 'wr-chip', key: label, type: 'button', 'data-active': type === label ? 'true' : 'false', disabled: busy, onClick: () => setType(label) },
+                  t(key),
+                ),
+              ),
+            ),
+            kind !== 'thought'
+              ? null
+              : h(
+                  'div',
+                  { className: 'wr-picker-link' },
+                  h('p', { className: 'wr-notice-line' }, t('mat.picker.noteHint')),
+                  same.length === 0
+                    ? h('p', { className: 'wr-muted' }, t('mat.picker.empty'))
+                    : h(
+                        'div',
+                        { className: 'wr-picklist' },
+                        h(
+                          'button',
+                          { className: 'wr-pickrow', type: 'button', 'data-on': linkId === '' ? 'true' : 'false', disabled: busy, onClick: () => setLinkId('') },
+                          h('span', { className: 'wr-pickrow-mark' }, linkId === '' ? '✓' : ''),
+                          h('span', null, t('mat.picker.skip')),
+                        ),
+                        same.map((note) =>
+                          h(
+                            'button',
+                            {
+                              className: 'wr-pickrow',
+                              key: note.id,
+                              type: 'button',
+                              'data-on': linkId === String(note.id) ? 'true' : 'false',
+                              disabled: busy,
+                              onClick: () => setLinkId(String(note.id)),
+                            },
+                            h('span', { className: 'wr-pickrow-mark' }, linkId === String(note.id) ? '✓' : ''),
+                            h('span', null, clip(String(note.text || ''), 90)),
+                          ),
+                        ),
+                      ),
+                ),
+            error === '' ? null : h('p', { className: 'wr-adopt-error' }, t('mat.failed', { error })),
+          ),
+          h('div', { className: 'wr-modal-foot' },
+            h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => props.onClose(false) }, t('mat.picker.cancel')),
+            h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: save }, busy ? t('state.loading') : t('mat.picker.save')),
+          ),
+        ),
+      )
+    }
+
+    /** Four ways to keep thinking; each opens the conversation card in place. */
+    function ThinkingBar(props) {
+      const [open, setOpen] = useState(null)
+      const [pick, setPick] = useState(false)
+      const [saved, setSaved] = useState('')
+      const barRef = useRef(null)
+
+      const stop = (event) => {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+      }
+
+      const openCard = (mode, askKey) => {
+        const node = barRef.current
+        let anchor = { x: 40, y: 140 }
+        if (node && typeof node.getBoundingClientRect === 'function') {
+          const rect = node.getBoundingClientRect()
+          anchor = { x: rect.left, y: rect.bottom }
+        }
+        setOpen({ mode, question: askKey === null ? '' : t(askKey), anchor })
+      }
+
+      const pack = open === null ? '' : buildSourcePack({ entry: props.entry, kind: props.kind, context: props.context })
+
+      return h(
+        'div',
+        { className: 'wr-think', ref: barRef, 'data-open': open === null ? 'false' : 'true' },
+        h(
+          'div',
+          { className: 'wr-think-row' },
+          THINK_MODES.map(([id, labelKey, askKey]) =>
+            h(
+              'button',
+              {
+                className: 'wr-think-btn',
+                key: id,
+                type: 'button',
+                onClick: (event) => {
+                  stop(event)
+                  openCard(id, askKey)
+                },
+              },
+              t(labelKey),
+            ),
+          ),
+          h(
+            'button',
+            {
+              className: 'wr-think-btn',
+              type: 'button',
+              onClick: (event) => {
+                stop(event)
+                openCard('', null)
+              },
+            },
+            t('think.mode.custom'),
+          ),
+          h(
+            'button',
+            {
+              className: 'wr-think-btn wr-think-take',
+              type: 'button',
+              onClick: (event) => {
+                stop(event)
+                setPick(true)
+              },
+            },
+            t('ask.adoptMaterial'),
+          ),
+          saved ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('mat.picker.saved')) : null,
+        ),
+        pick
+          ? h(MaterialPicker, {
+              entry: props.entry,
+              kind: props.kind,
+              context: props.context,
+              onClose: (didSave) => {
+                setPick(false)
+                if (didSave === true) setSaved('material')
+              },
+            })
+          : null,
+        open === null
+          ? null
+          : h(AskCard, {
+              pack,
+              entry: props.entry,
+              kind: props.kind,
+              question: open.question,
+              mode: open.mode,
+              anchor: open.anchor,
+              onClose: () => setOpen(null),
+            }),
+      )
+    }
+
     function NoteRow(props) {
       const note = props.note
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
       const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
       return h(
         'div',
-        { className: 'wr-quote', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-quote', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: 'wr-quote-text', text: note.text, needle: props.needle }),
+        h(ThinkingBar, { entry: note, kind: 'note', context: [] }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -1554,7 +2864,7 @@ window.__ModuleLoader__.load({
       const showClamped = clampable && !expanded
       return h(
         'div',
-        { className: 'wr-thought', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-thought', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: showClamped ? 'wr-quote-text wr-clamp' : 'wr-quote-text', text: content, needle: props.needle }),
         clampable
@@ -1571,6 +2881,7 @@ window.__ModuleLoader__.load({
               expanded ? t('thought.collapse') : t('thought.expand', { count: String(content.length - THOUGHT_CLAMP_CHARS) }),
             )
           : null,
+        h(ThinkingBar, { entry: thought, kind: 'thought', context: context }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -1612,6 +2923,1196 @@ window.__ModuleLoader__.load({
                   },
                 },
                 t('thought.contextToggle', { count: String(context.length) }),
+              ),
+      )
+    }
+
+    // -------------------------------------------------------------- journeys
+    // Two rows: the four journeys are the top level, the views inside a journey
+    // sit directly under it, so READ keeps its four pages one click away and
+    // never hides them behind an abstract layer.
+    const VIEW_STAGE = {
+      overview: 'read',
+      shelf: 'read',
+      notes: 'read',
+      thoughts: 'read',
+      book: 'read',
+      responses: 'think',
+      materials: 'create',
+      topics: 'create',
+      works: 'create',
+      timeline: 'grow',
+      annual: 'grow',
+    }
+    const STAGES = [
+      ['read', 'nav.read', 'journey.read.hint'],
+      ['think', 'nav.think', 'journey.think.hint'],
+      ['create', 'nav.create', 'journey.create.hint'],
+      ['grow', 'nav.grow', 'journey.grow.hint'],
+    ]
+    const STAGE_VIEWS = {
+      read: [
+        ['overview', 'nav.overview'],
+        ['shelf', 'nav.shelf'],
+        ['notes', 'nav.notes'],
+        ['thoughts', 'nav.thoughts'],
+      ],
+      think: [['responses', 'nav.responses']],
+      create: [
+        ['materials', 'nav.materials'],
+        ['topics', 'nav.topics'],
+        ['works', 'nav.works'],
+      ],
+      grow: [
+        ['timeline', 'nav.timeline'],
+        ['annual', 'nav.annual'],
+      ],
+    }
+
+    function bookTitleOf(bookId, data, craft) {
+      const id = String(bookId || '')
+      if (id === '') return ''
+      const books = data && Array.isArray(data.books) ? data.books : []
+      const hit = books.find((book) => String(book.bookId) === id)
+      if (hit) return String(hit.title || '')
+      const index = craft && Array.isArray(craft.bookIndex) ? craft.bookIndex : []
+      const row = index.find((item) => String(item.bookId) === id)
+      return row ? String(row.bookTitle || '') : ''
+    }
+
+    /** One source id -> a short, honest label: the kind plus the first words. */
+    function sourceLabel(sourceId, lookup) {
+      const kind = sourceKind(sourceId)
+      const id = sourceRawId(sourceId)
+      const bag = lookup && lookup[kind] ? lookup[kind] : null
+      const hit = bag ? bag.get(id) : null
+      if (!hit) return `${kind === '' ? '?' : t(`src.${kind}`)}: ${clip(id, 10)}`
+      const text = kind === 'thought' ? hit.content : hit.text
+      return `${t(`src.${kind}`)} · ${clip(String(text || ''), 16)}`
+    }
+
+    /** The asset a source id points at, or null when it is gone from the books. */
+    function craftSourceHit(sourceId, lookup) {
+      const kind = sourceKind(sourceId)
+      const bag = lookup && lookup[kind] ? lookup[kind] : null
+      return bag ? bag.get(sourceRawId(sourceId)) || null : null
+    }
+
+    function SourceTags(props) {
+      const ids = Array.isArray(props.sourceIds) ? props.sourceIds.filter((id) => String(id || '') !== '') : []
+      if (ids.length === 0) return h('span', { className: 'wr-src wr-src-empty' }, t('work.noSource'))
+      const open = typeof props.onOpenSource === 'function' ? props.onOpenSource : null
+      return h(
+        'span',
+        { className: 'wr-srcs' },
+        ids.map((id) => {
+          const kind = sourceKind(id)
+          const label = sourceLabel(id, props.lookup)
+          // F3: a source chip is the way back to what it came from. When the
+          // excerpt or material has moved out of the window it stays clickable
+          // and says so instead of silently looking like a dead label.
+          const known = craftSourceHit(id, props.lookup) !== null
+          const text = known ? label : `${label} · ${t('mat.status.missing')}`
+          const common = {
+            className: 'wr-src',
+            key: id,
+            'data-kind': kind || 'other',
+            'data-missing': known ? 'false' : 'true',
+            title: String(id),
+          }
+          if (!open) return h('span', common, text)
+          return h(
+            'button',
+            Object.assign({}, common, {
+              type: 'button',
+              onClick: (event) => {
+                if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                open(id)
+              },
+            }),
+            text,
+          )
+        }),
+      )
+    }
+
+    /** Two-step delete: the first tap only arms it, so a stray click cannot lose data. */
+    function DangerButton(props) {
+      const [armed, setArmed] = useState(false)
+      return h(
+        'button',
+        {
+          className: 'wr-btn wr-btn-ghost',
+          type: 'button',
+          'data-armed': armed ? 'true' : 'false',
+          disabled: Boolean(props.disabled),
+          onClick: (event) => {
+            if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+            if (!armed) {
+              setArmed(true)
+              return
+            }
+            setArmed(false)
+            if (typeof props.onDelete === 'function') props.onDelete()
+          },
+        },
+        armed ? t('mat.sure') : t(props.labelKey || 'mat.delete'),
+      )
+    }
+
+    /** Every empty screen says what to do next and offers the one button that does it. */
+    function CraftEmpty(props) {
+      return h(
+        'div',
+        { className: 'wr-empty' },
+        h('strong', null, t(props.titleKey)),
+        h('p', { className: 'wr-empty-next' }, t(props.nextKey)),
+        typeof props.onAction === 'function'
+          ? h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onAction }, t(props.actionKey))
+          : null,
+      )
+    }
+
+    function JourneyBar(props) {
+      const active = VIEW_STAGE[props.view] || 'read'
+      const counts = props.counts || {}
+      return h(
+        'div',
+        { className: 'wr-journey', role: 'tablist' },
+        STAGES.map(([id, labelKey]) =>
+          h(
+            'button',
+            {
+              key: id,
+              className: 'wr-journey-tab',
+              type: 'button',
+              role: 'tab',
+              title: t(`journey.${id}.hint`),
+              'aria-selected': active === id ? 'true' : 'false',
+              'data-active': active === id ? 'true' : 'false',
+              onClick: () => props.onPick(id),
+            },
+            t(labelKey),
+            Number(counts[id]) > 0 ? h('span', { className: 'wr-journey-count' }, String(counts[id])) : null,
+          ),
+        ),
+      )
+    }
+
+    function SubNav(props) {
+      const stage = VIEW_STAGE[props.view] || 'read'
+      const views = STAGE_VIEWS[stage] || STAGE_VIEWS.read
+      const scope = String(props.scopeTitle || '')
+      return h(
+        'div',
+        { className: 'wr-subnav' },
+        h(
+          'div',
+          { className: 'wr-tabs' },
+          views.map(([id, labelKey]) =>
+            h(
+              'button',
+              {
+                key: id,
+                className: 'wr-tab',
+                type: 'button',
+                'data-active': props.view === id || (props.view === 'book' && id === 'shelf') ? 'true' : 'false',
+                onClick: () => props.onPick(id),
+              },
+              t(labelKey),
+            ),
+          ),
+        ),
+        scope === ''
+          ? null
+          : h(
+              'button',
+              { className: 'wr-chip', type: 'button', 'data-active': 'true', onClick: props.onClearScope, title: scope },
+              t('thinkView.backBook', { title: clip(scope, 14) }),
+            ),
+        h('span', { className: 'wr-subnav-hint' }, t(`journey.${stage}.hint`)),
+      )
+    }
+
+    /** F-19: the six steps of one book, counted where the data actually lives. */
+    function BookChain(props) {
+      const book = props.book || {}
+      const craft = props.craft || EMPTY_CRAFT
+      const craftState = props.craftState || 'ready'
+      const index = (Array.isArray(craft.bookIndex) ? craft.bookIndex : []).find((row) => String(row.bookId) === String(book.bookId))
+      const host = index && index.counts ? index.counts : null
+      const byBook = (list) =>
+        (Array.isArray(list) ? list : []).filter((item) => String(item.bookId || '') === String(book.bookId || '')).length
+      const pick = (key, list) => (host && typeof host[key] === 'number' ? host[key] : byBook(list))
+      const rows = [
+        ['notes', Number(book.noteCount) || 0, 'chain.notes'],
+        ['thoughts', Number(book.reviewCount) || 0, 'chain.thoughts'],
+        ['responses', pick('responses', craft.responses), 'chain.responses'],
+        ['materials', pick('materials', craft.materials), 'chain.materials'],
+        ['topics', pick('topics', craft.topics), 'chain.topics'],
+        ['works', pick('works', craft.works), 'chain.works'],
+      ]
+      const cached = index ? index.cached !== false : true
+      return h(
+        'div',
+        { className: 'wr-chain' },
+        h(
+          'div',
+          { className: 'wr-chain-head' },
+          h('strong', null, t('chain.title')),
+          h('span', { className: 'wr-muted' }, t('chain.hint')),
+          craftState !== 'ready' ? h('span', { className: 'wr-degraded' }, t('craft.offline')) : null,
+          cached ? null : h('span', { className: 'wr-degraded' }, t('chain.cached')),
+        ),
+        h(
+          'div',
+          { className: 'wr-chain-row' },
+          rows.map(([id, count, labelKey]) =>
+            h(
+              'button',
+              {
+                key: id,
+                className: 'wr-chain-step',
+                type: 'button',
+                'data-empty': count > 0 ? 'false' : 'true',
+                onClick: () => props.onJump(id),
+              },
+              h('span', { className: 'wr-chain-count' }, fmtCount(count)),
+              h('span', { className: 'wr-chain-label' }, t(labelKey)),
+            ),
+          ),
+        ),
+      )
+    }
+
+    /** THINK keeps only what was adopted; the conversation itself is never stored. */
+    function ResponseList(props) {
+      const craft = props.craft || EMPTY_CRAFT
+      const scope = String(props.scopeBookId || '')
+      const rows = (Array.isArray(craft.responses) ? craft.responses : [])
+        .filter((item) => scope === '' || String(item.bookId) === scope)
+        .slice()
+        .sort((left, right) => (Number(right.adoptedAt) || 0) - (Number(left.adoptedAt) || 0))
+      if (props.craftState === 'failed') {
+        return h(
+          'div',
+          { className: 'wr-empty' },
+          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
+          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
+        )
+      }
+      if (rows.length === 0) {
+        return h(CraftEmpty, {
+          titleKey: 'thinkView.empty.title',
+          nextKey: 'thinkView.empty.next',
+          actionKey: 'thinkView.empty.action',
+          onAction: props.onGoShelf,
+        })
+      }
+      return h(
+        'div',
+        { className: 'wr-stack' },
+        h('p', { className: 'wr-notice-line' }, t('thinkView.hint')),
+        rows.map((item) =>
+          h(
+            'div',
+            { className: 'wr-item', key: item.id, 'data-focus': props.focusId === item.id ? 'true' : 'false' },
+            h(
+              'div',
+              { className: 'wr-item-head' },
+              h(
+                'button',
+                {
+                  className: 'wr-chip',
+                  type: 'button',
+                  onClick: () => props.onOpenBook(item.bookId, 'thoughts'),
+                  title: item.bookTitle,
+                },
+                clip(String(item.bookTitle || bookTitleOf(item.bookId, props.data, craft) || '—'), 22),
+              ),
+              item.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('thinkView.ai')) : null,
+              item.model ? h('span', { className: 'wr-tag' }, item.model) : null,
+            ),
+            h('p', { className: 'wr-item-text' }, String(item.text || '')),
+            h(
+              'div',
+              { className: 'wr-item-meta' },
+              h('span', null, `${t('thinkView.adoptedAt')} ${fmtStamp(item.adoptedAt) || '—'}`),
+              h(SourceTags, { sourceIds: item.sourceIds, lookup: props.lookup, onOpenSource: props.onOpenSource }),
+              h(DangerButton, { onDelete: () => props.onDelete(item.id) }),
+            ),
+          ),
+        ),
+      )
+    }
+
+    function MaterialBoard(props) {
+      const craft = props.craft || EMPTY_CRAFT
+      const [type, setType] = useState('')
+      const scope = String(props.scopeBookId || '')
+      const rows = (Array.isArray(craft.materials) ? craft.materials : [])
+        .filter((item) => (type === '' || item.type === type) && (scope === '' || String(item.bookId) === scope))
+        .slice()
+        .sort((left, right) => (Number(right.createdAt) || 0) - (Number(left.createdAt) || 0))
+      const cachedOf = (bookId) => {
+        const index = (Array.isArray(craft.bookIndex) ? craft.bookIndex : []).find((row) => String(row.bookId) === String(bookId))
+        return index ? index.cached !== false : true
+      }
+      if (props.craftState === 'failed') {
+        return h(
+          'div',
+          { className: 'wr-empty' },
+          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
+          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
+        )
+      }
+      return h(
+        'div',
+        null,
+        h(
+          'div',
+          { className: 'wr-toolbar' },
+          h(
+            'div',
+            { className: 'wr-chips' },
+            h(
+              'button',
+              { className: 'wr-chip', type: 'button', 'data-active': type === '' ? 'true' : 'false', onClick: () => setType('') },
+              t('mat.filterAll'),
+            ),
+            MATERIAL_TYPES.map(([label, key]) =>
+              h(
+                'button',
+                { key: label, className: 'wr-chip', type: 'button', 'data-active': type === label ? 'true' : 'false', onClick: () => setType(label) },
+                t(key),
+              ),
+            ),
+          ),
+          h('span', { className: 'wr-muted' }, t('mat.count', { count: String(rows.length) })),
+        ),
+        rows.length === 0
+          ? h(CraftEmpty, { titleKey: 'mat.empty.title', nextKey: 'mat.empty.next', actionKey: 'mat.empty.action', onAction: props.onGoShelf })
+          : h(
+              'div',
+              { className: 'wr-stack' },
+              rows.map((item) =>
+                h(
+                  'div',
+                  { className: 'wr-item', key: item.id, 'data-focus': props.focusId === item.id ? 'true' : 'false' },
+                  h(
+                    'div',
+                    { className: 'wr-item-head' },
+                    h('span', { className: 'wr-tag' }, t(materialTypeKey(item.type))),
+                    h(
+                      'button',
+                      { className: 'wr-chip', type: 'button', onClick: () => props.onOpenBook(item.bookId, 'thoughts'), title: item.bookTitle },
+                      clip(String(item.bookTitle || bookTitleOf(item.bookId, props.data, craft) || '—'), 20),
+                    ),
+                    item.authorType === 'ai' || item.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('mat.aiTag')) : null,
+                    cachedOf(item.bookId) ? null : h('span', { className: 'wr-degraded' }, t('mat.cached')),
+                    item.verification && item.verification.status !== 'ok'
+                      ? h('span', { className: 'wr-tag', 'data-tone': item.verification.status }, t(`mat.status.${item.verification.status}`))
+                      : null,
+                  ),
+                  h('p', { className: 'wr-item-text' }, String(item.text || '')),
+                  h(
+                    'div',
+                    { className: 'wr-item-meta' },
+                    h(SourceTags, { sourceIds: item.sourceIds, lookup: props.lookup, onOpenSource: props.onOpenSource }),
+                    // B3: a material can be re-typed in place — type is the only
+                    // field the material board owns, so no separate editor.
+                    h(
+                      'select',
+                      {
+                        className: 'wr-select wr-type-switch',
+                        value: item.type,
+                        title: t('mat.type.switch'),
+                        'aria-label': t('mat.type.switch'),
+                        onChange: (event) => {
+                          const next = event && event.target ? String(event.target.value || '') : ''
+                          if (next === '' || next === item.type) return
+                          props.write('material.update', { id: item.id, type: next })
+                        },
+                      },
+                      MATERIAL_TYPES.map(([label, key]) => h('option', { key: label, value: label }, t(key))),
+                    ),
+                    h('span', null, fmtStamp(item.createdAt)),
+                    h(DangerButton, { onDelete: () => props.onDelete(item.id) }),
+                  ),
+                ),
+              ),
+            ),
+      )
+    }
+
+    function TopicBoard(props) {
+      const craft = props.craft || EMPTY_CRAFT
+      const materials = Array.isArray(craft.materials) ? craft.materials : []
+      const topics = (Array.isArray(craft.topics) ? craft.topics : []).slice().sort((left, right) => (Number(right.createdAt) || 0) - (Number(left.createdAt) || 0))
+      const scope = String(props.scopeBookId || '')
+      const shown = scope === '' ? topics : topics.filter((item) => (Array.isArray(item.bookIds) ? item.bookIds : []).map(String).includes(scope))
+      const [statement, setStatement] = useState('')
+      const [gapNote, setGapNote] = useState('')
+      const [picked, setPicked] = useState([])
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const [open, setOpen] = useState(false)
+      const toggle = (id) => setPicked((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : prev.concat([id])))
+      const create = () => {
+        if (statement.trim() === '') {
+          setError(t('topic.needStatement'))
+          return
+        }
+        if (picked.length === 0) {
+          setError(t('topic.needMaterial'))
+          return
+        }
+        setBusy(true)
+        setError('')
+        Promise.resolve(props.write('topic.add', { statement: statement.trim(), materialIds: picked, gapNote: gapNote.trim() }))
+          .then(() => {
+            setBusy(false)
+            setStatement('')
+            setGapNote('')
+            setPicked([])
+            setOpen(false)
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      if (props.craftState === 'failed') {
+        return h(
+          'div',
+          { className: 'wr-empty' },
+          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
+          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
+        )
+      }
+      return h(
+        'div',
+        null,
+        h(
+          'div',
+          { className: 'wr-toolbar' },
+          h('span', { className: 'wr-muted' }, t('topic.count', { count: String(shown.length) })),
+          materials.length === 0
+            ? null
+            : h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: () => setOpen(!open) }, t('topic.new')),
+        ),
+        open
+          ? h(
+              'div',
+              { className: 'wr-form' },
+              h('input', {
+                className: 'wr-input',
+                value: statement,
+                placeholder: t('topic.statementPlaceholder'),
+                maxLength: 400,
+                onChange: (event) => setStatement(event ? String(event.target.value || '') : ''),
+              }),
+              h('input', {
+                className: 'wr-input',
+                value: gapNote,
+                placeholder: t('topic.gapPlaceholder'),
+                onChange: (event) => setGapNote(event ? String(event.target.value || '') : ''),
+              }),
+              h('span', { className: 'wr-muted' }, t('topic.pickMaterials')),
+              h(
+                'div',
+                { className: 'wr-picklist' },
+                materials.map((material) =>
+                  h(
+                    'button',
+                    {
+                      className: 'wr-pickrow',
+                      key: material.id,
+                      type: 'button',
+                      'data-on': picked.includes(material.id) ? 'true' : 'false',
+                      disabled: busy,
+                      onClick: () => toggle(material.id),
+                    },
+                    h('span', { className: 'wr-pickrow-mark' }, picked.includes(material.id) ? '✓' : ''),
+                    h('span', null, `${t(materialTypeKey(material.type))} · ${clip(String(material.text || ''), 70)}`),
+                  ),
+                ),
+              ),
+              error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
+              h(
+                'div',
+                { className: 'wr-form-row' },
+                h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: create }, busy ? t('state.loading') : t('topic.create')),
+                h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => setOpen(false) }, t('action.cancel')),
+              ),
+            )
+          : null,
+        shown.length === 0
+          ? h(CraftEmpty, {
+              titleKey: 'topic.empty.title',
+              nextKey: 'topic.empty.next',
+              actionKey: 'topic.empty.action',
+              onAction: props.onGoMaterials,
+            })
+          : h(
+              'div',
+              { className: 'wr-stack' },
+              shown.map((item) =>
+                h(
+                  'div',
+                  { className: 'wr-item', key: item.id },
+                  h('p', { className: 'wr-item-text' }, String(item.statement || '')),
+                  item.gapNote ? h('p', { className: 'wr-notice-line' }, `${t('topic.gap')}：${item.gapNote}`) : null,
+                  h(
+                    'div',
+                    { className: 'wr-item-meta' },
+                    (Array.isArray(item.bookIds) ? item.bookIds : []).map((bookId) =>
+                      // B5: a topic's books are entry points, not decoration.
+                      h(
+                        'button',
+                        {
+                          className: 'wr-chip',
+                          key: bookId,
+                          type: 'button',
+                          title: bookTitleOf(bookId, props.data, craft) || String(bookId),
+                          onClick: () => props.onOpenBook(bookId, 'thoughts'),
+                        },
+                        clip(bookTitleOf(bookId, props.data, craft) || String(bookId), 18),
+                      ),
+                    ),
+                    h('span', null, t('topic.materialCount', { count: String((item.materialIds || []).length) })),
+                    h(
+                      'button',
+                      { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => props.onDraft(item) },
+                      t('topic.draft'),
+                    ),
+                    h(SourceTags, { sourceIds: (item.materialIds || []).map((id) => `material:${id}`), lookup: props.lookup, onOpenSource: props.onOpenSource }),
+                    h(DangerButton, { onDelete: () => props.onDelete(item.id) }),
+                  ),
+                ),
+              ),
+            ),
+      )
+    }
+
+    function ParagraphRow(props) {
+      const paragraph = props.paragraph || {}
+      const [editing, setEditing] = useState(false)
+      const [text, setText] = useState(String(paragraph.text || ''))
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const save = () => {
+        setBusy(true)
+        setError('')
+        Promise.resolve(props.onSave(text))
+          .then(() => {
+            setBusy(false)
+            setEditing(false)
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      return h(
+        'div',
+        { className: 'wr-paragraph' },
+        h('span', { className: 'wr-paragraph-index' }, t('work.paragraph', { index: String(props.index + 1) })),
+        h(
+          'div',
+          { className: 'wr-paragraph-main' },
+          editing
+            ? h('textarea', {
+                className: 'wr-ask-input',
+                rows: 3,
+                value: text,
+                onChange: (event) => setText(event ? String(event.target.value || '') : ''),
+              })
+            : h('p', { className: 'wr-item-text' }, String(paragraph.text || '')),
+          h(
+            'div',
+            { className: 'wr-item-meta' },
+            paragraph.ai ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
+            h(SourceTags, { sourceIds: paragraph.sourceIds, lookup: props.lookup, onOpenSource: props.onOpenSource }),
+            editing
+              ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: save }, t('action.save'))
+              : h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => setEditing(true) }, t('action.edit')),
+            h(DangerButton, { onDelete: props.onDelete }),
+          ),
+          error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
+        ),
+      )
+    }
+
+    function WorkBoard(props) {
+      const craft = props.craft || EMPTY_CRAFT
+      const materials = Array.isArray(craft.materials) ? craft.materials : []
+      // F2: with a book in scope only that book's drafts belong on screen. A
+      // work has no bookIds field on purpose — its books are whatever its
+      // paragraphs cite, so the filter walks that chain.
+      const scoped = String(props.scopeBookId || '')
+      const bookIdOf = typeof props.bookIdOf === 'function' ? props.bookIdOf : null
+      const everyWork = Array.isArray(craft.works) ? craft.works : []
+      const scopedWorks =
+        scoped === '' || !bookIdOf
+          ? everyWork
+          : everyWork.filter((item) =>
+              (Array.isArray(item.paragraphs) ? item.paragraphs : []).some((paragraph) =>
+                (Array.isArray(paragraph.sourceIds) ? paragraph.sourceIds : []).some((sourceId) => bookIdOf(sourceId) === scoped),
+              ),
+            )
+      const works = scopedWorks.slice().sort((left, right) => (Number(right.updatedAt) || 0) - (Number(left.updatedAt) || 0))
+      const [activeId, setActiveId] = useState('')
+      const [title, setTitle] = useState('')
+      const [creating, setCreating] = useState(false)
+      const [draft, setDraft] = useState('')
+      const [picked, setPicked] = useState([])
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const [markdown, setMarkdown] = useState('')
+      const [path, setPath] = useState('')
+      const work = works.find((item) => item.id === activeId) || works[0] || null
+      const paragraphs = work && Array.isArray(work.paragraphs) ? work.paragraphs : []
+      const call = (op, payload) => {
+        setBusy(true)
+        setError('')
+        return Promise.resolve(props.write(op, payload))
+          .then((created) => {
+            setBusy(false)
+            return created
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+            throw thrown
+          })
+      }
+      const createWork = () => {
+        call('work.add', { title: title.trim() === '' ? undefined : title.trim() })
+          .then((created) => {
+            setTitle('')
+            setCreating(false)
+            if (created && created.id) setActiveId(created.id)
+          })
+          .catch(() => {})
+      }
+      const addParagraph = () => {
+        if (!work || draft.trim() === '') {
+          setError(t('work.needParagraph'))
+          return
+        }
+        const sourceIds = picked.map((id) => `material:${id}`)
+        call('work.paragraph.add', { id: work.id, text: draft.trim(), sourceIds })
+          .then(() => {
+            setDraft('')
+            setPicked([])
+          })
+          .catch(() => {})
+      }
+      const exportWork = (mode) => {
+        if (!work) return
+        setBusy(true)
+        setError('')
+        apiCraftExport(work.id, mode)
+          .then((result) => {
+            setBusy(false)
+            const document = result && result.document ? result.document : null
+            setMarkdown(document && document.markdown ? document.markdown : '')
+            setPath(result && result.path ? String(result.path) : '')
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      if (props.craftState === 'failed') {
+        return h(
+          'div',
+          { className: 'wr-empty' },
+          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
+          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
+        )
+      }
+      return h(
+        'div',
+        null,
+        h(
+          'div',
+          { className: 'wr-toolbar' },
+          h('span', { className: 'wr-muted' }, t('work.count', { count: String(works.length) })),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: () => setCreating(!creating) }, t('work.new')),
+        ),
+        creating
+          ? h(
+              'div',
+              { className: 'wr-form' },
+              h('div', { className: 'wr-form-row' },
+                h('input', {
+                  className: 'wr-input',
+                  value: title,
+                  placeholder: t('work.titlePlaceholder'),
+                  onChange: (event) => setTitle(event ? String(event.target.value || '') : ''),
+                }),
+                h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: createWork }, t('work.create')),
+                h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => setCreating(false) }, t('action.cancel')),
+              ),
+            )
+          : null,
+        works.length === 0
+          ? h(CraftEmpty, { titleKey: 'work.empty.title', nextKey: 'work.empty.next', actionKey: 'work.empty.action', onAction: props.onGoTopics })
+          : h(
+              'div',
+              null,
+              h(
+                'div',
+                { className: 'wr-chips' },
+                works.map((item) =>
+                  h(
+                    'button',
+                    {
+                      className: 'wr-chip',
+                      key: item.id,
+                      type: 'button',
+                      'data-active': work && work.id === item.id ? 'true' : 'false',
+                      onClick: () => {
+                        setActiveId(item.id)
+                        setMarkdown('')
+                        setPath('')
+                      },
+                    },
+                    clip(String(item.title || '—'), 20),
+                  ),
+                ),
+              ),
+              work === null
+                ? null
+                : h(
+                    'div',
+                    { className: 'wr-draft' },
+                    h(
+                      'div',
+                      { className: 'wr-item-head' },
+                      h('strong', null, String(work.title || t('work.new'))),
+                      work.status === 'confirmed'
+                        ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.confirmed'))
+                        : h('span', { className: 'wr-tag' }, t('nav.works')),
+                      work.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
+                    ),
+                    h('p', { className: 'wr-notice-line' }, t('work.hint')),
+                    paragraphs.length === 0
+                      ? h('p', { className: 'wr-muted' }, t('work.emptyParagraphs'))
+                      : paragraphs.map((paragraph, index) =>
+                          h(ParagraphRow, {
+                            key: paragraph.id,
+                            paragraph,
+                            index,
+                            lookup: props.lookup,
+                            focusId: props.focusId,
+                            onOpenSource: props.onOpenSource,
+                            onSave: (text) => call('work.paragraph.update', { id: work.id, paragraphId: paragraph.id, text: text.trim() }),
+                            onDelete: () => {
+                              call('work.paragraph.delete', { id: work.id, paragraphId: paragraph.id }).catch(() => {})
+                            },
+                          }),
+                        ),
+                    h(
+                      'div',
+                      { className: 'wr-form' },
+                      h('textarea', {
+                        className: 'wr-ask-input',
+                        rows: 3,
+                        value: draft,
+                        placeholder: t('work.paragraphPlaceholder'),
+                        onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
+                      }),
+                      materials.length === 0
+                        ? null
+                        : h(
+                            'div',
+                            null,
+                            h('span', { className: 'wr-muted' }, t('work.attach')),
+                            h(
+                              'div',
+                              { className: 'wr-picklist' },
+                              materials.map((material) =>
+                                h(
+                                  'button',
+                                  {
+                                    className: 'wr-pickrow',
+                                    key: material.id,
+                                    type: 'button',
+                                    'data-on': picked.includes(material.id) ? 'true' : 'false',
+                                    onClick: () =>
+                                      setPicked((prev) => (prev.includes(material.id) ? prev.filter((id) => id !== material.id) : prev.concat([material.id]))),
+                                  },
+                                  h('span', { className: 'wr-pickrow-mark' }, picked.includes(material.id) ? '✓' : ''),
+                                  h('span', null, `[${t(materialTypeKey(material.type))}] ${clip(String(material.text || ''), 64)}`),
+                                ),
+                              ),
+                            ),
+                          ),
+                      h(
+                        'div',
+                        { className: 'wr-form-row' },
+                        h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: addParagraph }, t('work.addParagraph')),
+                        h(
+                          'button',
+                          {
+                            className: 'wr-btn wr-btn-ghost',
+                            type: 'button',
+                            disabled: busy || paragraphs.length === 0,
+                            onClick: () => {
+                              call('work.confirm', { id: work.id }).catch(() => {})
+                            },
+                          },
+                          t('work.confirm'),
+                        ),
+                        h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: () => exportWork('preview') }, t('work.exportPreview')),
+                        h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: () => exportWork('file') }, t('work.exportFile')),
+                        h(DangerButton, { onDelete: () => { call('work.delete', { id: work.id }).catch(() => {}) } }),
+                      ),
+                    ),
+                    error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
+                    h('p', { className: 'wr-notice-line' }, t('work.frontMatter')),
+                    path === '' ? null : h('p', { className: 'wr-notice-line' }, t('work.exported', { path })),
+                    markdown === ''
+                      ? null
+                      : h(
+                          'div',
+                          { className: 'wr-draft-export' },
+                          h('pre', { className: 'wr-export-text' }, markdown),
+                          h(CopyButton, { text: markdown }),
+                        ),
+                  ),
+            ),
+      )
+    }
+
+    function GrowTimeline(props) {
+      const craft = props.craft || EMPTY_CRAFT
+      const bookIdOf = typeof props.bookIdOf === 'function' ? props.bookIdOf : null
+      const materials = Array.isArray(craft.materials) ? craft.materials : []
+      // B1: every event has to know which book it came from, so a timeline row
+      // can go back to the shelf instead of being decoration. Topics and works
+      // stop holding bookId on purpose — the books come from what they cite.
+      const booksOf = (sourceIds) => {
+        const seen = []
+        for (const sourceId of Array.isArray(sourceIds) ? sourceIds : []) {
+          const bookId = String((bookIdOf ? bookIdOf(sourceId) : '') || '')
+          if (bookId !== '' && !seen.includes(bookId)) seen.push(bookId)
+        }
+        return seen
+      }
+      const events = []
+      for (const item of Array.isArray(craft.responses) ? craft.responses : []) {
+        const bookId = String(item.bookId || '')
+        events.push({
+          key: `response:${item.id}`,
+          kind: 'response',
+          at: item.adoptedAt || item.createdAt,
+          text: item.text,
+          bookIds: bookId === '' ? [] : [bookId],
+          open: () => {
+            if (typeof props.onOpenSource === 'function') props.onOpenSource(`response:${item.id}`)
+          },
+        })
+      }
+      for (const item of materials) {
+        const bookId = String(item.bookId || '')
+        events.push({
+          key: `material:${item.id}`,
+          kind: 'material',
+          at: item.createdAt,
+          text: item.text,
+          bookIds: bookId === '' ? [] : [bookId],
+          open: () => {
+            if (typeof props.onOpenSource === 'function') props.onOpenSource(`material:${item.id}`)
+          },
+        })
+      }
+      for (const item of Array.isArray(craft.topics) ? craft.topics : []) {
+        const sourceIds = (Array.isArray(item.materialIds) ? item.materialIds : []).map((id) => `material:${id}`)
+        const bookIds = booksOf(sourceIds)
+        events.push({
+          key: `topic:${item.id}`,
+          kind: 'topic',
+          at: item.createdAt,
+          text: item.statement,
+          bookIds,
+          open: bookIds.length === 1 ? () => props.onOpenBook(bookIds[0], 'thoughts') : null,
+        })
+      }
+      for (const item of Array.isArray(craft.works) ? craft.works : []) {
+        const sourceIds = (Array.isArray(item.paragraphs) ? item.paragraphs : []).reduce(
+          (all, paragraph) => all.concat(Array.isArray(paragraph.sourceIds) ? paragraph.sourceIds : []),
+          [],
+        )
+        const bookIds = booksOf(sourceIds)
+        events.push({
+          key: `work:${item.id}`,
+          kind: 'work',
+          at: item.updatedAt || item.createdAt,
+          text: item.title,
+          bookIds,
+          open: bookIds.length === 1 ? () => props.onOpenBook(bookIds[0], 'thoughts') : null,
+        })
+      }
+      const [page, setPage] = useState(0)
+      const scope = String(props.scopeBookId || '')
+      // B4: with a book in scope the timeline keeps only that book's events.
+      const inScope = scope === '' ? events : events.filter((event) => event.bookIds.includes(scope))
+      const sorted = inScope.slice().sort((left, right) => (Number(right.at) || 0) - (Number(left.at) || 0))
+      const groups = []
+      for (const event of sorted) {
+        const month = monthKeyOf(event.at)
+        if (month === '') continue
+        const last = groups[groups.length - 1]
+        if (last && last.month === month) last.items.push(event)
+        else groups.push({ month, items: [event] })
+      }
+      const perPage = 6
+      const pages = Math.max(1, Math.ceil(groups.length / perPage))
+      const current = Math.min(page, pages - 1)
+      const shown = groups.slice(current * perPage, current * perPage + perPage)
+      if (props.craftState === 'failed') {
+        return h(
+          'div',
+          { className: 'wr-empty' },
+          h('strong', null, t('craft.failed', { error: props.craftError || '' })),
+          h('p', { className: 'wr-empty-next' }, t('craft.offline')),
+          h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: props.onRetry }, t('craft.retry')),
+        )
+      }
+      if (groups.length === 0) {
+        return h(CraftEmpty, { titleKey: 'grow.empty.title', nextKey: 'grow.empty.next', actionKey: 'grow.empty.action', onAction: props.onGoShelf })
+      }
+      return h(
+        'div',
+        null,
+        h(
+          'p',
+          { className: 'wr-notice-line' },
+          `${t('grow.total', { count: String(sorted.length) })}${scope === '' ? '' : ' · ' + t('thinkView.scope')}`,
+        ),
+        h(
+          'div',
+          { className: 'wr-tl' },
+          shown.map((group) =>
+            h(
+              'div',
+              { key: group.month },
+              h(
+                'div',
+                { className: 'wr-tl-month' },
+                h('span', null, t('grow.monthLabel', { year: group.month.slice(0, 4), month: group.month.slice(5, 7) })),
+                h('span', { className: 'wr-muted' }, t('grow.monthCount', { count: String(group.items.length) })),
+              ),
+              h(
+                'div',
+                { className: 'wr-tl-items' },
+                group.items.map((event) => {
+                  const cross = event.bookIds.length !== 1
+                  return h(
+                    'button',
+                    {
+                      className: 'wr-tl-item',
+                      key: event.key,
+                      type: 'button',
+                      'data-kind': event.kind,
+                      'data-cross': cross ? 'true' : 'false',
+                      disabled: cross || typeof event.open !== 'function',
+                      onClick: (clickEvent) => {
+                        if (cross || typeof event.open !== 'function') return
+                        if (clickEvent && typeof clickEvent.stopPropagation === 'function') clickEvent.stopPropagation()
+                        event.open()
+                      },
+                    },
+                    h('span', { className: 'wr-tl-kind' }, t(`grow.event.${event.kind}`)),
+                    h('span', { className: 'wr-tl-text', title: String(event.text || '') }, clip(String(event.text || '—'), 64)),
+                    event.bookIds.length === 1
+                      ? h(
+                          'span',
+                          { className: 'wr-muted wr-tl-book' },
+                          clip(bookTitleOf(event.bookIds[0], props.data, craft) || event.bookIds[0], 16),
+                        )
+                      : null,
+                    cross ? h('span', { className: 'wr-tag wr-tl-cross' }, t('grow.cross')) : null,
+                    h('span', { className: 'wr-muted' }, fmtDate(event.at)),
+                  )
+                }),
+              ),
+            ),
+          ),
+        ),
+        pages <= 1
+          ? null
+          : h(
+              'div',
+              { className: 'wr-pager' },
+              h(
+                'button',
+                { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: current <= 0, onClick: () => setPage(Math.max(0, current - 1)) },
+                t('pager.prev'),
+              ),
+              h('span', { className: 'wr-muted' }, t('pager.page', { page: String(current + 1), total: String(pages) })),
+              h(
+                'button',
+                { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: current >= pages - 1, onClick: () => setPage(Math.min(pages - 1, current + 1)) },
+                t('pager.next'),
+              ),
+            ),
+      )
+    }
+
+    /** GROW reads only the yearly numbers that already exist; nothing here scores you. */
+    function GrowAnnual(props) {
+      const years = props.data && Array.isArray(props.data.years) ? props.data.years.map((item) => Number(item.year)).filter(Boolean) : []
+      const [year, setYear] = useState(years.length > 0 ? years[0] : new Date().getFullYear())
+      const [days, setDays] = useState(null)
+      const [annual, setAnnual] = useState(null)
+      const [error, setError] = useState('')
+      const [exporting, setExporting] = useState(false)
+      const [exported, setExported] = useState('')
+      useEffect(() => {
+        let alive = true
+        apiHeat(year)
+          .then((payload) => {
+            if (!alive) return
+            setDays(payload && payload.days ? payload.days : {})
+            setAnnual(payload && payload.annual ? payload.annual : null)
+          })
+          .catch((thrown) => {
+            if (!alive) return
+            setDays({})
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+        return () => {
+          alive = false
+        }
+      }, [year])
+      // 一份年度回顾也不该在读数据时变成一颗孤零零的转圈：标题、年份、口径先站着。
+      const readDays = days === null ? 0 : Object.keys(days).filter((key) => {
+        const value = days[key]
+        const seconds = typeof value === 'number' ? value : value && value.seconds ? value.seconds : 0
+        return Number(seconds) > 0
+      }).length
+      const total = annual && annual.totalReadTime ? annual.totalReadTime : 0
+      const counts = (props.data && props.data.counts) || {}
+      const yearBooks =
+        props.data && Array.isArray(props.data.books)
+          ? props.data.books.filter((book) => Number(book.year) === Number(year))
+          : []
+      const craftCounts = (props.craft && props.craft.counts) || {}
+      // B6: an empty year is a state with a next step, not a dead end.
+      const empty = days !== null && readDays === 0 && yearBooks.length === 0
+      const exportYear = () => {
+        if (yearBooks.length === 0 || exporting) return
+        setExporting(true)
+        setExported('')
+        const options = { excerpts: true, thoughts: true, meta: true, chapter: true, star: true, sourceUrl: true }
+        apiExport({ bookIds: yearBooks.map((book) => book.bookId) }, options, 'file')
+          .then((result) => {
+            setExporting(false)
+            const files = result && Array.isArray(result.files) ? result.files.join('、') : ''
+            setExported(String((result && result.filename) || files || ''))
+          })
+          .catch((thrown) => {
+            setExporting(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      return h(
+        'div',
+        null,
+        h(
+          'div',
+          { className: 'wr-toolbar' },
+          h(
+            'div',
+            { className: 'wr-chips' },
+            years.map((item) =>
+              h(
+                'button',
+                { key: item, className: 'wr-chip', type: 'button', 'data-active': Number(item) === Number(year) ? 'true' : 'false', onClick: () => setYear(item) },
+                String(item),
+              ),
+            ),
+          ),
+          h('span', { className: 'wr-muted' }, t('grow.annual.note')),
+          h(
+            'button',
+            {
+              className: 'wr-btn wr-btn-ghost',
+              type: 'button',
+              disabled: exporting || yearBooks.length === 0,
+              title: yearBooks.length === 0 ? t('grow.annual.noBooks') : t('grow.annual.export'),
+              onClick: exportYear,
+            },
+            exporting ? t('state.loading') : t('grow.annual.export'),
+          ),
+        ),
+        error === '' ? null : h('p', { className: 'wr-adopt-error' }, `${t('error.prefix')}${error}`),
+        h(
+          'div',
+          { className: 'wr-section' },
+          h('div', { className: 'wr-section-title' }, t('grow.annual.title')),
+          h('div', { className: 'wr-section-hint' }, t('grow.annual.hint')),
+        ),
+        days === null
+          ? h('div', { className: 'wr-empty' }, h('span', { className: 'wr-spinner' }), h('div', null, t('state.loading')))
+          : empty
+            ? h(CraftEmpty, {
+                titleKey: 'grow.annual.empty',
+                nextKey: 'grow.annual.emptyNext',
+                actionKey: 'grow.annual.emptyAction',
+                onAction: props.onGoShelf,
+              })
+            : h(
+                'div',
+                null,
+                h(
+                  'div',
+                  { className: 'wr-kpis' },
+                  h('div', { className: 'wr-kpi' }, h('span', { className: 'wr-kpi-label' }, t('grow.annual.total')), h('strong', { className: 'wr-kpi-value' }, total ? fmtDuration(total) : '—')),
+                  h('div', { className: 'wr-kpi' }, h('span', { className: 'wr-kpi-label' }, t('grow.annual.days')), h('strong', { className: 'wr-kpi-value' }, fmtCount(readDays))),
+                  h('div', { className: 'wr-kpi' }, h('span', { className: 'wr-kpi-label' }, t('grow.annual.notes')), h('strong', { className: 'wr-kpi-value' }, fmtCount(Number(counts.notes) || 0))),
+                  h('div', { className: 'wr-kpi' }, h('span', { className: 'wr-kpi-label' }, t('grow.annual.thoughts')), h('strong', { className: 'wr-kpi-value' }, fmtCount(Number(counts.thoughts) || 0))),
+                ),
+                h(
+                  'p',
+                  { className: 'wr-notice-line' },
+                  `${t('grow.annual.craft')}：${t('nav.responses')} ${fmtCount(Number(craftCounts.responses) || 0)} · ${t('nav.materials')} ${fmtCount(Number(craftCounts.materials) || 0)} · ${t('nav.topics')} ${fmtCount(Number(craftCounts.topics) || 0)} · ${t('nav.works')} ${fmtCount(Number(craftCounts.works) || 0)}`,
+                ),
+                h(
+                  'div',
+                  { className: 'wr-section' },
+                  h('div', { className: 'wr-section-title' }, t('grow.annual.books')),
+                ),
+                yearBooks.length === 0
+                  ? h('p', { className: 'wr-muted' }, t('grow.annual.noBooks'))
+                  : h(
+                      'div',
+                      { className: 'wr-chips' },
+                      yearBooks.map((book) =>
+                        h(
+                          'button',
+                          {
+                            className: 'wr-chip',
+                            key: book.bookId,
+                            type: 'button',
+                            title: String(book.title || ''),
+                            onClick: () => props.onOpenBook(book.bookId, 'notes'),
+                          },
+                          clip(String(book.title || '—'), 20),
+                        ),
+                      ),
+                    ),
+                exported === '' ? null : h('p', { className: 'wr-notice-line' }, t('export.saved', { files: exported })),
+                readDays === 0 ? null : h(Heatmap, { year, days }),
               ),
       )
     }
@@ -1931,7 +4432,7 @@ window.__ModuleLoader__.load({
                     return next
                   })
                 return kind === 'note'
-                  ? h(NoteRow, { key: item.id, note: item, needle: query.trim(), selected: selected.has(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
+                  ? h(NoteRow, { key: item.id, note: item, needle: query.trim(), selected: selected.has(item.id), focus: String(props.focusId || '') === String(item.id), onToggle: pick, onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null })
                   : h(ThoughtRow, {
                       key: item.id,
                       thought: item,
@@ -1939,6 +4440,7 @@ window.__ModuleLoader__.load({
                       wall: mode === 'wall',
                       context: contextOf(item),
                       selected: selected.has(item.id),
+                      focus: String(props.focusId || '') === String(item.id),
                       onToggle: pick,
                       onOpen: props.onOpenBook ? () => props.onOpenBook(item.bookId, kind) : null,
                     })
@@ -1994,6 +4496,15 @@ window.__ModuleLoader__.load({
       const current = Math.min(page, pageCount - 1)
       const pageItems = activeList.slice(current * pageSize, current * pageSize + pageSize)
 
+      // F3: arriving from a source chip should land on the row that was cited,
+      // not on whatever page the reader left the book at.
+      useEffect(() => {
+        const id = String(props.focusId || '')
+        if (id === '') return
+        const at = activeList.findIndex((item) => String(item.id) === id)
+        if (at >= 0) setPage(Math.floor(at / pageSize))
+      }, [props.focusId, activeList, pageSize])
+
       return h(
         'div',
         null,
@@ -2032,6 +4543,16 @@ window.__ModuleLoader__.load({
             book.intro ? h('p', { className: 'wr-notice', style: { maxHeight: '80px', overflow: 'auto' } }, book.intro) : null,
           ),
         ),
+        // F-19: the six steps of this one book, so the page says where the
+        // reading has actually gone instead of only listing highlights.
+        h(BookChain, {
+          book: Object.assign({}, book, { noteCount: notes.length, reviewCount: thoughts.length }),
+          craft: props.craft,
+          craftState: props.craftState,
+          onJump: (kind) => {
+            if (typeof props.onChainJump === 'function') props.onChainJump(book.bookId, kind)
+          },
+        }),
         h(
           'div',
           { className: 'wr-toolbar', style: { marginTop: '18px' } },
@@ -2478,7 +4999,13 @@ window.__ModuleLoader__.load({
       const [query, setQuery] = useState('')
       const [showSettings, setShowSettings] = useState(false)
       const [booting, setBooting] = useState(true)
+      // The writing side loads on its own request: if it fails, READ keeps working.
+      const [craft, setCraft] = useState(EMPTY_CRAFT)
+      const [craftState, setCraftState] = useState('loading')
+      const [craftError, setCraftError] = useState('')
+      const [scopeBookId, setScopeBookId] = useState('')
       const mounted = useRef(true)
+      const craftRef = useRef(EMPTY_CRAFT)
 
       useEffect(() => {
         mounted.current = true
@@ -2509,18 +5036,89 @@ window.__ModuleLoader__.load({
         }
       }, [])
 
+      const loadCraft = useCallback(async () => {
+        try {
+          const payload = await apiCraft()
+          const next = asCraft(payload)
+          craftRef.current = next
+          if (mounted.current) {
+            setCraft(next)
+            setCraftState('ready')
+            setCraftError('')
+          }
+          return next
+        } catch (issue) {
+          if (mounted.current) {
+            setCraftState('failed')
+            setCraftError(String((issue && issue.message) || issue))
+          }
+          return null
+        }
+      }, [])
+
+      /**
+       * Every write carries the revision it was based on. A conflict means the
+       * file moved under us, so we reload once and let the caller retry rather
+       * than overwriting someone else's paragraph.
+       */
+      const craftWrite = useCallback(
+        async (op, payload) => {
+          try {
+            const result = await apiCraftWrite(op, payload, craftRef.current.revision)
+            const next = result && result.craft ? asCraft(result.craft) : await loadCraft()
+            if (next) {
+              craftRef.current = next
+              if (mounted.current) {
+                setCraft(next)
+                setCraftState('ready')
+                setCraftError('')
+              }
+            }
+            return result && result.created ? result.created : null
+          } catch (issue) {
+            await loadCraft()
+            throw issue
+          }
+        },
+        [loadCraft],
+      )
+
+      useEffect(() => {
+        craftBridge.write = craftWrite
+        craftBridge.craft = craft
+        return () => {
+          craftBridge.write = null
+        }
+      }, [craft, craftWrite])
+
+      // One lookup table, so a `kind:id` chip can show the first words of the
+      // thing it names instead of an opaque id.
+      const lookup = useMemo(() => {
+        const bag = { note: new Map(), thought: new Map(), response: new Map(), material: new Map() }
+        for (const note of (data && data.notes) || []) bag.note.set(String(note.id), note)
+        for (const thought of (data && data.thoughts) || []) bag.thought.set(String(thought.id), thought)
+        for (const item of craft.responses || []) bag.response.set(String(item.id), item)
+        for (const item of craft.materials || []) bag.material.set(String(item.id), item)
+        return bag
+      }, [data, craft])
+
       useEffect(() => {
         let cancelled = false
+        // F1: decide whether the AI entry points can work before anyone clicks.
+        void probeChat()
         ;(async () => {
           const next = await refreshState()
           if (cancelled) return
-          if (next && next.configured) await loadData()
+          if (next && next.configured) {
+            await loadData()
+            await loadCraft()
+          }
           if (!cancelled) setBooting(false)
         })()
         return () => {
           cancelled = true
         }
-      }, [loadData, refreshState])
+      }, [loadCraft, loadData, refreshState])
 
       const running = Boolean(state && state.sync && state.sync.running)
 
@@ -2562,6 +5160,106 @@ window.__ModuleLoader__.load({
       const counts = (data && data.counts) || (state && state.counts) || {}
       const synced = Boolean(data && data.updatedAt)
 
+      const journeyCounts = {
+        read: (Number(counts.notes) || 0) + (Number(counts.thoughts) || 0),
+        think: (craft.responses || []).length,
+        create: (craft.materials || []).length + (craft.topics || []).length + (craft.works || []).length,
+        grow: (craft.responses || []).length + (craft.materials || []).length + (craft.topics || []).length + (craft.works || []).length,
+      }
+      const scopeTitle = scopeBookId === '' ? '' : bookTitleOf(scopeBookId, data, craft) || ''
+      const openCraftView = (nextView, bookId) => {
+        setQuery('')
+        setActiveBookId('')
+        setScopeBookId(String(bookId || ''))
+        setView(nextView)
+      }
+      // Any journey can be entered from one book and come back to it.
+      const chainJump = (bookId, kind) => {
+        if (kind === 'notes' || kind === 'thoughts') {
+          openBookById(bookId, kind)
+          return
+        }
+        openCraftView(kind, bookId)
+      }
+      const draftFromTopic = (topic) => {
+        craftWrite('work.add', { title: clip(String(topic.statement || ''), 48) })
+          .then(() => {
+            setScopeBookId('')
+            setView('works')
+          })
+          .catch(() => {})
+      }
+      // F3: every source chip walks back to the asset it names — a material
+      // opens in the basket, an excerpt or thought opens the book it sits in.
+      const sourceFocus = useRef('')
+      const openSource = (sourceId) => {
+        const hit = craftSourceHit(sourceId, lookup)
+        if (!hit) return
+        const kind = sourceKind(sourceId)
+        sourceFocus.current = sourceRawId(sourceId)
+        if (kind === 'note' || kind === 'thought') {
+          const tab = kind === 'note' ? 'notes' : 'thoughts'
+          const bookId = String(hit.bookId || '')
+          if (bookId !== '' && books.some((book) => book.bookId === bookId)) {
+            openBookById(bookId, tab)
+            return
+          }
+          // The book left the sync window: land on the stream that still holds
+          // the excerpt instead of opening a book page with nothing on it.
+          setQuery('')
+          setView(tab)
+          return
+        }
+        openCraftView(kind === 'response' ? 'responses' : 'materials', hit.bookId)
+      }
+      // F2: a work carries no bookIds of its own; the answer comes from its
+      // paragraphs' sources, which is also what the reader can verify.
+      const bookIdOfSource = (sourceId) => {
+        const hit = craftSourceHit(sourceId, lookup)
+        return hit && hit.bookId ? String(hit.bookId) : ''
+      }
+      const craftProps = {
+        craft,
+        craftState,
+        craftError,
+        lookup,
+        data: data || {},
+        scopeBookId,
+        focusId: sourceFocus.current,
+        onOpenSource: openSource,
+        bookIdOf: bookIdOfSource,
+        onRetry: () => {
+          void loadCraft()
+        },
+        onOpenBook: (bookId, tab) => openBookById(bookId, tab),
+        onGoShelf: () => {
+          setScopeBookId('')
+          setView('shelf')
+        },
+        onGoMaterials: () => {
+          setScopeBookId('')
+          setView('materials')
+        },
+        onGoTopics: () => {
+          setScopeBookId('')
+          setView('topics')
+        },
+        write: craftWrite,
+        onDraft: draftFromTopic,
+        onDelete: (id) => {
+          const op = view === 'responses' ? 'response.delete' : view === 'materials' ? 'material.delete' : 'topic.delete'
+          craftWrite(op, { id }).catch(() => {})
+        },
+      }
+      const craftView = () => {
+        if (view === 'responses') return h(ResponseList, craftProps)
+        if (view === 'materials') return h(MaterialBoard, craftProps)
+        if (view === 'topics') return h(TopicBoard, craftProps)
+        if (view === 'works') return h(WorkBoard, craftProps)
+        if (view === 'timeline') return h(GrowTimeline, craftProps)
+        return h(GrowAnnual, { data: data || {}, craft, craftCounts: craft.counts, onGoShelf: craftProps.onGoShelf, onOpenBook: craftProps.onOpenBook })
+      }
+
       const head = h(
         'div',
         { className: 'wr-head' },
@@ -2573,19 +5271,16 @@ window.__ModuleLoader__.load({
               : t('synced.never'),
           ),
         ),
-        h(
-          'div',
-          { className: 'wr-tabs' },
-          ['overview', 'shelf', 'notes', 'thoughts'].map((key) =>
-            h('button', {
-              key,
-              className: 'wr-tab',
-              type: 'button',
-              'data-active': view === key || (view === 'book' && key === 'shelf'),
-              onClick: () => { setView(key); setActiveBookId(''); setQuery('') },
-            }, t(`nav.${key}`)),
-          ),
-        ),
+        h(JourneyBar, {
+          view: query.trim() !== '' ? 'read' : view,
+          counts: journeyCounts,
+          onPick: (stage) => {
+            setQuery('')
+            setActiveBookId('')
+            setScopeBookId('')
+            setView(STAGE_VIEWS[stage][0][0])
+          },
+        }),
         h(
           'div',
           { className: 'wr-head-right' },
@@ -2608,6 +5303,22 @@ window.__ModuleLoader__.load({
 
       const syncBanner = h(SyncBanner, { sync: state && state.sync })
 
+      // The second row only lists the views of the journey you are standing in,
+      // so nothing from the old four pages is buried behind a new abstraction.
+      const subnav = state && state.configured
+        ? h(SubNav, {
+            view: query.trim() !== '' ? 'overview' : view,
+            scopeTitle,
+            onPick: (id) => {
+              setQuery('')
+              setActiveBookId('')
+              if (VIEW_STAGE[id] === 'read') setScopeBookId('')
+              setView(id)
+            },
+            onClearScope: () => setScopeBookId(''),
+          })
+        : null
+
       let body = null
       if (booting) {
         body = h('div', { className: 'wr-empty' }, h('span', { className: 'wr-spinner' }), h('div', { style: { marginTop: '10px' } }, t('state.loading')))
@@ -2620,13 +5331,25 @@ window.__ModuleLoader__.load({
       } else if (query.trim() !== '') {
         body = h(SearchResults, { data: data || {}, query, onOpenBook: openBook })
       } else if (view === 'book' && activeBook) {
-        body = h(BookView, { key: `${activeBook.bookId}:${bookTab}`, data: data || {}, book: activeBook, initialTab: bookTab, onBack: () => { setView('shelf'); setActiveBookId('') } })
+        body = h(BookView, {
+          key: `${activeBook.bookId}:${bookTab}`,
+          data: data || {},
+          book: activeBook,
+          initialTab: bookTab,
+          focusId: sourceFocus.current,
+          craft,
+          craftState,
+          onChainJump: chainJump,
+          onBack: () => { setView('shelf'); setActiveBookId('') },
+        })
       } else if (view === 'shelf') {
         body = h(ShelfView, { data: data || {}, onOpenBook: openBook })
       } else if (view === 'notes') {
         body = h(StreamView, { data: data || {}, kind: 'note', onOpenBook: openBookById })
       } else if (view === 'thoughts') {
         body = h(StreamView, { data: data || {}, kind: 'thought', onOpenBook: openBookById })
+      } else if (view === 'responses' || view === 'materials' || view === 'topics' || view === 'works' || view === 'timeline' || view === 'annual') {
+        body = craftView()
       } else {
         body = h(Overview, { data: data || {} })
       }
@@ -2644,6 +5367,7 @@ window.__ModuleLoader__.load({
         { className: 'wr-root', 'data-view': room, 'data-dsh-weread-gather': '' },
         h('style', { dangerouslySetInnerHTML: { __html: CSS } }),
         head,
+        subnav,
         h(
           'div',
           { className: 'wr-body' },
@@ -2656,8 +5380,13 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'wr-banner' }, h('span', null, `部分数据同步失败：${data.warnings.slice(0, 2).join('；')}`))
               : null,
             body,
+            // Two clocks, kept apart on purpose: reading data and writing data
+            // are refreshed by different actions and can be stale independently.
             synced
               ? h('p', { className: 'wr-notice', style: { marginTop: '22px' } }, t('synced.at', { time: fmtDateTime(data.updatedAt) }))
+              : null,
+            craftState === 'ready' && craft.updatedAt
+              ? h('p', { className: 'wr-notice', style: { marginTop: synced ? '2px' : '22px' } }, t('synced.craftAt', { time: fmtDateTime(craft.updatedAt) }))
               : null,
           ),
         ),
@@ -2665,7 +5394,12 @@ window.__ModuleLoader__.load({
           ? h(SettingsModal, {
               state: state || {},
               onClose: () => setShowSettings(false),
-              onChanged: (next) => { setState(next); void loadData() },
+              onChanged: (next) => {
+      setState(next)
+      void loadData()
+      // A key just added in Settings must un-grey the AI entry points.
+      void forgetChatProbe().catch(() => {})
+    },
               onDataChanged: () => { void loadData(); void refreshState() },
               onSyncStarted: () => { void refreshState() },
             })
@@ -2745,7 +5479,41 @@ window.__ModuleLoader__.load({
       },
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
-      __smoke: { ExportPanel, MarkedText, PickButton, SyncBanner, clip, ThoughtRow, THOUGHT_CLAMP_CHARS },
+      __smoke: {
+        ExportPanel,
+        MarkedText,
+        PickButton,
+        SyncBanner,
+        clip,
+        ThoughtRow,
+        THOUGHT_CLAMP_CHARS,
+        buildSourcePack,
+        ThinkingBar,
+        AskCard,
+        ASK_WIDTH,
+        AskAdopt,
+        MaterialPicker,
+        JourneyBar,
+        SubNav,
+        BookChain,
+        ResponseList,
+        MaterialBoard,
+        TopicBoard,
+        WorkBoard,
+        GrowTimeline,
+        GrowAnnual,
+        asCraft,
+        EMPTY_CRAFT,
+        STAGES,
+        STAGE_VIEWS,
+        SourceTags,
+        craftSourceHit,
+        probeChat,
+        forgetChatProbe,
+        chatAvailability,
+        craftBridge,
+        MATERIAL_TYPES,
+      },
     }
   },
 })

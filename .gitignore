@@ -11,6 +11,9 @@ heat.json
 # 内部文档（PRD / backlog / 开发记录）只留本地，不入库
 docs/
 
+
+samples/
+
 # 导出产物
 exports/
 

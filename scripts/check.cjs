@@ -25,9 +25,11 @@ const missingZh = [...usedKeys].filter((k) => !zhKeys.has(k) && !k.startsWith('n
 const missingEn = [...zhKeys].filter((k) => !enKeys.has(k))
 console.log('[locale] zh=%d en=%d missingZh=%s missingEn=%s', zhKeys.size, enKeys.size, missingZh.join(',') || 'none', missingEn.join(',') || 'none')
 
-// 3) nav.* 模板键是否齐全
-const navKeys = ['overview', 'shelf', 'notes', 'thoughts'].map((k) => `nav.${k}`)
-console.log('[nav] missing=%s', navKeys.filter((k) => !zhKeys.has(k)).join(',') || 'none')
+// 3) nav.* 模板键是否齐全（1.2.1 起：四段旅程 + 四个 READ 内页，旧键一个不删）
+const navKeys = ['read', 'think', 'create', 'grow', 'overview', 'shelf', 'notes', 'thoughts'].map((k) => `nav.${k}`)
+const missingNav = navKeys.filter((k) => !zhKeys.has(k))
+console.log('[nav] missing=%s', missingNav.join(',') || 'none')
+if (missingNav.length > 0) process.exitCode = 1
 
 // 4) 客户端读取的数据字段 vs 宿主写入的字段
 const hostFields = new Set([...host.matchAll(/^\s{2,}(\w+):/gm)].map((m) => m[1]))

@@ -280,6 +280,8 @@ function renderNode(node, depth, out) {
   }
   if (typeof type === 'string') {
     out.tags[type] = (out.tags[type] || 0) + 1
+    // 结构断言（F1 置灰、F3 可点 chip）需要读属性，文字探针对它们无能为力。
+    if (out.elements) out.elements.push({ tag: type, props })
     renderNode(props.children, depth, out)
     return
   }
@@ -289,11 +291,11 @@ function renderNode(node, depth, out) {
 
 function renderPanel(label, seeds) {
   resetHooks(seeds)
-  const out = { text: '', tags: {}, components: new Set() }
+  const out = { text: '', tags: {}, components: new Set(), elements: [] }
   try {
     const tree = panel.component({})
     renderNode(tree, 0, out)
-    drawCalls.push({ label, ok: true, text: out.text, tags: Object.keys(out.tags).length, nodes: Object.values(out.tags).reduce((a, b) => a + b, 0), textLength: out.text.length, components: [...out.components].join(',') })
+    drawCalls.push({ label, ok: true, text: out.text, tags: Object.keys(out.tags).length, nodes: Object.values(out.tags).reduce((a, b) => a + b, 0), textLength: out.text.length, components: [...out.components].join(','), elements: out.elements })
     console.log('[render] %s ok tags=%d nodes=%d text=%d components=%s', label, Object.keys(out.tags).length, Object.values(out.tags).reduce((a, b) => a + b, 0), out.text.length, [...out.components].join(','))
     return tree
   } catch (error) {
@@ -304,8 +306,110 @@ function renderPanel(label, seeds) {
 }
 
 const anyBook = dataset.books.find((book) => (book.noteCount || 0) + (book.reviewCount || 0) > 0) || dataset.books[0]
+
+// 写作侧（craft.json）的样例：形状与 GET /craft 完全一致，来源 id 全部取自
+// 真实 dataset，所以「来源」chip 能解析出原文而不是 id。
+const EMPTY_CRAFT_FIXTURE = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
+function smokeCraft() {
+  const stamp = Math.floor(Date.now() / 1000) - 3600
+  const book = anyBook || { bookId: 'weread:book/1', title: '书名', author: '作者' }
+  const note = (dataset.notes || []).find((item) => item.bookId === book.bookId) || (dataset.notes || [])[0] || { id: 'n_1', text: '划线原文', bookId: book.bookId }
+  const thought = (dataset.thoughts || []).find((item) => item.bookId === book.bookId) || (dataset.thoughts || [])[0] || null
+  const responseId = 'r_smoke1'
+  const materialId = 'm_smoke1'
+  const topicId = 't_smoke1'
+  const workId = 'w_smoke1'
+  return {
+    hasCraft: true,
+    revision: 7,
+    updatedAt: stamp,
+    counts: { responses: 1, materials: 1, topics: 1, works: 1 },
+    responses: [{
+      id: responseId,
+      bookId: book.bookId,
+      bookTitle: book.title,
+      author: book.author || '',
+      sourceIds: [`note:${note.id}`],
+      text: '这句回应是从对话里采纳下来的。',
+      origin: 'think',
+      containsAI: true,
+      model: 'gpt-4o-mini',
+      promptVersion: 'think-v1',
+      adoptedAt: stamp,
+      createdAt: stamp,
+    }],
+    materials: [{
+      id: materialId,
+      type: '金句',
+      text: note.text || '素材正文',
+      bookId: book.bookId,
+      bookTitle: book.title,
+      author: book.author || '',
+      sourceIds: [`note:${note.id}`],
+      authorType: 'ai',
+      origin: 'craft',
+      containsAI: true,
+      verification: { status: 'ok', checkedAt: stamp, hash: 'abc123', snapshot: (note.text || '').slice(0, 40) },
+      createdAt: stamp,
+      updatedAt: stamp,
+    }],
+    topics: [{
+      id: topicId,
+      statement: '想写清楚「为什么读过的书记不住」这件事。',
+      materialIds: [materialId],
+      bookIds: [book.bookId],
+      gapNote: '还缺一组反例。',
+      candidates: [],
+      createdAt: stamp,
+      updatedAt: stamp,
+    }],
+    works: [{
+      id: workId,
+      title: '为什么读过的书记不住',
+      status: 'draft',
+      exportId: `craft:work/${workId}`,
+      containsAI: true,
+      paragraphs: [{
+        id: 'p_smoke1',
+        text: '第一段：先把问题摆出来。',
+        sourceIds: [`material:${materialId}`],
+        ai: true,
+        aiOriginIds: [responseId],
+        editedAt: 0,
+      }],
+      createdAt: stamp,
+      updatedAt: stamp,
+      confirmedAt: 0,
+    }],
+    bookIndex: [{
+      bookId: book.bookId,
+      bookTitle: book.title,
+      author: book.author || '',
+      counts: { responses: 1, materials: 1, topics: 1, works: 1 },
+      cached: true,
+    }],
+  }
+}
+// 一本书的素材 + 另一本书的素材被同一个选题引用：时间线上这条必须降级成「跨书」。
+function crossCraft() {
+  const base = smokeCraft()
+  const other = 'weread:book/888888888'
+  const material = base.materials[0]
+  base.materials = base.materials.concat([Object.assign({}, material, { id: 'm_smoke2', bookId: other, bookTitle: '另一本书' })])
+  base.topics = base.topics.concat([{
+    id: 't_smoke2',
+    statement: '跨两本书的选题',
+    materialIds: [material.id, 'm_smoke2'],
+    bookIds: [base.bookIndex[0].bookId, other],
+    gapNote: '',
+    candidates: [],
+    createdAt: base.updatedAt,
+    updatedAt: base.updatedAt,
+  }])
+  return base
+}
 // StudyPanel 的 useState 调用顺序（改动 client.js 里那段 state 声明时必须同步这里）：
-// state, data, error, view, activeBookId, bookTab, query, showSettings, booting
+// state, data, error, view, activeBookId, bookTab, query, showSettings, booting, craft, craftState, craftError, scopeBookId
 function seeds(input) {
   const it = input || {}
   return [
@@ -318,6 +422,10 @@ function seeds(input) {
     it.query === undefined ? '' : it.query,
     it.showSettings === undefined ? false : it.showSettings,
     it.booting === undefined ? false : it.booting,
+    it.craft === undefined ? smokeCraft() : it.craft,
+    it.craftState === undefined ? 'ready' : it.craftState,
+    it.craftError === undefined ? '' : it.craftError,
+    it.scopeBookId === undefined ? '' : it.scopeBookId,
   ]
 }
 const seedBase = (view, extra) => seeds({ view, bookId: extra && extra.bookId, query: extra && extra.query })
@@ -332,15 +440,43 @@ renderPanel('setup(no key)', seeds({ state: Object.assign({}, statePayload, { co
 renderPanel('empty(no data)', seeds({ state: Object.assign({}, statePayload, { hasData: false }), data: null }))
 renderPanel('error-banner', seeds({ error: '网络开小差了' }))
 renderPanel('sync-running', seeds({ state: Object.assign({}, statePayload, { sync: { running: true, phase: 'meta', label: '补全书籍信息', done: 120, total: 400, message: '已补全 120/400 本' } }) }))
+// 1.2.1 四段旅程的内页：THINK 1 + CREATE 3 + GROW 2，外加空库、取数失败、按书过滤、书掉出缓存。
+renderPanel('responses', seedBase('responses'))
+renderPanel('materials', seedBase('materials'))
+renderPanel('topics', seedBase('topics'))
+renderPanel('works', seedBase('works'))
+renderPanel('timeline', seedBase('timeline'))
+renderPanel('annual', seedBase('annual'))
+renderPanel('craft-empty', seeds({ view: 'materials', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty-think', seeds({ view: 'responses', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty-topics', seeds({ view: 'topics', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty-works', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty-grow', seeds({ view: 'timeline', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-failed', seeds({ view: 'materials', craft: EMPTY_CRAFT_FIXTURE, craftState: 'failed', craftError: '网络开小差了' }))
+renderPanel('craft-scoped', seeds({ view: 'materials', scopeBookId: anyBook.bookId }))
+// F2：换一本书进 CREATE，别的书的稿子不能跟过来。用一本夹具里不存在的书做
+// 反证——按 scope 过滤后必须落到空态，而不是把 A 书的稿子留在屏幕上。
+renderPanel('works-scoped-other', seeds({ view: 'works', scopeBookId: 'weread:book/999999999' }))
+// B1/B4：时间线的事件行要能回到书；跨书选题降级；按书筛只留这本书的事件。
+renderPanel('timeline-scoped', seeds({ view: 'timeline', scopeBookId: anyBook.bookId }))
+renderPanel('timeline-scoped-other', seeds({ view: 'timeline', scopeBookId: 'weread:book/999999999' }))
+renderPanel('timeline-cross', seeds({ view: 'timeline', craft: crossCraft() }))
+renderPanel('book-chain-degraded', seeds({
+  view: 'book',
+  bookId: anyBook.bookId,
+  craft: Object.assign({}, smokeCraft(), {
+    bookIndex: [{ bookId: anyBook.bookId, bookTitle: anyBook.title, author: '', counts: { responses: 0, materials: 0, topics: 0, works: 0 }, cached: false }],
+  }),
+}))
 
 // 导出面板只在点击之后才出现，所以直接拿模块里的组件挂载一次。
 function renderStandalone(label, component, props, hookSeeds) {
   resetHooks(hookSeeds)
-  const out = { text: '', tags: {}, components: new Set() }
+  const out = { text: '', tags: {}, components: new Set(), elements: [] }
   try {
     const tree = component(props)
     renderNode(tree, 0, out)
-    drawCalls.push({ label, ok: true, text: out.text, tags: Object.keys(out.tags).length, nodes: Object.values(out.tags).reduce((a, b) => a + b, 0), textLength: out.text.length, components: [...out.components].join(',') })
+    drawCalls.push({ label, ok: true, text: out.text, tags: Object.keys(out.tags).length, nodes: Object.values(out.tags).reduce((a, b) => a + b, 0), textLength: out.text.length, components: [...out.components].join(','), elements: out.elements })
     console.log('[render] %s ok tags=%d nodes=%d text=%d components=%s', label, Object.keys(out.tags).length, Object.values(out.tags).reduce((a, b) => a + b, 0), out.text.length, [...out.components].join(','))
   } catch (error) {
     drawCalls.push({ label, ok: false, error: String(error && error.stack ? error.stack.split('\n').slice(0, 4).join(' | ') : error) })
@@ -421,6 +557,243 @@ if (shortDraw && shortDraw.text.includes('thought.expand')) thoughtGuards.push('
 if (byLabel0('thought-context-toggle') && !byLabel0('thought-context-toggle').text.includes('thought.contextToggle')) thoughtGuards.push('thought-context-toggle: 缺同章上下文按钮')
 if (byLabel0('thought-context-open') && !byLabel0('thought-context-open').text.includes('thought.contextTitle')) thoughtGuards.push('thought-context-open: 展开后缺上下文标题')
 
+// 来源包：字段齐、原文带引用、想法带同章上下文、缺书名不瞎猜、长文被截断。
+const packGuards = []
+if (typeof smoke.buildSourcePack !== 'function') packGuards.push('client module 未暴露 buildSourcePack')
+else {
+  const note = {
+    id: 'n1',
+    bookId: 'b1',
+    bookTitle: '顾随诗词讲记',
+    author: '顾随',
+    chapterTitle: '开场白',
+    text: '诗根本不是教训人的，是感动人的。'.repeat(80),
+    createTime: 1794193279,
+  }
+  const notePack = smoke.buildSourcePack({ entry: note, kind: 'note', question: '这段话在说什么？' })
+  for (const needle of ['think.packHead', 'think.packBook', '《顾随诗词讲记》', 'think.packAuthor', 'think.packChapter', 'think.packKindNote', 'think.packOriginal', 'think.packFoot']) {
+    if (!notePack.includes(needle)) packGuards.push(`note pack: 缺 ${needle}`)
+  }
+  if (!notePack.includes('\n> ')) packGuards.push('note pack: 原文没有用引用块')
+  if (!notePack.trimEnd().endsWith('这段话在说什么？')) packGuards.push('note pack: 问题没有放到末尾')
+  if (notePack.length > 1600) packGuards.push(`note pack: 太长（${notePack.length} 字），原文没截断`)
+
+  const thought = { id: 't1', bookId: 'b1', bookTitle: '书名', chapterName: '第一章', content: '我的想法', createTime: 1794193279 }
+  const thoughtPack = smoke.buildSourcePack({
+    entry: thought,
+    kind: 'thought',
+    context: [1, 2, 3, 4].map((i) => ({ id: `n${i}`, text: `同章 ${i}` })),
+  })
+  for (const needle of ['think.packKindThought', 'think.packMine', 'think.packContext', '1. 同章 1']) {
+    if (!thoughtPack.includes(needle)) packGuards.push(`thought pack: 缺 ${needle}`)
+  }
+  if (thoughtPack.includes('4. 同章 4')) packGuards.push('thought pack: 上下文条数没有上限')
+
+  const bare = smoke.buildSourcePack({ entry: { id: 'n2', text: '没有书名的划线' }, kind: 'note' })
+  if (!bare.includes('think.packUnknown')) packGuards.push('bare pack: 缺书名时没有写明未记录')
+  if (bare.includes('undefined') || bare.includes('null')) packGuards.push('bare pack: 出现了 undefined/null')
+}
+
+// 内联对话卡：原地弹出、带上下文、有 ×、有输入框、等待态有提示。
+// AskCard 的 useState 顺序：messages, draft, busy, error, model, packOpen
+const askGuards = []
+if (typeof smoke.AskCard !== 'function') askGuards.push('client module 未暴露 AskCard')
+const packText = smoke.buildSourcePack
+  ? smoke.buildSourcePack({ entry: thoughtBase, kind: 'thought', context: contextNotes })
+  : '【书房来源包】'
+renderStandalone('ask-empty', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[], '', false, '', '', ''])
+renderStandalone('ask-answer', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '它在说诗要打动人' }], '', false, '', 'deepseek-flash', 'explain'])
+renderStandalone('ask-busy', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[{ role: 'user', text: '再想想' }, { role: 'assistant', text: '' }], '', true, '', '', ''])
+const askEmpty = byLabel0('ask-empty')
+if (!askEmpty) askGuards.push('ask-empty: 未渲染')
+else {
+  for (const needle of ['×', 'think.empty', 'think.send', 'think.aiNote', 'think.mode.explain', 'think.mode.custom'])
+    if (!askEmpty.text.includes(needle)) askGuards.push('ask-empty: 缺 ' + needle)
+  if (!askEmpty.text.includes('一本名字很长很长的书')) askGuards.push('ask-empty: 缺书名上下文')
+  if (!askEmpty.text.includes('第一章')) askGuards.push('ask-empty: 缺章节上下文')
+}
+const askAnswer = byLabel0('ask-answer')
+if (!askAnswer) askGuards.push('ask-answer: 未渲染')
+else {
+  for (const needle of ['这句话怎么理解', '它在说诗要打动人', 'deepseek-flash', '×'])
+    if (!askAnswer.text.includes(needle)) askGuards.push('ask-answer: 缺 ' + needle)
+}
+if (askAnswer && !askAnswer.text.includes('ask.adoptHint')) askGuards.push('ask-answer: 缺采纳出口（F-20）')
+const askBusy = byLabel0('ask-busy')
+if (askBusy && !askBusy.text.includes('think.thinking')) askGuards.push('ask-busy: 等待态缺提示')
+
+// F1：宿主没有可用模型时，四个胶囊与发送键必须已经置灰并说明原因，
+// 而不是等读者按下发送再去读一个 400。这里先把探测结果置为 offline，
+// 渲染一张「已经写了字」的卡片——此时唯一能解释 disabled 的就是离线。
+if (typeof smoke.forgetChatProbe === 'function' && smoke.chatAvailability) {
+  smoke.chatAvailability.state = 'offline'
+  renderStandalone('ask-offline', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[], '写点什么', false, '', '', ''])
+  smoke.chatAvailability.state = 'unknown'
+  const offlineDraw = byLabel0('ask-offline')
+  if (!offlineDraw) askGuards.push('ask-offline: 未渲染')
+  else {
+    const elements = offlineDraw.elements || []
+    const chips = elements.filter((el) => String(el.props.className || '').indexOf('wr-ask-chip') >= 0)
+    const sends = elements.filter((el) => String(el.props.className || '') === 'wr-ask-send')
+    const reasons = elements.filter((el) => String(el.props.className || '') === 'wr-ask-offline')
+    if (chips.length < 4) askGuards.push(`ask-offline: 只有 ${chips.length} 个胶囊`)
+    else if (!chips.every((el) => el.props.disabled === true)) askGuards.push('ask-offline: 无模型时胶囊没有置灰（F1）')
+    if (sends.length === 0) askGuards.push('ask-offline: 找不到发送键')
+    else if (!sends.every((el) => el.props.disabled === true)) askGuards.push('ask-offline: 无模型时发送键没有置灰（F1）')
+    if (reasons.length === 0) askGuards.push('ask-offline: 置灰没有给出原因（F1）')
+    if (!offlineDraw.text.includes('think.offline')) askGuards.push('ask-offline: 缺原因文案 think.offline')
+  }
+} else {
+  askGuards.push('client module 未暴露 chatAvailability/forgetChatProbe（F1 无法探针）')
+}
+
+// F3：段落、回应、素材、选题上的来源 chip 都要能点回原物（带出处定位）。
+const worksDraw = byLabel0('works')
+if (worksDraw) {
+  const srcChips = (worksDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-src' || String(el.props.className || '') === 'wr-src wr-src-empty')
+  const clickable = srcChips.filter((el) => el.tag === 'button' && typeof el.props.onClick === 'function')
+  if (srcChips.length === 0) askGuards.push('works: 段落没有渲染来源 chip')
+  else if (clickable.length !== srcChips.length) askGuards.push(`works: ${srcChips.length} 个来源 chip 只有 ${clickable.length} 个可点（F3）`)
+} else {
+  askGuards.push('works: 未渲染，无法断言来源 chip')
+}
+
+// F-20 第二个出口：从想法直接收为素材，降级①要能看到「同章摘录」选择器与跳过。
+if (typeof smoke.MaterialPicker === 'function') {
+  renderStandalone('material-picker', smoke.MaterialPicker, { entry: thoughtBase, kind: 'thought', context: contextNotes, onClose() {} }, ['观点', '', false, ''])
+  const picker = byLabel0('material-picker')
+  if (!picker) askGuards.push('material-picker: 未渲染')
+  else {
+    for (const needle of ['mat.picker.title', 'mat.picker.skip', 'mat.picker.save', 'mat.type.idea'])
+      if (!picker.text.includes(needle)) askGuards.push('material-picker: 缺 ' + needle)
+    if (!picker.text.includes('同章划线 1')) askGuards.push('material-picker: 缺同章摘录上下文')
+  }
+} else {
+  askGuards.push('client module 未暴露 MaterialPicker')
+}
+
+// 四段旅程：二层导航、六个内页、三个空/失败态、书页链路块。
+// 这里只声明断言队列，真正的求值放到 guards 初始化之后（checkJourneys）。
+const journeyGuards = []
+const CRAFT_STAGE = { responses: 'think', materials: 'create', topics: 'create', works: 'create', timeline: 'grow', annual: 'grow' }
+function checkJourneys(guards, byLabel, bookDraw) {
+  for (const label of ['responses', 'materials', 'topics', 'works', 'timeline', 'annual']) {
+    const draw = byLabel(label)
+    if (!draw) { journeyGuards.push(`${label}: 未渲染`); continue }
+    // 两层导航在每一个内页上都得在：第一行四个旅程 + 第二行当前旅程的口径说明。
+    for (const needle of ['nav.read', 'nav.think', 'nav.create', 'nav.grow']) {
+      if (!draw.text.includes(needle)) journeyGuards.push(`${label}: 缺旅程标签 ${needle}`)
+    }
+    const stage = CRAFT_STAGE[label]
+    if (!draw.text.includes(`journey.${stage}.hint`)) journeyGuards.push(`${label}: 第二行导航缺 journey.${stage}.hint`)
+  }
+  if (byLabel('responses') && !byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 缺「对话不落盘」的口径')
+  if (byLabel('materials') && !byLabel('materials').text.includes('mat.type.quote')) journeyGuards.push('materials: 缺类型筛选')
+  if (byLabel('topics') && !byLabel('topics').text.includes('topic.count')) journeyGuards.push('topics: 缺计数')
+  if (byLabel('works') && !byLabel('works').text.includes('work.export')) journeyGuards.push('works: 缺导出按钮')
+  if (byLabel('timeline') && !byLabel('timeline').text.includes('grow.total')) journeyGuards.push('timeline: 缺事件总数')
+  if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
+  // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。
+  const emptyExpect = {
+    'craft-empty': ['mat.empty.title', 'mat.empty.next', 'mat.empty.action'],
+    'craft-empty-think': ['thinkView.empty.title', 'thinkView.empty.next', 'thinkView.empty.action'],
+    'craft-empty-topics': ['topic.empty.title', 'topic.empty.next', 'topic.empty.action'],
+    'craft-empty-works': ['work.empty.title', 'work.empty.next', 'work.empty.action'],
+    'craft-empty-grow': ['grow.empty.title', 'grow.empty.next'],
+  }
+  for (const [label, needles] of Object.entries(emptyExpect)) {
+    const draw = byLabel(label)
+    if (!draw) { journeyGuards.push(`${label}: 未渲染`); continue }
+    for (const needle of needles) if (!draw.text.includes(needle)) journeyGuards.push(`${label}: 缺 ${needle}`)
+  }
+  const failedDraw = byLabel('craft-failed')
+  if (!failedDraw) journeyGuards.push('craft-failed: 未渲染')
+  else {
+    for (const needle of ['craft.failed', 'craft.retry'])
+      if (!failedDraw.text.includes(needle)) journeyGuards.push(`craft-failed: 缺 ${needle}`)
+    // 写作侧取数失败不能污染 READ：旅程导航仍然在。
+    if (!failedDraw.text.includes('nav.read')) journeyGuards.push('craft-failed: 旅程导航被拖垮')
+  }
+  if (byLabel('craft-scoped') && !byLabel('craft-scoped').text.includes('thinkView.backBook')) journeyGuards.push('craft-scoped: 按书过滤时没写明「回到哪本书」')
+  // 书页的六段链路块，以及「书已掉出同步窗口」的降级交代。
+  if (bookDraw && !bookDraw.text.includes('chain.title')) guards.push('book: 缺「这本书的读写链路」')
+  if (bookDraw && !bookDraw.text.includes('synced.at')) guards.push('book: 缺微读更新时间')
+  const degradedDraw = byLabel('book-chain-degraded')
+  if (!degradedDraw) journeyGuards.push('book-chain-degraded: 未渲染')
+  else {
+    if (!degradedDraw.text.includes('chain.cached')) journeyGuards.push('book-chain-degraded: 掉出缓存时没有交代')
+    if (!degradedDraw.text.includes('chain.title')) journeyGuards.push('book-chain-degraded: 缺链路块')
+  }
+  // 页脚两个时间各说各话。
+  if (byLabel('materials') && !byLabel('materials').text.includes('synced.craftAt')) journeyGuards.push('materials: 缺创作更新时间')
+
+  // B1：时间线的每一条都得能回到产生它的那本书，跨书的事件降级成不可点而不是假装可点。
+  const tlItems = (label) =>
+    ((byLabel(label) || {}).elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-tl-item'))
+  const timelineItems = tlItems('timeline')
+  if (timelineItems.length < 4) journeyGuards.push(`timeline: 事件行太少（${timelineItems.length}）`)
+  if (timelineItems.some((el) => el.tag !== 'button')) journeyGuards.push('timeline: 事件行不是可点 button')
+  if (!timelineItems.some((el) => el.tag === 'button' && typeof el.props.onClick === 'function' && el.props.disabled !== true))
+    journeyGuards.push('timeline: 没有任何一条能点回书页')
+  if (!timelineItems.some((el) => el.props['data-kind'] === 'work' && el.props.disabled !== true))
+    journeyGuards.push('timeline: 作品事件不能点回书页')
+  const crossItems = tlItems('timeline-cross')
+  if (!crossItems.some((el) => el.props['data-cross'] === 'true' && el.props.disabled === true))
+    journeyGuards.push('timeline-cross: 跨书事件没有降级为不可点')
+  if (byLabel('timeline-cross') && !byLabel('timeline-cross').text.includes('grow.cross')) journeyGuards.push('timeline-cross: 缺「跨书」标注')
+
+  // B4：把一本书放进 GROW，时间线只留这本书的事件；别的书进来必须是空态。
+  const scopedTimeline = tlItems('timeline-scoped')
+  if (scopedTimeline.length !== timelineItems.length) journeyGuards.push(`timeline-scoped: 该书的 4 条事件没全留下（${scopedTimeline.length}）`)
+  if (scopedTimeline.some((el) => el.props['data-cross'] === 'true')) journeyGuards.push('timeline-scoped: 按书过滤后不该还有跨书事件')
+  if (byLabel('timeline-scoped') && !byLabel('timeline-scoped').text.includes('thinkView.scope')) journeyGuards.push('timeline-scoped: 没写明只看这本书')
+  if (byLabel('timeline-scoped-other') && !byLabel('timeline-scoped-other').text.includes('grow.empty.title'))
+    journeyGuards.push('timeline-scoped-other: 别的书的事件串进了这本书的时间线')
+
+  // B3：素材类型可以在原位改，不需要另开编辑面板。
+  const typeSwitches = ((byLabel('materials') || {}).elements || []).filter((el) =>
+    String(el.props.className || '').split(' ').includes('wr-type-switch'),
+  )
+  if (typeSwitches.length === 0) journeyGuards.push('materials: 素材没有改类型的入口')
+  else {
+    const sw = typeSwitches[0]
+    if (sw.tag !== 'select' || typeof sw.props.onChange !== 'function') journeyGuards.push('materials: 改类型入口不是可用的 select')
+    const options = ((byLabel('materials') || {}).elements || []).filter((el) => el.tag === 'option')
+    if (options.length < 6) journeyGuards.push(`materials: 改类型只有 ${options.length} 个选项`)
+  }
+
+  // B5：选题上的书名是回到那本书的入口。
+  const topicBookButtons = ((byLabel('topics') || {}).elements || []).filter(
+    (el) => el.tag === 'button' && String(el.props.className || '').split(' ').includes('wr-chip') && typeof el.props.onClick === 'function',
+  )
+  if (topicBookButtons.length === 0) journeyGuards.push('topics: 书名不是可点的入口')
+
+  // B6：年度回顾要能说出「这一年」，也要能把这一年导出去。
+  const annualDraw = byLabel('annual')
+  if (annualDraw) {
+    for (const needle of ['grow.annual.title', 'grow.annual.export', 'grow.annual.note']) {
+      if (!annualDraw.text.includes(needle)) journeyGuards.push(`annual: 缺 ${needle}`)
+    }
+    const exportButton = (annualDraw.elements || []).find(
+      (el) => el.tag === 'button' && typeof el.props.onClick === 'function' && String(el.props.title || '').includes('grow.annual'),
+    )
+    if (!exportButton) journeyGuards.push('annual: 没有「导出这一年」按钮')
+  }
+
+  // F2：作品按「段落 → 来源 → 书」推导归属；换一本书进 CREATE 时，
+  // A 书的稿子不能出现在 B 书的链路里（空态才是正确答案）。
+  const worksAll = byLabel('works')
+  const worksOther = byLabel('works-scoped-other')
+  const smokeWorkTitle = '为什么读过的书记不住'
+  if (!worksAll) journeyGuards.push('works: 未渲染')
+  else if (!worksAll.text.includes(smokeWorkTitle)) journeyGuards.push('works: 不按书过滤时应列出全部稿子')
+  if (!worksOther) journeyGuards.push('works-scoped-other: 未渲染')
+  else {
+    if (worksOther.text.includes(smokeWorkTitle)) journeyGuards.push('works-scoped-other: 按书过滤后仍出现别的书的稿子（F2）')
+    if (!worksOther.text.includes('work.empty.title')) journeyGuards.push('works-scoped-other: 没有落到空态')
+  }
+}
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -459,6 +832,10 @@ const overviewDraw = byLabel('overview')
 if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
 for (const item of bannerGuards) guards.push(item)
 for (const item of thoughtGuards) guards.push(item)
+for (const item of packGuards) guards.push(item)
+for (const item of askGuards) guards.push(item)
+checkJourneys(guards, byLabel, bookDraw)
+for (const item of journeyGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)
