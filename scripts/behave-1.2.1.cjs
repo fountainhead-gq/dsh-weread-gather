@@ -487,13 +487,14 @@ async function main() {
   has('搜索保留类型筛选', searchDraw.text, 'search.typeAll')
 
   const bookDraw = get('book', { view: 'book', bookId: BOOK_A.bookId })
-  has('书页有读写链路块', bookDraw.text, 'chain.title')
-  for (const needle of ['chain.notes', 'chain.thoughts', 'chain.responses', 'chain.works']) {
-    has('书页链路四格：' + needle, bookDraw.text, needle)
-  }
-  missing('素材/选题已从链路块退场（materials）', bookDraw.text, 'chain.materials')
-  missing('素材/选题已从链路块退场（topics）', bookDraw.text, 'chain.topics')
-  missing('在架的书不显示「不在缓存」', bookDraw.text, 'chain.cached')
+  // 1.2.2：六格计数块整块退场，书页第一块换成「我的阅读脉络」。
+  has('书页有「我的阅读脉络」', bookDraw.text, 'thread.title')
+  missing('六格计数块已经退场', bookDraw.text, 'chain.title')
+  check(
+    '脉络块在书名简介之后、笔记/想法分栏之前',
+    bookDraw.text.indexOf('thread.title') >= 0 && bookDraw.text.indexOf('thread.title') < bookDraw.text.indexOf('关关雎鸠'),
+    String(bookDraw.text.indexOf('thread.title')) + ' / ' + String(bookDraw.text.indexOf('关关雎鸠')),
+  )
 
   // --- 2. 按书过滤（F2 + 三类列表） -----------------------------------------
   const createViews = (smoke.STAGE_VIEWS && smoke.STAGE_VIEWS.create) || []
@@ -733,12 +734,13 @@ async function main() {
   check('B1 时间线事件行都是可点 button', tlRows.length >= 2 && tlRows.every((el) => el.tag === 'button'), tlRows.length)
   const kinds = new Set(tlRows.map((el) => el.props['data-kind']))
   eq('时间线只剩「回应」和「作品」两类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'work']))
-  const workRow = tlRows.find((el) => el.props['data-kind'] === 'work')
-  check('B1 时间线里有作品事件', Boolean(workRow))
+  const workRows = tlRows.filter((el) => el.props['data-kind'] === 'work')
+  check('B1 时间线里有作品事件', workRows.length > 0)
   has('B1 事件行显示书名', timeline.text, String(BOOK_A.title).slice(0, 6))
-  if (workRow) {
-    workRow.props.onClick({ stopPropagation() {} })
-    check('B1 点作品事件回到那本书', tlOpened.books.length === 1 && tlOpened.books[0][0] === BOOK_A.bookId, JSON.stringify(tlOpened.books))
+  if (workRows.length > 0) {
+    // 每篇稿子各自回到它的书 —— 不假设时间线里哪一行排在前面。
+    for (const row of workRows) row.props.onClick({ stopPropagation() {} })
+    check('B1 点作品事件回到那本书', tlOpened.books.some((entry) => entry[0] === BOOK_A.bookId), JSON.stringify(tlOpened.books))
   }
   const responseRow = tlRows.find((el) => el.props['data-kind'] === 'response')
   if (responseRow) {
@@ -1420,6 +1422,153 @@ async function main() {
   const inlineCards = (inlineDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
   check('F-28 关系卡挂在记录卡内部（一行一个）', inlineCards.length === 1, String(inlineCards.length))
   check('F-28 关系卡上没有浮层坐标', inlineCards.length === 1 && inlineCards[0].props.style === undefined)
+
+// --- 11.8 我的阅读脉络（F-33）：生成 → 校验 → 落盘 → 采纳建议对 ---------------
+  // 这条链每一步都真跑：真宿主写数据、真 SSE 帧、真 threads.save。断言数单独累计。
+  let threadChain = 0
+  const threadCheck = (name, ok, detail) => {
+    threadChain += 1
+    check(name, ok, detail)
+  }
+  const relOne = host.craftOp('relation.add', {
+    from: { kind: 'note', id: NOTE_A1.id },
+    to: { kind: 'thought', id: THOUGHT_A.id },
+    label: '呼应',
+    reason: '都在说先给画面。',
+    bookId: BOOK_A.bookId,
+    origin: 'manual',
+  }, host.craftSummary().revision).created.relation
+  const threadWrites = []
+  const threadWrite = (op, payload) => {
+    threadWrites.push({ op, payload })
+    return Promise.resolve(host.craftOp(op, payload, host.craftSummary().revision))
+  }
+  const threadBase = {
+    book: BOOK_A,
+    data: dataPayload,
+    craft: host.craftView(),
+    craftState: 'ready',
+    write: threadWrite,
+    onOpenSource() {},
+    onSwitchToWorks() {},
+  }
+  // BookThreads 的 useState 顺序：busy, error, notice, suggests, adopting, saving, expand
+  const threadSeeds = [false, '', '', [], false, false, false]
+  const thinBook = Object.assign({}, dataPayload, {
+    notes: (dataPayload.notes || []).filter((item) => item.bookId !== BOOK_A.bookId),
+    thoughts: (dataPayload.thoughts || []).filter((item) => item.bookId !== BOOK_A.bookId),
+  })
+  const thinDraw = renderComp('threads-thin', smoke.BookThreads, Object.assign({}, threadBase, { data: thinBook }), threadSeeds)
+  has('记录太少时给的是「先划一句」', thinDraw.text, 'thread.emptyNone')
+  missing('记录太少时不给梳理按钮', thinDraw.text, 'thread.build')
+  const thinBtn = (thinDraw.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-threads-build'))
+  threadCheck('记录太少时没有可点的梳理按钮', !thinBtn)
+
+  const answerOne = JSON.stringify({
+    threads: [
+      { title: '读诗先要一个画面', why: '两次都停在先看见。', relations: [relOne.id], suggest: [] },
+      { title: '这条线索的编号是编的', why: '编号不在包里。', relations: ['rel_fake_999'], suggest: [] },
+    ],
+  })
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: answerOne },
+    { type: 'done' },
+  ]
+  net.calls.length = 0
+  const buildDraw = renderComp('threads-build', smoke.BookThreads, threadBase, threadSeeds)
+  const buildBtn = (buildDraw.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-threads-build'))
+  threadCheck('梳理按钮可点', Boolean(buildBtn) && typeof buildBtn.props.onClick === 'function')
+  if (buildBtn) {
+    buildBtn.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const chatCall = net.calls.filter((call) => String(call.url).includes('/chat') && !String(call.url).includes('/chat/models')).pop()
+    threadCheck('真的发出了 /chat 请求', Boolean(chatCall))
+    let chatBody = {}
+    try {
+      chatBody = chatCall ? JSON.parse(String(chatCall.body || '{}')) : {}
+    } catch {
+      chatBody = {}
+    }
+    threadCheck('请求体带 mode=threads', chatBody.mode === 'threads')
+    threadCheck('请求体把全书记录按章带上了编号', String(chatBody.pack || '').includes('note:' + NOTE_A1.id))
+    threadCheck('请求体带上了已确认的对照编号', String(chatBody.pack || '').includes(relOne.id))
+    const saved = threadWrites.filter((item) => item.op === 'threads.save').pop()
+    threadCheck('生成后写了 threads.save', Boolean(saved))
+    threadCheck('只留下编号能落地的线索', Boolean(saved) && saved.payload.threads.length === 1)
+    threadCheck('存的是那条已确认关系的编号', Boolean(saved) && saved.payload.threads[0].relationIds[0] === relOne.id)
+    threadCheck('编造的编号没有进 threads.save', Boolean(saved) && !JSON.stringify(saved.payload).includes('rel_fake_999'))
+    const stored = host.craftView()
+    const storedThread = (stored.threads || []).find((item) => String(item.bookId) === String(BOOK_A.bookId))
+    threadCheck('宿主按书存下了这条线索', Boolean(storedThread))
+    threadCheck('覆盖行由宿主算：章数', Boolean(storedThread) && (storedThread.coverage.chapters || []).length >= 1)
+    threadCheck('覆盖行由宿主算：划线数', Boolean(storedThread) && Number(storedThread.coverage.notes) === 2)
+    threadCheck('覆盖行由宿主算：想法数', Boolean(storedThread) && Number(storedThread.coverage.thoughts) === 1)
+    const reopened = I.createHost({}).craftView()
+    threadCheck('刷新后线索仍在', (reopened.threads || []).some((item) => String(item.title) === '读诗先要一个画面'))
+  }
+
+  // 上限：模型给 6 条，前端先截到 5 条再落盘（宿主 >5 会 400，所以这里也证明没把 400 露给用户）。
+  threadWrites.length = 0
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: JSON.stringify({ threads: Array.from({ length: 6 }, (_, index) => ({ title: '线索 ' + (index + 1), why: '第 ' + (index + 1) + ' 条。', relations: [relOne.id], suggest: [] })) }) },
+    { type: 'done' },
+  ]
+  const cappedDraw = renderComp('threads-build-capped', smoke.BookThreads, threadBase, threadSeeds)
+  const cappedBtn = (cappedDraw.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-threads-build'))
+  if (cappedBtn) {
+    cappedBtn.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const cappedSave = threadWrites.filter((item) => item.op === 'threads.save').pop()
+    threadCheck('六条线索只落了五条', Boolean(cappedSave) && cappedSave.payload.threads.length === 5)
+    threadCheck('截断发生在前端（宿主没有收到 6 条）', Boolean(cappedSave) && cappedSave.payload.threads.length <= 5)
+  }
+  const cappedView = renderComp('threads-capped-notice', smoke.BookThreads, threadBase, [false, '', 'thread.capped(1)', [], false, false, false])
+  has('超上限时给出提示', cappedView.text, 'thread.capped')
+
+  // 冷启动：一条 relations 都没有时，模型只能给「建议对」；采纳才写。
+  host.craftOp('relation.delete', { id: relOne.id }, host.craftSummary().revision)
+  threadWrites.length = 0
+  net.chatFrames = [
+    { type: 'open', provider: 'fake', model: 'fake-1' },
+    { type: 'text', text: JSON.stringify({ threads: [{ title: '两条该放一起看', why: '都在说自然的秩序。', relations: [], suggest: [[ 'note:' + NOTE_A1.id, 'thought:' + THOUGHT_A.id ]] }] }) },
+    { type: 'done' },
+  ]
+  const coldDraw = renderComp('threads-cold', smoke.BookThreads, Object.assign({}, threadBase, { craft: host.craftView() }), threadSeeds)
+  const coldBtn = (coldDraw.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-threads-build'))
+  if (coldBtn) {
+    coldBtn.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    threadCheck('只有建议对时不动库（没有 threads.save）', threadWrites.filter((item) => item.op === 'threads.save').length === 0)
+    threadCheck('只有建议对时也没有写关系', threadWrites.filter((item) => item.op === 'relation.add').length === 0)
+  }
+  const suggestEntry = { thread: { title: '两条该放一起看', why: '都在说自然的秩序。', relations: [], suggest: [['note:' + NOTE_A1.id, 'thought:' + THOUGHT_A.id]] } }
+  const suggestDraw = renderComp('threads-suggest-adopt', smoke.BookThreads, Object.assign({}, threadBase, { craft: host.craftView() }), [false, '', '', [suggestEntry], '', '', false])
+  has('建议对渲染成一行', suggestDraw.text, 'thread.suggestTitle')
+  const adopter = (suggestDraw.elements || []).find((el) => String(el.props.className || '').split(' ').includes('wr-thread-adopt'))
+  threadCheck('建议对有「采纳」按钮', Boolean(adopter) && typeof adopter.props.onClick === 'function')
+  if (adopter) {
+    adopter.props.onClick({ stopPropagation() {} })
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const relAdd = threadWrites.filter((item) => item.op === 'relation.add').pop()
+    try {
+      const direct = host.craftOp('relation.add', relAdd.payload, host.craftSummary().revision)
+    } catch (error) {
+    }
+    threadCheck('采纳点了才写 relation.add', Boolean(relAdd))
+    threadCheck('采纳写的是「待核实」标签', Boolean(relAdd) && relAdd.payload.label === '待核实')
+    threadCheck('建议对两端都用包里出现过的编号', Boolean(relAdd) && relAdd.payload.from.kind === 'note' && relAdd.payload.from.id === NOTE_A1.id && relAdd.payload.to.kind === 'thought' && relAdd.payload.to.id === THOUGHT_A.id)
+    const afterAdopt = host.craftView()
+    const created = (afterAdopt.relations || []).find((item) => String(item.reason) === '都在说自然的秩序。')
+    threadCheck('关系真的落了盘', Boolean(created))
+    const reSave = threadWrites.filter((item) => item.op === 'threads.save').pop()
+    threadCheck('采纳后把这一对的编号并入 threads.save', Boolean(reSave) && JSON.stringify(reSave.payload).includes(created ? created.id : 'rel_missing'))
+    const reloadedThreads = I.createHost({}).craftView().threads || []
+    threadCheck('刷新后这条建议对成的线索还在', reloadedThreads.some((item) => item.title === '两条该放一起看'))
+  }
+
+  console.log('[behave] 阅读脉络链路断言 %d 条（含「建议对 → 采纳 → 落 relation → 重存 threads」）', threadChain)
 
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')

@@ -436,6 +436,37 @@ function relatedCraft() {
   }]
   return base
 }
+// 我的阅读脉络：一条线索 = 一串已确认的关系。证据必须落到真实记录上，
+// 校验靠的就是这两个 Map —— 编号对不上时，那一整条线索都不该出现。
+function threadsCraft() {
+  const base = relatedCraft()
+  const relation = base.relations[0]
+  base.responses = base.responses.concat([{
+    id: 'r_smoke2',
+    bookId: base.bookIndex[0].bookId,
+    bookTitle: base.bookIndex[0].bookTitle,
+    author: '',
+    sourceIds: [`note:${relation.from.id}`],
+    text: '我读诗的时候，先要一个画面。',
+    origin: 'think',
+    containsAI: true,
+    model: 'gpt-4o-mini',
+    promptVersion: 'think-v1',
+    adoptedAt: base.updatedAt,
+    createdAt: base.updatedAt,
+  }])
+  base.threads = [{
+    id: 'th_smoke1',
+    bookId: base.bookIndex[0].bookId,
+    title: '读诗时我总先要一个画面',
+    why: '两次都停在「先看见」这件事上。',
+    relationIds: [relation.id],
+    coverage: { chapters: ['开场白'], notes: 3, thoughts: 1, hasFullText: false },
+    createdAt: base.updatedAt,
+    updatedAt: base.updatedAt,
+  }]
+  return base
+}
 // StudyPanel 的 useState 调用顺序（改动 client.js 里那段 state 声明时必须同步这里）：
 // state, data, error, view, activeBookId, bookTab, query, showSettings, booting, craft, craftState, craftError, scopeBookId
 function seeds(input) {
@@ -486,13 +517,8 @@ renderPanel('works-scoped-other', seeds({ view: 'works', scopeBookId: 'weread:bo
 renderPanel('timeline-scoped', seeds({ view: 'timeline', scopeBookId: anyBook.bookId }))
 renderPanel('timeline-scoped-other', seeds({ view: 'timeline', scopeBookId: 'weread:book/999999999' }))
 renderPanel('timeline-cross', seeds({ view: 'timeline', craft: crossCraft() }))
-renderPanel('book-chain-degraded', seeds({
-  view: 'book',
-  bookId: anyBook.bookId,
-  craft: Object.assign({}, smokeCraft(), {
-    bookIndex: [{ bookId: anyBook.bookId, bookTitle: anyBook.title, author: '', counts: { responses: 0, materials: 0, topics: 0, works: 0 }, cached: false }],
-  }),
-}))
+// 1.2.2：书页的六格计数块换成「我的阅读脉络」。书页本身仍要能打开、能读。
+renderPanel('book-threads', seeds({ view: 'book', bookId: anyBook.bookId, craft: threadsCraft() }))
 // F-28 外观：没有「跟随 DSH」这一档了 —— 没设置（或写了不认识的名字）就渲染默认的 glacier。
 const paletteState = (palette) => Object.assign({}, statePayload, { palette })
 renderPanel('palette-default', seeds({ view: 'overview', state: paletteState('') }))
@@ -515,6 +541,40 @@ function renderStandalone(label, component, props, hookSeeds) {
 }
 
 const smoke = loadedModule.__smoke || {}
+
+// 「我的阅读脉络」是书页里的一块，只在书页出现，所以这里单独挂载它。
+// 播种顺序与 BookThreads 的 useState 一致：busy, error, notice, suggests, adopting, saving, expand
+const threadBook = anyBook || { bookId: 'weread:book/1', title: '书名', author: '作者' }
+const threadsProps = (craft, extra) =>
+  Object.assign(
+    {
+      book: threadBook,
+      data: payload,
+      craft,
+      craftState: 'ready',
+      write: () => Promise.resolve({}),
+      onOpenSource: () => {},
+      onSwitchToWorks: () => {},
+    },
+    extra || {},
+  )
+
+renderStandalone('threads-result', smoke.BookThreads, threadsProps(threadsCraft()), [false, '', '', [], false, false, false])
+// 记录太少：这本书一条划线都没有，按钮不出来，只给一句「先划一句」。
+renderStandalone(
+  'threads-empty',
+  smoke.BookThreads,
+  threadsProps(smokeCraft(), { data: Object.assign({}, payload, { notes: (payload.notes || []).filter((item) => item.bookId !== threadBook.bookId) }) }),
+  [false, '', '', [], false, false, false],
+)
+renderStandalone('threads-error', smoke.BookThreads, threadsProps(threadsCraft()), [false, 'provider rate limited (429)', '', [], false, false, false])
+renderStandalone('threads-capped', smoke.BookThreads, threadsProps(threadsCraft()), [false, '', 'thread.capped(3)', [], false, false, false])
+renderStandalone(
+  'threads-suggest',
+  smoke.BookThreads,
+  threadsProps(smokeCraft(), { craftState: 'ready' }),
+  [false, '', '', [{ thread: { title: '两个声音在打架', why: '都在说读诗要慢下来。', relations: [], suggest: [['note:smoke_a', 'thought:smoke_b']] } }], false, false, false],
+)
 if (typeof smoke.ExportPanel !== 'function') {
   console.error('FAIL: client module did not expose __smoke.ExportPanel')
   process.exit(1)
@@ -1209,14 +1269,56 @@ function checkJourneys(guards, byLabel, bookDraw) {
   }
   if (byLabel('craft-scoped') && !byLabel('craft-scoped').text.includes('thinkView.backBook')) journeyGuards.push('craft-scoped: 按书过滤时没写明「回到哪本书」')
   // 书页的六段链路块，以及「书已掉出同步窗口」的降级交代。
-  if (bookDraw && !bookDraw.text.includes('chain.title')) guards.push('book: 缺「这本书的读写链路」')
+  if (bookDraw && !bookDraw.text.includes('thread.title')) journeyGuards.push('book: 缺「我的阅读脉络」')
+if (bookDraw && bookDraw.text.includes('chain.title')) journeyGuards.push('book: 六格计数块应该已经退场')
+const threadsDraw = byLabel('book-threads')
+if (!threadsDraw) journeyGuards.push('book-threads: 未渲染')
+else {
+  // 覆盖行的每个数字都来自宿主 coverage，不是前端自己数的。
+  if (!threadsDraw.text.includes('thread.coverage')) journeyGuards.push('book-threads: 缺覆盖行')
+  if (!threadsDraw.text.includes('读诗时我总先要一个画面')) journeyGuards.push('book-threads: 线索标题没渲染')
+  if (!threadsDraw.text.includes('thread.lastAt')) journeyGuards.push('book-threads: 缺生成时间')
+  const records = (threadsDraw.elements || []).filter((item) => item.tag === 'button' && String(item.props.className || '').split(/\s+/).indexOf('wr-thread-record') !== -1)
+  if (records.length === 0) journeyGuards.push('book-threads: 证据没有可点回原文的入口')
+  if (!records.every((item) => typeof item.props.onClick === 'function')) journeyGuards.push('book-threads: 有证据点不回去')
+}
+const threadsResult = byLabel('threads-result')
+if (!threadsResult) journeyGuards.push('threads-result: 未渲染')
+else {
+  if (!threadsResult.text.includes('thread.coverage')) journeyGuards.push('threads-result: 缺覆盖行')
+  if (!threadsResult.text.includes('thread.why')) journeyGuards.push('threads-result: 缺「为什么值得回看」')
+  if (!threadsResult.text.includes('thread.write')) journeyGuards.push('threads-result: 缺「写进作品」')
+  const recordButtons = (threadsResult.elements || []).filter((item) => item.tag === 'button' && String(item.props.className || '').split(/\s+/).indexOf('wr-thread-record') !== -1)
+  if (recordButtons.length === 0) journeyGuards.push('threads-result: 证据没渲染成按钮')
+}
+const threadsEmpty = byLabel('threads-empty')
+if (!threadsEmpty) journeyGuards.push('threads-empty: 未渲染')
+else {
+  if (!threadsEmpty.text.includes('thread.emptyNone')) journeyGuards.push('threads-empty: 没交代「先划一句」')
+  if (threadsEmpty.text.includes('thread.build')) journeyGuards.push('threads-empty: 记录不够却给了梳理按钮')
+  const gates = (threadsEmpty.elements || []).filter((item) => item.tag === 'button' && String(item.props.className || '').indexOf('wr-threads-build') !== -1)
+  if (gates.length !== 0) journeyGuards.push('threads-empty: 门槛没拦住按钮')
+}
+const threadsError = byLabel('threads-error')
+if (!threadsError) journeyGuards.push('threads-error: 未渲染')
+else {
+  if (!threadsError.text.includes('provider rate limited (429)')) journeyGuards.push('threads-error: 没显示真实错误')
+  if (!threadsError.text.includes('think.retry')) journeyGuards.push('threads-error: 没有重试')
+}
+const threadsCapped = byLabel('threads-capped')
+if (!threadsCapped) journeyGuards.push('threads-capped: 未渲染')
+else if (!threadsCapped.text.includes('thread.capped')) journeyGuards.push('threads-capped: 超上限没有提示')
+const threadsSuggest = byLabel('threads-suggest')
+if (!threadsSuggest) journeyGuards.push('threads-suggest: 未渲染')
+else {
+  if (!threadsSuggest.text.includes('thread.suggestTitle')) journeyGuards.push('threads-suggest: 建议对没显示')
+  const adoptButtons = (threadsSuggest.elements || []).filter((item) => item.tag === 'button' && String(item.props.className || '').indexOf('wr-thread-adopt') !== -1)
+  if (adoptButtons.length === 0) journeyGuards.push('threads-suggest: 建议对没有采纳入口')
+  if (!adoptButtons.every((item) => typeof item.props.onClick === 'function')) journeyGuards.push('threads-suggest: 采纳按钮点不动')
+}
   if (bookDraw && !bookDraw.text.includes('synced.at')) guards.push('book: 缺微读更新时间')
-  const degradedDraw = byLabel('book-chain-degraded')
-  if (!degradedDraw) journeyGuards.push('book-chain-degraded: 未渲染')
-  else {
-    if (!degradedDraw.text.includes('chain.cached')) journeyGuards.push('book-chain-degraded: 掉出缓存时没有交代')
-    if (!degradedDraw.text.includes('chain.title')) journeyGuards.push('book-chain-degraded: 缺链路块')
-  }
+  // 1.2.2：六格计数块整块退场，「我的阅读脉络」接手；旧视图不该再被渲染。
+  if (byLabel('book-chain-degraded')) journeyGuards.push('book-chain-degraded: 这个视图应该已经退场')
   // 页脚两个时间各说各话。
   if (byLabel('works') && !byLabel('works').text.includes('synced.craftAt')) journeyGuards.push('works: 缺创作更新时间')
 

@@ -418,16 +418,51 @@ window.__ModuleLoader__.load({
       'work.aiNeedSource': '这一段还没有出处，先挑素材再让它补写',
       'work.aiNoSource': '这一段挂着的出处都找不到了，先补出处再试',
       'work.aiFailed': '没写出来：{error}',
-      'chain.title': '这本书的读写链路',
-      'chain.hint': '点哪一段，就带着这本书去那一段',
-      'chain.notes': '摘录',
-      'chain.thoughts': '想法',
-      'chain.responses': '回应',
-      'chain.materials': '素材',
-      'chain.topics': '选题',
-      'chain.works': '初稿',
-      'chain.cached': '不在书架缓存',
-      'chain.craftDown': '创作数据没读出来，后四段暂时为 0',
+      'thread.title': '我的阅读脉络',
+      'thread.coverage': '本书导入：{chapters} 章 · 划线 {notes} 条 · 想法 {thoughts} 条 · {fullText}',
+      'thread.onlyHighlights': '仅摘录，无全文',
+      'thread.build': '梳理这本书',
+      'thread.rebuild': '重新梳理',
+      'thread.building': '正在读你的记录…',
+      'thread.slow': '记录多的时候会慢一点',
+      'thread.lastAt': '上次 {time}',
+      'thread.more': '还有 {count} 条',
+      'thread.less': '收起',
+      'thread.why': '为什么值得回看',
+      'thread.link': '联系',
+      'thread.write': '写进作品',
+      'thread.source': '回到原文',
+      'thread.empty': '这本书还没有可以串起来的记录。',
+      'thread.emptyNeed': '要形成脉络，至少需要 2 条划线，或者 1 条划线 + 1 条想法。',
+      'thread.emptyNone': '你还没有导入这本书的划线。先去读几页，划一句回来。',
+      'thread.capped': '这次线索多，先看 5 条（还有 {count} 条没放进来）。',
+      'thread.none': '这次没找到能串起来的线索。可以再划几句，或者补一条想法。',
+      'thread.failed': '这次没梳理成（{error}）',
+      'thread.badJson': '回答不是完整的 JSON',
+      'thread.stale': '这本书又有 {count} 条新记录，可以重新梳理。',
+      'thread.gapNoThought': '{chapters} 章有划线但没有想法：{names}',
+      'thread.gapNoChapter': '{count} 条划线没有章节名',
+      'thread.scanned': '这次扫了：{chapters}',
+      'thread.noChapter': '无章节',
+      'thread.noEvidence': '这条线索的对照关系已经被删掉了，重新梳理一次即可。',
+      'thread.needRelation': '还没有确认过的对照关系。可以点「梳理这本书」，它会先提出几条建议；也可以先去某条记录上用「放回书里看」接一对。',
+      'thread.suggestTitle': '建议放一起看',
+      'thread.suggest': '把 {a} 和 {b} 放一起看',
+      'thread.adopt': '采纳',
+      'thread.adopting': '正在存…',
+      'thread.adopted': '已存下这条对照，可以重新梳理了。',
+      'thread.suggestDropped': '这条建议没存下来，刷新后再试。',
+      'thread.suggestReason': '整理阅读脉络时提出的一对记录',
+      'thread.packHead': '这是我在微信读书里读《{title}》（{author}）留下的全部记录：{chapters} 章、{notes} 条划线、{thoughts} 条想法、{responses} 条我采纳过的回应。只有摘录，没有全文。',
+      'thread.packNotes': '划线：',
+      'thread.packThoughts': '想法：',
+      'thread.packResponses': '我采纳过的回应：',
+      'thread.packRelations': '我已经确认过的对照关系（括号里是关系编号）：',
+      'thread.packCut': '（还有 {count} 条没放进来）',
+      'thread.packRule': '请从这些记录里找出 3 到 5 条线索，说明我当时其实在反复追问同一件事。每条都要有：标题（一句具体的问题或观察，不要「关于 X 的思考」这种写法）、为什么值得回看（一句话）、对照关系的编号（只写上面出现过的 rel_ 编号）、联系（这两三句具体怎么接上的，一两句话，不要评价我这个人）。',
+      'thread.packSuggest': '如果发现两条记录明显该放一起看、但还没有对照关系，可以另外提出：suggest 里放一到三对，两端都只写上面出现过的编号。',
+      'thread.packSuggestOnly': '现在还没有任何已确认的对照关系，所以线索只能靠你提出建议对：suggest 里放一到三对，两端都只写上面出现过的编号。',
+      'thread.packJson': '只返回 JSON，不要别的文字：{"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
       'thinkView.title': '留下的回应',
       'thinkView.hint': '对话本身不落盘；只有你采纳的那一句留在这里，并带着出处。',
       'thinkView.empty.title': '这里还空着',
@@ -861,16 +896,51 @@ window.__ModuleLoader__.load({
       'work.aiNeedSource': 'This paragraph has no source yet — pick materials first',
       'work.aiNoSource': 'None of this paragraph’s sources can be found any more — restore them first',
       'work.aiFailed': 'Not written: {error}',
-      'chain.title': "This book's read-write chain",
-      'chain.hint': 'Tap a step to go there with this book',
-      'chain.notes': 'Highlights',
-      'chain.thoughts': 'Thoughts',
-      'chain.responses': 'Answers',
-      'chain.materials': 'Material',
-      'chain.topics': 'Topics',
-      'chain.works': 'Drafts',
-      'chain.cached': 'Not in shelf cache',
-      'chain.craftDown': 'Writing data is unavailable; the last four steps show 0 for now',
+      'thread.title': 'My reading threads',
+      'thread.coverage': 'Imported: {chapters} chapters · {notes} highlights · {thoughts} thoughts · {fullText}',
+      'thread.onlyHighlights': 'highlights only, no full text',
+      'thread.build': 'Read this book together',
+      'thread.rebuild': 'Read it again',
+      'thread.building': 'Reading your records…',
+      'thread.slow': 'Slower when there are many records',
+      'thread.lastAt': 'Last run {time}',
+      'thread.more': '{count} more',
+      'thread.less': 'Collapse',
+      'thread.why': 'Why it is worth going back',
+      'thread.link': 'How they connect',
+      'thread.write': 'Write into a draft',
+      'thread.source': 'Back to the text',
+      'thread.empty': 'Nothing in this book can be threaded together yet.',
+      'thread.emptyNeed': 'A thread needs at least 2 highlights, or 1 highlight + 1 thought.',
+      'thread.emptyNone': 'You have not imported any highlight of this book yet. Read a few pages and highlight a line.',
+      'thread.capped': 'This run found more than five; five are here ({count} left out).',
+      'thread.none': 'No thread came out of this run. Highlight a few more lines, or add one thought.',
+      'thread.failed': 'Could not read it this time ({error})',
+      'thread.badJson': 'the answer was not complete JSON',
+      'thread.stale': '{count} new records in this book — you can read it again.',
+      'thread.gapNoThought': '{chapters} chapters have highlights but no thoughts: {names}',
+      'thread.gapNoChapter': '{count} highlights have no chapter name',
+      'thread.scanned': 'Scanned: {chapters}',
+      'thread.noChapter': 'no chapter',
+      'thread.noEvidence': 'The pairs behind this thread were deleted; read the book again.',
+      'thread.needRelation': 'No confirmed pairs yet. Run “Read this book together” and it will propose a few, or open a record and use “Put it back in the book” first.',
+      'thread.suggestTitle': 'Suggested pairs',
+      'thread.suggest': 'Put {a} and {b} together',
+      'thread.adopt': 'Keep it',
+      'thread.adopting': 'Saving…',
+      'thread.adopted': 'Saved that pair — you can read the book again now.',
+      'thread.suggestDropped': 'That pair was not saved; refresh and try again.',
+      'thread.suggestReason': 'A pair proposed while reading the threads',
+      'thread.packHead': 'These are all the records I kept while reading 《{title}》 ({author}): {chapters} chapters, {notes} highlights, {thoughts} thoughts, {responses} replies I kept. Highlights only, no full text.',
+      'thread.packNotes': 'Highlights:',
+      'thread.packThoughts': 'Thoughts:',
+      'thread.packResponses': 'Replies I kept:',
+      'thread.packRelations': 'Pairs I have already confirmed (the id in brackets is the relation id):',
+      'thread.packCut': '({count} more left out)',
+      'thread.packRule': 'Find 3 to 5 threads in these records that show what I kept circling around. Each thread needs: a title (one concrete question or observation, not “thoughts on X”); why it is worth going back to (one sentence); the relation ids (only the rel_ ids that appear above); how they connect (one or two sentences about what actually links them, do not judge me as a person).',
+      'thread.packSuggest': 'If two records clearly belong together but have no relation yet, propose them separately: one to three pairs in suggest, both ends using only ids that appear above.',
+      'thread.packSuggestOnly': 'There are no confirmed pairs yet, so the threads can only come from pairs you propose: one to three pairs in suggest, both ends using only ids that appear above.',
+      'thread.packJson': 'Return JSON only, nothing else: {"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
       'thinkView.title': 'Kept answers',
       'thinkView.hint': 'Conversations are not saved; only the answer you kept stays here, with its source.',
       'thinkView.empty.title': 'Nothing kept yet',
@@ -1425,6 +1495,32 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-adopt-error{font-size:10.5px;color:var(--dsw-alias-state-error-primary);width:100%}
 .wr-btn[data-active=true]{border-color:var(--wr-moss);color:var(--wr-moss)}
 .wr-modal-body{display:flex;flex-direction:column;gap:10px;padding:4px 1px 8px;min-height:0;overflow:auto}
+.wr-threads{margin:18px 0 0;padding:14px 16px;border:1px solid var(--wr-card-line);border-radius:var(--wr-radius);background:var(--wr-paper-soft)}
+.wr-threads-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wr-threads-head strong{font-size:13.5px;color:var(--wr-ink)}
+.wr-threads-coverage{font-size:11.5px;color:var(--wr-ink-soft)}
+.wr-threads-meta{margin:6px 0 0;font-size:11px;color:var(--wr-ink-mute);display:flex;gap:10px;flex-wrap:wrap}
+.wr-threads-stale{color:var(--wr-clay)}
+.wr-threads-gate{margin:10px 0 0;font-size:12.5px;color:var(--wr-ink-soft);line-height:1.8}
+.wr-threads-loading{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:12px;color:var(--wr-ink-soft)}
+.wr-threads-error{margin:10px 0 0;font-size:12px;color:var(--dsw-alias-state-error-primary);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wr-threads-notice{margin:8px 0 0;font-size:11.5px;color:var(--wr-moss)}
+.wr-thread{display:flex;gap:10px;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--wr-divider)}
+.wr-thread-index{flex:none;width:20px;font-size:11px;color:var(--wr-ink-mute);padding-top:3px}
+.wr-thread-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.wr-thread-title{margin:0;font-size:13.5px;font-weight:600;color:var(--wr-ink);line-height:1.5}
+.wr-thread-why{margin:0;font-size:12.5px;color:var(--wr-ink-soft);line-height:1.7}
+.wr-thread-evidence{display:flex;flex-direction:column;gap:4px}
+.wr-thread-record{appearance:none;text-align:left;background:none;border:1px solid var(--wr-line);border-radius:8px;padding:5px 8px;font:inherit;font-size:11.5px;color:var(--wr-ink-soft);cursor:pointer;line-height:1.6}
+.wr-thread-record:hover{background:var(--wr-wash)}
+.wr-thread-chapter{color:var(--wr-ink-mute)}
+.wr-thread-link{margin:0;font-size:11.5px;color:var(--wr-moss);line-height:1.7}
+.wr-thread-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.wr-thread-suggest{margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--wr-line-2)}
+.wr-thread-suggest-title{margin:0 0 6px;font-size:11.5px;color:var(--wr-ink-mute)}
+.wr-thread-suggest-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--wr-ink-soft);margin:0 0 6px}
+.wr-threads-gaps{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--wr-divider);font-size:11.5px;color:var(--wr-ink-mute);line-height:1.8}
+.wr-threads-more{margin:10px 0 0}
 `
 
     // ------------------------------------------------------------ components
@@ -3493,54 +3589,578 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
     }
 
     /** F-19: the four steps of one book that still have a page, counted where the data lives. */
-    function BookChain(props) {
+/* ---------------------------------------------------------------- threads
+       1.2.2「我的阅读脉络」：一本书读完以后回头看的整体形状，不是「这条能和什么
+       一起看」。证据只走已经确认过的对照关系（threads 里存的是 relationIds），
+       正文 / 章节 / 日期一律在本机渲染，模型只给标题、理由和「这两条该放一起」
+       这样的建议。 */
+
+    const THREAD_LIMIT = 5
+    const THREAD_SUGGEST_LIMIT = 3
+    const THREAD_EMPTY_TITLE = /^(关于.{1,20}的(思考|感想|体会|梳理)|.{1,20}的(几点|一些)(思考|体会|感想)|浅析|浅谈)/
+
+    function threadChapterOf(entry) {
+      const value = entry && (entry.chapterTitle || entry.chapterName)
+      return String(value || '').trim()
+    }
+
+    function threadRecordText(entry, kind) {
+      if (!entry) return ''
+      if (kind === 'thought') return String(entry.content || '')
+      return String(entry.text || '')
+    }
+
+    /** Everything this book has, split by the shape each store uses. */
+    function threadBookPool(data, craft, bookId) {
+      const id = String(bookId || '')
+      const ofBook = (item) => String((item && item.bookId) || '') === id
+      return {
+        notes: (Array.isArray(data && data.notes) ? data.notes : []).filter(ofBook),
+        thoughts: (Array.isArray(data && data.thoughts) ? data.thoughts : []).filter(ofBook),
+        responses: (Array.isArray(craft && craft.responses) ? craft.responses : []).filter(ofBook),
+        relations: (Array.isArray(craft && craft.relations) ? craft.relations : []).filter(ofBook),
+      }
+    }
+
+    function threadChapters(pool) {
+      const chapters = []
+      const add = (value) => {
+        const text = String(value || '').trim()
+        if (text !== '' && chapters.indexOf(text) === -1) chapters.push(text)
+      }
+      ;(pool.notes || []).forEach((note) => add(threadChapterOf(note)))
+      ;(pool.thoughts || []).forEach((thought) => add(threadChapterOf(thought)))
+      return chapters
+    }
+
+    function threadRecordMap(pool) {
+      const map = new Map()
+      for (const note of pool.notes || []) map.set(`note:${note.id}`, { kind: 'note', item: note })
+      for (const thought of pool.thoughts || []) map.set(`thought:${thought.id}`, { kind: 'thought', item: thought })
+      for (const response of pool.responses || []) map.set(`response:${response.id}`, { kind: 'response', item: response })
+      return map
+    }
+
+    /**
+     * One natural-language pack: the whole book by chapter, plus the edges the
+     * reader already confirmed. The closing instruction is what makes a first run
+     * possible on a book with no edges yet — the model may *propose* a pair, but
+     * nothing is written until the reader taps 采纳.
+     */
+    function buildThreadsPack(input) {
+      const book = (input && input.book) || {}
+      const pool = (input && input.pool) || { notes: [], thoughts: [], responses: [], relations: [] }
+      const chapters = threadChapters(pool)
+      const lines = []
+      lines.push(
+        t('thread.packHead', {
+          title: String(book.title || '') || '—',
+          author: String(book.author || '') || '—',
+          chapters: chapters.length,
+          notes: (pool.notes || []).length,
+          thoughts: (pool.thoughts || []).length,
+          responses: (pool.responses || []).length,
+        }),
+      )
+      lines.push('')
+      if ((pool.notes || []).length > 0) {
+        lines.push(t('thread.packNotes'))
+        for (const note of pool.notes.slice(0, 40)) {
+          lines.push(`- (note:${note.id}) ${fmtDate(note.createTime)}《${threadChapterOf(note) || t('thread.noChapter')}》：${clip(note.text, 120)}`)
+        }
+        if (pool.notes.length > 40) lines.push(t('thread.packCut', { count: pool.notes.length - 40 }))
+        lines.push('')
+      }
+      if ((pool.thoughts || []).length > 0) {
+        lines.push(t('thread.packThoughts'))
+        for (const thought of pool.thoughts.slice(0, 24)) {
+          lines.push(`- (thought:${thought.id}) ${fmtDate(thought.createTime)}《${threadChapterOf(thought) || t('thread.noChapter')}》：${clip(thought.content, 120)}`)
+        }
+        if (pool.thoughts.length > 24) lines.push(t('thread.packCut', { count: pool.thoughts.length - 24 }))
+        lines.push('')
+      }
+      if ((pool.responses || []).length > 0) {
+        lines.push(t('thread.packResponses'))
+        for (const response of pool.responses.slice(0, 12)) {
+          lines.push(`- (response:${response.id}) ${fmtDate(response.adoptedAt)}：${clip(response.text, 120)}`)
+        }
+        lines.push('')
+      }
+      if ((pool.relations || []).length > 0) {
+        lines.push(t('thread.packRelations'))
+        for (const relation of pool.relations.slice(0, 40)) {
+          lines.push(`- (${relation.id}) ${relation.from.id} ↔ ${relation.to.id}【${relation.label}】${clip(relation.reason, 100)}`)
+        }
+        lines.push('')
+      }
+      lines.push(t('thread.packRule'))
+      lines.push((pool.relations || []).length > 0 ? t('thread.packSuggest') : t('thread.packSuggestOnly'))
+      lines.push(t('thread.packJson'))
+      return lines.join('\n')
+    }
+
+    /** The model answers with JSON only; a half frame is not worth rendering. */
+    function parseThreadsAnswer(text) {
+      const source = String(text || '')
+      const start = source.indexOf('{')
+      const end = source.lastIndexOf('}')
+      if (start === -1 || end <= start) return { ok: false, threads: [] }
+      let parsed = null
+      try {
+        parsed = JSON.parse(source.slice(start, end + 1))
+      } catch {
+        return { ok: false, threads: [] }
+      }
+      const list = Array.isArray(parsed && parsed.threads) ? parsed.threads : []
+      const threads = []
+      for (const raw of list) {
+        const item = raw && typeof raw === 'object' ? raw : {}
+        const relations = (Array.isArray(item.relations) ? item.relations : [])
+          .map((id) => String(id || '').trim())
+          .filter((id) => id !== '')
+        const suggest = (Array.isArray(item.suggest) ? item.suggest : [])
+          .map((pair) => (Array.isArray(pair) ? [String(pair[0] || '').trim(), String(pair[1] || '').trim()] : null))
+          .filter((pair) => pair !== null && pair[0] !== '' && pair[1] !== '' && pair[0] !== pair[1])
+        threads.push({ title: String(item.title || '').trim(), why: String(item.why || '').trim(), relations, suggest })
+      }
+      return { ok: true, threads }
+    }
+
+    /**
+     * 渲染前校验（与「放回书里看」同一条纪律）：relation 编号必须在本书已存的
+     * 对照里，建议对的两端必须在本次 pack 的记录里；一条证据都没有的线索整条
+     * 丢弃，空标题（「关于…的思考」这类）也丢弃。超过 5 条先截断并告知。
+     */
+    function validateThreads(input, pool) {
+      const relationIds = new Set((pool.relations || []).map((item) => String(item.id)))
+      const records = new Set()
+      for (const note of pool.notes || []) records.add(`note:${note.id}`)
+      for (const thought of pool.thoughts || []) records.add(`thought:${thought.id}`)
+      for (const response of pool.responses || []) records.add(`response:${response.id}`)
+      const seen = new Set()
+      const threads = []
+      let dropped = 0
+      for (const raw of Array.isArray(input) ? input : []) {
+        const title = String((raw && raw.title) || '').trim()
+        if (title === '' || THREAD_EMPTY_TITLE.test(title)) {
+          dropped += 1
+          continue
+        }
+        const relations = (raw.relations || []).filter((id) => relationIds.has(id))
+        const suggest = []
+        for (const pair of raw.suggest || []) {
+          if (!records.has(pair[0]) || !records.has(pair[1])) continue
+          const key = `${pair[0]}|${pair[1]}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          suggest.push([pair[0], pair[1]])
+          if (suggest.length >= THREAD_SUGGEST_LIMIT) break
+        }
+        if (relations.length === 0 && suggest.length === 0) {
+          dropped += 1
+          continue
+        }
+        threads.push({ title, why: String((raw && raw.why) || '').trim(), relations, suggest })
+      }
+      const kept = threads.slice(0, THREAD_LIMIT)
+      return { threads: kept, dropped, overflow: Math.max(0, threads.length - kept.length) }
+    }
+
+    /** 一条线索里的证据：关系 → 两端记录，正文一律本地取。 */
+    function threadEvidence(thread, relationById, recordById) {
+      const rows = []
+      for (const id of thread.relationIds || []) {
+        const relation = relationById.get(String(id))
+        if (!relation) continue
+        // Relationships store bare ids; the record map is keyed by 编号 (kind:id),
+        // so the two ends resolve through their kind, never by bare id alone.
+        const from = relation.from ? recordById.get(`${relation.from.kind}:${relation.from.id}`) || null : null
+        const to = relation.to ? recordById.get(`${relation.to.kind}:${relation.to.id}`) || null : null
+        if (!from && !to) continue
+        rows.push({ id: String(id), label: relation.label, reason: relation.reason, from, to })
+      }
+      return rows
+    }
+
+    function BookThreads(props) {
       const book = props.book || {}
+      const data = props.data || {}
       const craft = props.craft || EMPTY_CRAFT
-      const craftState = props.craftState || 'ready'
-      const index = (Array.isArray(craft.bookIndex) ? craft.bookIndex : []).find((row) => String(row.bookId) === String(book.bookId))
-      const host = index && index.counts ? index.counts : null
-      const byBook = (list) =>
-        (Array.isArray(list) ? list : []).filter((item) => String(item.bookId || '') === String(book.bookId || '')).length
-      const pick = (key, list) => (host && typeof host[key] === 'number' ? host[key] : byBook(list))
-      // 素材 / 选题 left the interface in 1.2.2, so the chain no longer counts them:
-      // a step you cannot walk to is not a step.
-      const rows = [
-        ['notes', Number(book.noteCount) || 0, 'chain.notes'],
-        ['thoughts', Number(book.reviewCount) || 0, 'chain.thoughts'],
-        ['responses', pick('responses', craft.responses), 'chain.responses'],
-        ['works', pick('works', craft.works), 'chain.works'],
-      ]
-      const cached = index ? index.cached !== false : true
-      return h(
-        'div',
-        { className: 'wr-chain' },
-        h(
-          'div',
-          { className: 'wr-chain-head' },
-          h('strong', null, t('chain.title')),
-          h('span', { className: 'wr-muted' }, t('chain.hint')),
-          craftState !== 'ready' ? h('span', { className: 'wr-degraded' }, t('craft.offline')) : null,
-          cached ? null : h('span', { className: 'wr-degraded' }, t('chain.cached')),
-        ),
-        h(
-          'div',
-          { className: 'wr-chain-row' },
-          rows.map(([id, count, labelKey]) =>
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const [notice, setNotice] = useState('')
+      const [suggests, setSuggests] = useState([])
+      const [adopting, setAdopting] = useState('')
+      const [saving, setSaving] = useState('')
+      const [expand, setExpand] = useState(false)
+
+      const pool = useMemo(() => threadBookPool(data, craft, book.bookId), [data, craft, book.bookId])
+      const chapters = useMemo(() => threadChapters(pool), [pool])
+      const recordById = useMemo(() => threadRecordMap(pool), [pool])
+      const relationById = useMemo(() => {
+        const map = new Map()
+        for (const relation of pool.relations) map.set(String(relation.id), relation)
+        return map
+      }, [pool])
+      const rows = useMemo(() => {
+        const list = (Array.isArray(craft.threads) ? craft.threads : []).filter((item) => String(item.bookId) === String(book.bookId))
+        return list.slice().sort((left, right) => (Number(right.updatedAt) || 0) - (Number(left.updatedAt) || 0))
+      }, [craft.threads, book.bookId])
+      const snapshot = rows[0] || null
+      const coverage = snapshot && snapshot.coverage ? snapshot.coverage : null
+      // The gate is the one number we must compute locally: without it there is no
+      // button, and without a button there is no first run. It is never rendered as
+      // a coverage claim — the card only ever prints the host's numbers.
+      const enough = pool.notes.length >= 2 || (pool.notes.length >= 1 && pool.thoughts.length >= 1)
+      const stale = coverage
+        ? Math.abs(Number(coverage.notes) - pool.notes.length) + Math.abs(Number(coverage.thoughts) - pool.thoughts.length)
+        : 0
+      const gaps = useMemo(() => {
+        const thoughtChapters = new Set(pool.thoughts.map(threadChapterOf).filter((item) => item !== ''))
+        const counts = new Map()
+        for (const note of pool.notes) {
+          const chapter = threadChapterOf(note)
+          if (chapter === '') continue
+          counts.set(chapter, (counts.get(chapter) || 0) + 1)
+        }
+        const missing = Array.from(counts.keys()).filter((chapter) => !thoughtChapters.has(chapter))
+        const lines = []
+        if (missing.length > 0) {
+          const names = missing.slice(0, 3).map((chapter) => `《${chapter}》`).join('')
+          lines.push(t('thread.gapNoThought', { chapters: missing.length, names }))
+        }
+        const noChapter = pool.notes.filter((note) => threadChapterOf(note) === '').length
+        if (noChapter > 0) lines.push(t('thread.gapNoChapter', { count: noChapter }))
+        return lines.slice(0, 2)
+      }, [pool])
+
+      // threads.save replaces the whole set for one book, so the caller must hand
+      // over the complete list — never "existing plus new", which would grow past
+      // the host's five-thread limit on the second run.
+      const saveRows = async (list) => {
+        const outgoing = (list || []).map((row) => ({
+          ...(row.id ? { id: row.id } : {}),
+          title: row.title,
+          why: row.why || '',
+          relationIds: (row.relationIds || []).slice(),
+        }))
+        await props.write('threads.save', { bookId: book.bookId, threads: outgoing })
+      }
+      const rowsOut = () => rows.map((row) => ({ id: row.id, title: row.title, why: row.why, relationIds: (row.relationIds || []).slice() }))
+
+      const generate = async () => {
+        if (busy || !enough || typeof props.write !== 'function') return
+        setBusy(true)
+        setError('')
+        setNotice('')
+        setSuggests([])
+        let text = ''
+        let failed = ''
+        try {
+          await streamChat({ pack: buildThreadsPack({ book, pool, data }), question: '', mode: 'threads', history: [] }, (event) => {
+            if (!event) return
+            if (event.type === 'text' && typeof event.text === 'string') text += event.text
+            if (event.type === 'error') failed = String(event.message || event.error || '')
+          })
+        } catch (issue) {
+          failed = String((issue && issue.message) || issue || '')
+        }
+        if (failed !== '') {
+          setBusy(false)
+          setError(failed)
+          return
+        }
+        const parsed = parseThreadsAnswer(text)
+        if (!parsed.ok) {
+          setBusy(false)
+          setError(t('thread.badJson'))
+          return
+        }
+        const checked = validateThreads(parsed.threads, pool)
+        const ready = checked.threads.filter((item) => item.relations.length > 0)
+        const pending = checked.threads.filter((item) => item.relations.length === 0)
+        if (ready.length > 0) {
+          try {
+            await saveRows(ready.map((item) => ({ title: item.title, why: item.why, relationIds: item.relations })))
+          } catch (issue) {
+            setBusy(false)
+            setError(String((issue && issue.message) || issue || ''))
+            return
+          }
+        }
+        setSuggests(pending.map((item) => ({ thread: item })))
+        if (checked.overflow > 0) setNotice(t('thread.capped', { count: checked.overflow }))
+        else if (ready.length === 0 && pending.length === 0) setNotice(t('thread.none'))
+        setBusy(false)
+      }
+
+      // Cold start: a proposed pair only becomes an edge when the reader taps it.
+      const adopt = async (entry, pair) => {
+        if (adopting !== '' || typeof props.write !== 'function') return
+        setAdopting(`${pair[0]}|${pair[1]}`)
+        setError('')
+        try {
+          const result = await props.write('relation.add', {
+            from: relateEndOf(pair[0]),
+            to: relateEndOf(pair[1]),
+            label: '待核实',
+            reason: entry.thread.why || t('thread.suggestReason'),
+            bookId: book.bookId,
+            origin: 'ai',
+          })
+          // /craft answers { revision, created:{ relation }, craft } — the new edge is
+          // one level down, and a dropped pair simply has no created.relation.
+          const id = result && result.created && result.created.relation ? String(result.created.relation.id || '') : ''
+          if (id !== '') {
+            // Merge into the current set: the new edge joins this thread (or starts
+            // it), and every other thread stays exactly as it was.
+            const next = rowsOut()
+            const twin = next.find((row) => row.title === entry.thread.title)
+            if (twin) twin.relationIds = Array.from(new Set(twin.relationIds.concat([id])))
+            else next.push({ title: entry.thread.title, why: entry.thread.why, relationIds: [id] })
+            // The adopted thread goes first: at the five-thread ceiling it is the one
+            // that must survive the trim, not the oldest one.
+            const adoptedRow = next.find((row) => row.title === entry.thread.title)
+            const ordered = adoptedRow ? [adoptedRow].concat(next.filter((row) => row !== adoptedRow)) : next
+            await saveRows(ordered.slice(0, THREAD_LIMIT))
+            setSuggests((list) => list.filter((item) => item !== entry))
+            setNotice(t('thread.adopted'))
+          } else {
+            setNotice(t('thread.suggestDropped'))
+          }
+        } catch (issue) {
+          setError(String((issue && issue.message) || issue || ''))
+        }
+        setAdopting('')
+      }
+
+      const writeIntoWork = async (thread, evidence) => {
+        if (saving !== '' || typeof props.write !== 'function') return
+        setSaving(String(thread.id || thread.title))
+        setError('')
+        const sourceIds = []
+        for (const row of evidence) {
+          for (const end of [row.from, row.to]) {
+            if (!end) continue
+            const id = `${end.kind}:${end.item.id}`
+            if (sourceIds.indexOf(id) === -1) sourceIds.push(id)
+          }
+        }
+        const lines = [String(thread.title || '')]
+        if (thread.why) lines.push('', String(thread.why))
+        for (const row of evidence) {
+          const left = row.from ? threadRecordText(row.from.item, row.from.kind) : ''
+          const right = row.to ? threadRecordText(row.to.item, row.to.kind) : ''
+          const pair = [left, right].filter((item) => item !== '').map((item) => `「${clip(item, 60)}」`).join(' ↔ ')
+          if (pair !== '') lines.push('', pair)
+          if (row.reason) lines.push(String(row.reason))
+        }
+        try {
+          await props.write('work.add', {
+            title: clip(String(thread.title || t('nav.works')), 40),
+            paragraphs: [
+              {
+                text: lines.join('\n'),
+                sourceIds,
+                ai: true,
+                aiOriginIds: [`thread:${String(thread.id || '')}`],
+              },
+            ],
+          })
+          if (typeof props.onSwitchToWorks === 'function') props.onSwitchToWorks()
+        } catch (issue) {
+          setError(String((issue && issue.message) || issue || ''))
+        }
+        setSaving('')
+      }
+
+      const coverageText = coverage
+        ? t('thread.coverage', {
+            chapters: (coverage.chapters || []).length,
+            notes: Number(coverage.notes) || 0,
+            thoughts: Number(coverage.thoughts) || 0,
+            fullText: coverage.hasFullText === true ? t('thread.onlyHighlights') : t('thread.onlyHighlights'),
+          })
+        : ''
+
+      const renderEvidence = (thread) =>
+        threadEvidence(thread, relationById, recordById).map((row) =>
+          h(
+            'div',
+            { className: 'wr-thread-evidence', key: `${thread.id}:${row.id}` },
+            row.from
+              ? h(
+                  'button',
+                  {
+                    className: 'wr-thread-record',
+                    type: 'button',
+                    'data-kind': row.from.kind,
+                    title: String(row.from.item.id),
+                    onClick: () => {
+                      if (typeof props.onOpenSource === 'function') props.onOpenSource(`${row.from.kind}:${row.from.item.id}`)
+                    },
+                  },
+                  h('span', { className: 'wr-thread-chapter' }, `《${threadChapterOf(row.from.item) || t('thread.noChapter')}》`),
+                  h('span', { className: 'wr-thread-text' }, clip(threadRecordText(row.from.item, row.from.kind), 80)),
+                )
+              : null,
+            row.to
+              ? h(
+                  'button',
+                  {
+                    className: 'wr-thread-record',
+                    type: 'button',
+                    'data-kind': row.to.kind,
+                    title: String(row.to.item.id),
+                    onClick: () => {
+                      if (typeof props.onOpenSource === 'function') props.onOpenSource(`${row.to.kind}:${row.to.item.id}`)
+                    },
+                  },
+                  h('span', { className: 'wr-thread-chapter' }, `《${threadChapterOf(row.to.item) || t('thread.noChapter')}》`),
+                  h('span', { className: 'wr-thread-text' }, clip(threadRecordText(row.to.item, row.to.kind), 80)),
+                )
+              : null,
+            row.reason ? h('div', { className: 'wr-thread-link' }, `${t('thread.link')}：${row.reason}`) : null,
+            h('span', { className: 'wr-tag' }, row.label),
+          ),
+        )
+
+      const renderThread = (thread, index) => {
+        const evidence = threadEvidence(thread, relationById, recordById)
+        return h(
+          'article',
+          { className: 'wr-thread', key: String(thread.id || index) },
+          h('h4', { className: 'wr-thread-title' }, `${fmtCount(index + 1)} · ${thread.title}`),
+          thread.why ? h('p', { className: 'wr-thread-why' }, `${t('thread.why')}：${thread.why}`) : null,
+          evidence.length === 0 ? h('p', { className: 'wr-muted' }, t('thread.noEvidence')) : h('div', { className: 'wr-thread-body' }, renderEvidence(thread)),
+          h(
+            'div',
+            { className: 'wr-thread-actions' },
             h(
               'button',
-              {
-                key: id,
-                className: 'wr-chain-step',
-                type: 'button',
-                'data-empty': count > 0 ? 'false' : 'true',
-                onClick: () => props.onJump(id),
-              },
-              h('span', { className: 'wr-chain-count' }, fmtCount(count)),
-              h('span', { className: 'wr-chain-label' }, t(labelKey)),
+              { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: evidence.length === 0 || saving !== '', onClick: () => void writeIntoWork(thread, evidence) },
+              t('thread.write'),
+            ),
+            evidence.length > 0 && evidence[0].from
+              ? h(
+                  'button',
+                  {
+                    className: 'wr-btn wr-btn-ghost',
+                    type: 'button',
+                    onClick: () => {
+                      if (typeof props.onOpenSource === 'function') props.onOpenSource(`${evidence[0].from.kind}:${evidence[0].from.item.id}`)
+                    },
+                  },
+                  t('thread.source'),
+                )
+              : null,
+          ),
+        )
+      }
+
+      const renderSuggest = (entry) => {
+        const allowed = (entry.thread.suggest || []).slice(0, THREAD_SUGGEST_LIMIT)
+        return h(
+          'div',
+          { className: 'wr-thread-suggest', key: `suggest:${entry.thread.title}` },
+          h('div', { className: 'wr-thread-suggest-head' }, h('strong', null, t('thread.suggestTitle')), h('span', { className: 'wr-muted' }, entry.thread.title)),
+          allowed.map((pair) =>
+            h(
+              'div',
+              { className: 'wr-thread-suggest-row', key: `${pair[0]}|${pair[1]}` },
+              h('span', { className: 'wr-thread-suggest-text' }, t('thread.suggest', { a: threadPairLabel(pair[0], recordById), b: threadPairLabel(pair[1], recordById) })),
+              h(
+                'button',
+                {
+                  className: 'wr-btn wr-btn-ghost wr-thread-adopt',
+                  type: 'button',
+                  disabled: adopting !== '',
+                  onClick: () => void adopt(entry, pair),
+                },
+                adopting === `${pair[0]}|${pair[1]}` ? t('thread.adopting') : t('thread.adopt'),
+              ),
             ),
           ),
+        )
+      }
+
+      const visible = expand ? rows : rows.slice(0, 3)
+
+      return h(
+        'section',
+        { className: 'wr-threads', 'data-empty': rows.length === 0 ? 'true' : 'false' },
+        h(
+          'div',
+          { className: 'wr-threads-head' },
+          h('strong', null, t('thread.title')),
+          coverage ? h('span', { className: 'wr-threads-coverage' }, coverageText) : null,
+          h('div', { className: 'wr-toolbar-fill' }),
+          enough
+            ? h(
+                'button',
+                { className: 'wr-btn wr-btn-ghost wr-threads-build', type: 'button', disabled: busy || typeof props.write !== 'function', onClick: () => void generate() },
+                busy ? t('thread.building') : rows.length > 0 ? t('thread.rebuild') : t('thread.build'),
+              )
+            : null,
+        ),
+        snapshot
+          ? h(
+              'div',
+              { className: 'wr-threads-meta' },
+              h('span', { className: 'wr-muted' }, t('thread.lastAt', { time: fmtDateTime(snapshot.updatedAt) })),
+              stale > 0 ? h('span', { className: 'wr-threads-stale' }, t('thread.stale', { count: stale })) : null,
+            )
+          : null,
+        busy ? h('div', { className: 'wr-threads-loading' }, h('span', { className: 'wr-spinner' }), h('span', null, t('thread.building')), h('span', { className: 'wr-muted' }, t('thread.slow'))) : null,
+        error
+          ? h(
+              'div',
+              { className: 'wr-adopt-error' },
+              h('span', null, t('thread.failed', { error })),
+              h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: () => void generate() }, t('think.retry')),
+            )
+          : null,
+        notice ? h('p', { className: 'wr-threads-notice' }, notice) : null,
+        !enough
+          ? h(
+              'div',
+              { className: 'wr-threads-gate' },
+              h('strong', null, t('thread.empty')),
+              h('p', null, t('thread.emptyNeed')),
+              pool.notes.length === 0 ? h('p', { className: 'wr-muted' }, t('thread.emptyNone')) : null,
+            )
+          : null,
+        enough && rows.length === 0 && !busy && pool.relations.length === 0 && suggests.length === 0
+          ? h('p', { className: 'wr-threads-hint' }, t('thread.needRelation'))
+          : null,
+        visible.map(renderThread),
+        rows.length > 3
+          ? h('button', { className: 'wr-btn wr-btn-ghost wr-threads-more', type: 'button', onClick: () => setExpand(!expand) }, expand ? t('thread.less') : t('thread.more', { count: rows.length - 3 }))
+          : null,
+        suggests.map(renderSuggest),
+        h(
+          'div',
+          { className: 'wr-threads-gaps' },
+          chapters.length > 0 ? h('span', { className: 'wr-muted' }, t('thread.scanned', { chapters: chapters.slice(0, 6).map((item) => `《${item}》`).join('') })) : null,
+          gaps.map((line) => h('span', { className: 'wr-threads-gap', key: line }, line)),
         ),
       )
+    }
+
+        /** 建议对是编号字符串（note:x），关系端点要的是 {kind,id}。 */
+    function relateEndOf(value) {
+      const text = String(value === undefined || value === null ? '' : value)
+      const at = text.indexOf(':')
+      if (at <= 0) return null
+      return { kind: text.slice(0, at), id: text.slice(at + 1) }
+    }
+
+function threadPairLabel(id, recordById) {
+      const hit = recordById.get(String(id))
+      if (!hit) return String(id)
+      const chapter = threadChapterOf(hit.item)
+      const text = clip(threadRecordText(hit.item, hit.kind), 24)
+      return `${chapter === '' ? '' : `《${chapter}》`}${text}`
     }
 
     /** THINK keeps only what was adopted; the conversation itself is never stored. */
@@ -4786,15 +5406,16 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             book.intro ? h('p', { className: 'wr-notice', style: { maxHeight: '80px', overflow: 'auto' } }, book.intro) : null,
           ),
         ),
-        // F-19: the six steps of this one book, so the page says where the
-        // reading has actually gone instead of only listing highlights.
-        h(BookChain, {
-          book: Object.assign({}, book, { noteCount: notes.length, reviewCount: thoughts.length }),
+        // 1.2.2: the six-step counter became 「我的阅读脉络」. A count says how
+        // many; threads say which few are worth going back to.
+        h(BookThreads, {
+          book,
+          data,
           craft: props.craft,
           craftState: props.craftState,
-          onJump: (kind) => {
-            if (typeof props.onChainJump === 'function') props.onChainJump(book.bookId, kind)
-          },
+          write: props.onWrite,
+          onOpenSource: props.onOpenSource,
+          onSwitchToWorks: props.onSwitchToWorks,
         }),
         h(
           'div',
@@ -5448,22 +6069,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         setScopeBookId(String(bookId || ''))
         setView(nextView)
       }
-      // Any journey can be entered from one book and come back to it.
-      const chainJump = (bookId, kind) => {
-        if (kind === 'notes' || kind === 'thoughts') {
-          openBookById(bookId, kind)
-          return
-        }
-        openCraftView(kind, bookId)
-      }
-      const draftFromTopic = (topic) => {
-        craftWrite('work.add', { title: clip(String(topic.statement || ''), 48) })
-          .then(() => {
-            setScopeBookId('')
-            setView('works')
-          })
-          .catch(() => {})
-      }
       // F3: every source chip walks back to the asset it names — an excerpt or a
       // thought opens the book it sits in, a kept reply opens in THINK. Materials
       // are retired from the interface, so their chips stay inert (see SourceTags).
@@ -5611,7 +6216,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           focusId: sourceFocus.current,
           craft,
           craftState,
-          onChainJump: chainJump,
+          onWrite: craftWrite,
+          onOpenSource: openSource,
+          onSwitchToWorks: () => {
+            setScopeBookId(activeBook.bookId)
+            setView('works')
+          },
           onBack: () => { setView('shelf'); setActiveBookId('') },
         })
       } else if (view === 'shelf') {
@@ -5781,7 +6391,15 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         THINK_LIMITS,
         JourneyBar,
         SubNav,
-        BookChain,
+        BookThreads,
+        buildThreadsPack,
+        parseThreadsAnswer,
+        validateThreads,
+        threadBookPool,
+        threadEvidence,
+        threadPairLabel,
+        THREAD_LIMIT,
+        THREAD_SUGGEST_LIMIT,
         ResponseList,
         WorkBoard,
         GrowTimeline,
