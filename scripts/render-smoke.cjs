@@ -473,9 +473,9 @@ renderPanel('book-chain-degraded', seeds({
     bookIndex: [{ bookId: anyBook.bookId, bookTitle: anyBook.title, author: '', counts: { responses: 0, materials: 0, topics: 0, works: 0 }, cached: false }],
   }),
 }))
-// F-28 外观：默认不挂 data-palette（跟随 DSH），显式选了才挂，不认识的值回落默认。
+// F-28 外观：没有「跟随 DSH」这一档了 —— 没设置（或写了不认识的名字）就渲染默认的 glacier。
 const paletteState = (palette) => Object.assign({}, statePayload, { palette })
-renderPanel('palette-follow', seeds({ view: 'overview', state: paletteState('') }))
+renderPanel('palette-default', seeds({ view: 'overview', state: paletteState('') }))
 renderPanel('palette-night', seeds({ view: 'overview', state: paletteState('night') }))
 renderPanel('palette-unknown', seeds({ view: 'overview', state: paletteState('neon-bogus') }))
 
@@ -800,30 +800,57 @@ if (askAnswer && !askAnswer.text.includes('ask.adoptHint')) askGuards.push('ask-
 const askBusy = byLabel0('ask-busy')
 if (askBusy && !askBusy.text.includes('think.thinking')) askGuards.push('ask-busy: 等待态缺提示')
 
-// F1：宿主没有可用模型时，四个胶囊与发送键必须已经置灰并说明原因，
-// 而不是等读者按下发送再去读一个 400。这里先把探测结果置为 offline，
-// 渲染一张「已经写了字」的卡片——此时唯一能解释 disabled 的就是离线。
-if (typeof smoke.forgetChatProbe === 'function' && smoke.chatAvailability) {
-  smoke.chatAvailability.state = 'offline'
-  renderStandalone('ask-offline', smoke.AskCard, { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} }, [[], '写点什么', false, '', '', ''])
-  smoke.chatAvailability.state = 'unknown'
-  const offlineDraw = byLabel0('ask-offline')
-  if (!offlineDraw) askGuards.push('ask-offline: 未渲染')
+// 预检已经拆掉：入口永远可点，失败由真实请求给出错误 + 一次重试。
+// 这里渲染「已经失败过一轮」的卡片：错误原文与重试按钮都在，四个胶囊与发送键都不置灰。
+renderStandalone(
+  'ask-error',
+  smoke.AskCard,
+  { pack: packText, entry: thoughtBase, kind: 'thought', question: '', anchor: { x: 40, y: 120 }, onClose() {} },
+  [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '' }], '写点什么', false, 'provider rate limited (429)', '', ''],
+)
+{
+  const errorDraw = byLabel0('ask-error')
+  if (!errorDraw) askGuards.push('ask-error: 未渲染')
   else {
-    const elements = offlineDraw.elements || []
+    const elements = errorDraw.elements || []
     const chips = elements.filter((el) => String(el.props.className || '').indexOf('wr-ask-chip') >= 0)
     const sends = elements.filter((el) => String(el.props.className || '') === 'wr-ask-send')
-    const reasons = elements.filter((el) => String(el.props.className || '') === 'wr-ask-offline')
-    if (chips.length < 4) askGuards.push(`ask-offline: 只有 ${chips.length} 个胶囊`)
-    else if (!chips.every((el) => el.props.disabled === true)) askGuards.push('ask-offline: 无模型时胶囊没有置灰（F1）')
-    if (sends.length === 0) askGuards.push('ask-offline: 找不到发送键')
-    else if (!sends.every((el) => el.props.disabled === true)) askGuards.push('ask-offline: 无模型时发送键没有置灰（F1）')
-    if (reasons.length === 0) askGuards.push('ask-offline: 置灰没有给出原因（F1）')
-    if (!offlineDraw.text.includes('think.offline')) askGuards.push('ask-offline: 缺原因文案 think.offline')
+    const retries = elements.filter((el) => String(el.props.className || '') === 'wr-ask-retry')
+    if (chips.length < 4) askGuards.push(`ask-error: 只有 ${chips.length} 个胶囊`)
+    else if (chips.some((el) => el.props.disabled === true)) askGuards.push('ask-error: 出错后胶囊被置灰（入口不该不可点）')
+    if (sends.length === 0) askGuards.push('ask-error: 找不到发送键')
+    else if (!sends.every((el) => el.props.disabled === false)) askGuards.push('ask-error: 出错后发送键被置灰')
+    if (!errorDraw.text.includes('provider rate limited (429)')) askGuards.push('ask-error: 没有显示真实错误原文')
+    if (retries.length !== 1) askGuards.push(`ask-error: 重试按钮数量是 ${retries.length}`)
+    else if (retries[0].tag !== 'button' || typeof retries[0].props.onClick !== 'function')
+      askGuards.push('ask-error: 重试按钮不可点')
+    if (errorDraw.text.includes('wr-ask-offline')) askGuards.push('ask-error: 不该再有置灰提示条')
+    // 就地展开：卡片只是记录卡里的普通块，不再按视口坐标浮起来。
+    const card = elements.find((el) => String(el.props.className || '') === 'wr-ask')
+    if (!card) askGuards.push('ask-error: 找不到对话卡根节点')
+    else {
+      if (card.props['data-inline'] !== 'true') askGuards.push('ask-error: 对话卡没有就地展开标记（data-inline）')
+      if (card.props.style !== undefined) askGuards.push('ask-error: 对话卡还带着浮层定位的内联坐标')
+    }
   }
-} else {
-  askGuards.push('client module 未暴露 chatAvailability/forgetChatProbe（F1 无法探针）')
 }
+// 布局只能从样式表看：.wr-ask 必须是文档流里的块，且自带 max-height + 内部滚动。
+const askCssBlock = (() => {
+  const at = code.indexOf('.wr-ask{')
+  if (at < 0) return ''
+  const end = code.indexOf('}', at)
+  return end > at ? code.slice(at, end) : ''
+})()
+if (askCssBlock === '') {
+  askGuards.push('CSS: 找不到 .wr-ask 规则')
+} else {
+  if (askCssBlock.indexOf('position:fixed') >= 0) askGuards.push('CSS: .wr-ask 还是 position:fixed 浮层')
+  if (askCssBlock.indexOf('position:relative') < 0) askGuards.push('CSS: .wr-ask 不在文档流里（缺 position:relative）')
+  if (askCssBlock.indexOf('max-height') < 0) askGuards.push('CSS: .wr-ask 没有 max-height，长回答会把输入框顶出屏幕')
+  if (askCssBlock.indexOf('max-width:480px') < 0) askGuards.push('CSS: .wr-ask 的宽度上限不是 480px')
+}
+if (code.indexOf('askPosition') >= 0) askGuards.push('CSS: 还在按视口坐标摆卡片（askPosition 未删）')
+if (code.indexOf("request('/chat/models')") >= 0) askGuards.push('预检: 客户端还在请求 /chat/models')
 
 // F3：段落、回应、素材、选题上的来源 chip 都要能点回原物（带出处定位）。
 const worksDraw = byLabel0('works')
@@ -870,9 +897,9 @@ if (typeof smoke.ParagraphAI === 'function') {
     titleOf: () => aiMaterial.bookTitle,
     onAdopt: () => Promise.resolve(),
   }
-  renderStandalone('paragraph-ai', smoke.ParagraphAI, aiProps, ['ready', true, 'done', '秩序感先给画面，再给判断。', '', false])
-  renderStandalone('paragraph-ai-offline', smoke.ParagraphAI, aiProps, ['offline', false, '', '', '', false])
-  renderStandalone('paragraph-ai-nosource', smoke.ParagraphAI, Object.assign({}, aiProps, { sourceIds: [] }), ['ready', false, '', '', '', false])
+  renderStandalone('paragraph-ai', smoke.ParagraphAI, aiProps, [true, 'done', '秩序感先给画面，再给判断。', '', false])
+  renderStandalone('paragraph-ai-error', smoke.ParagraphAI, aiProps, [true, 'error', '', 'provider rate limited (429)', false])
+  renderStandalone('paragraph-ai-nosource', smoke.ParagraphAI, Object.assign({}, aiProps, { sourceIds: [] }), [false, '', '', '', false])
   const aiDraw = byLabel0('paragraph-ai')
   if (!aiDraw) paragraphGuards.push('paragraph-ai: 未渲染')
   else {
@@ -885,13 +912,16 @@ if (typeof smoke.ParagraphAI === 'function') {
     const keeps = (aiDraw.elements || []).filter((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiAdopt')
     if (keeps.length === 0) paragraphGuards.push('paragraph-ai: 草稿没有「采纳」出口')
   }
-  const aiOffline = byLabel0('paragraph-ai-offline')
-  if (!aiOffline) paragraphGuards.push('paragraph-ai-offline: 未渲染')
+  const aiError = byLabel0('paragraph-ai-error')
+  if (!aiError) paragraphGuards.push('paragraph-ai-error: 未渲染')
   else {
-    const triggers = (aiOffline.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
-    if (triggers.length === 0) paragraphGuards.push('paragraph-ai-offline: 缺入口')
-    else if (!triggers.every((el) => el.props.disabled === true)) paragraphGuards.push('paragraph-ai-offline: 无模型时入口没有置灰（F-23）')
-    if (!aiOffline.text.includes('think.offline')) paragraphGuards.push('paragraph-ai-offline: 置灰没有说明原因')
+    const triggers = (aiError.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    if (triggers.length === 0) paragraphGuards.push('paragraph-ai-error: 缺入口')
+    else if (triggers.some((el) => el.props.disabled === true)) paragraphGuards.push('paragraph-ai-error: 失败后入口被置灰（预检已拆，入口该一直可点）')
+    if (!aiError.text.includes('provider rate limited (429)')) paragraphGuards.push('paragraph-ai-error: 没有显示真实错误原文')
+    const retries = (aiError.elements || []).filter((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiRetry')
+    if (retries.length === 0) paragraphGuards.push('paragraph-ai-error: 失败后没有重试按钮')
+    else if (typeof retries[0].props.onClick !== 'function') paragraphGuards.push('paragraph-ai-error: 重试按钮不可点')
   }
   const aiNoSource = byLabel0('paragraph-ai-nosource')
   if (!aiNoSource) paragraphGuards.push('paragraph-ai-nosource: 未渲染')
@@ -905,7 +935,7 @@ if (typeof smoke.ParagraphAI === 'function') {
   paragraphGuards.push('client module 未暴露 ParagraphAI')
 }
 
-// F-28 外观：设置里只有一支选择器，七个选项，选中的那套写进根节点 data-palette。
+// F-28 外观：只有一支选择器、五套预设，默认就是 glacier（没有「跟随 DSH」这一档）。
 // SettingsModal 的 useState 顺序：key, maxBooks, notesPerBook, busy, message, dir, dataMessage, pending, busyData
 const paletteGuards = []
 if (typeof smoke.SettingsModal !== 'function') {
@@ -922,16 +952,18 @@ if (typeof smoke.SettingsModal !== 'function') {
   const settingsDraw = byLabel0('settings-palette')
   if (!settingsDraw) paletteGuards.push('settings-palette: 未渲染')
   else {
-    for (const needle of ['appearance.title', 'appearance.hint', 'appearance.follow', 'appearance.night'])
+    for (const needle of ['appearance.title', 'appearance.hint', 'appearance.glacier', 'appearance.night'])
       if (!settingsDraw.text.includes(needle)) paletteGuards.push('settings-palette: 缺 ' + needle)
+    for (const gone of ['appearance.follow', 'appearance.cream'])
+      if (settingsDraw.text.includes(gone)) paletteGuards.push('settings-palette: 退役选项又出现了 —— ' + gone)
     const selects = (settingsDraw.elements || []).filter((el) => el.tag === 'select' && String(el.props.className || '').indexOf('wr-palette-select') >= 0)
     if (selects.length !== 1) paletteGuards.push(`settings-palette: 期望 1 支外观选择器，实际 ${selects.length}`)
     else {
       const options = (settingsDraw.elements || []).filter((el) => el.tag === 'option')
       const values = [...new Set(options.map((el) => el.props.value))]
-      const expected = ['follow', 'mint', 'night', 'cream', 'mist', 'glacier', 'iris']
+      const expected = ['glacier', 'mint', 'night', 'mist', 'iris']
       if (values.length !== expected.length || expected.some((name) => values.indexOf(name) < 0))
-        paletteGuards.push(`settings-palette: 选项不是七套（${values.join(',')}）`)
+        paletteGuards.push(`settings-palette: 选项不是五套（${values.join(',')}）`)
       if (selects[0].props.value !== 'night') paletteGuards.push('settings-palette: 选择器没跟着 state.palette 走')
       if (typeof selects[0].props.onChange !== 'function') paletteGuards.push('settings-palette: 选择器不可选')
     }
@@ -944,23 +976,28 @@ const paletteOf = smoke.paletteOf
 if (typeof paletteOf !== 'function') paletteGuards.push('client module 未暴露 paletteOf')
 else {
   if (paletteOf('night') !== 'night') paletteGuards.push('paletteOf: 认不出 night')
-  if (paletteOf('neon-bogus') !== 'follow') paletteGuards.push('paletteOf: 未知值没有回落 follow')
-  if (paletteOf(undefined) !== 'follow') paletteGuards.push('paletteOf: 缺省不是 follow')
+  if (paletteOf('neon-bogus') !== 'glacier') paletteGuards.push('paletteOf: 未知值没有回落 glacier')
+  if (paletteOf(undefined) !== 'glacier') paletteGuards.push('paletteOf: 缺省不是 glacier')
+  if (paletteOf('cream') !== 'glacier') paletteGuards.push('paletteOf: 退役的 cream 没有回落到 glacier')
+  if (paletteOf('follow') !== 'glacier') paletteGuards.push('paletteOf: 退役的 follow 没有回落到 glacier')
 }
 const rootOf = (label) => {
   const draw = byLabel0(label)
   if (!draw) return null
   return (draw.elements || []).find((el) => String(el.props.className || '') === 'wr-root') || null
 }
-const followRoot = rootOf('palette-follow')
-if (!followRoot) paletteGuards.push('palette-follow: 没找到根节点')
-else if (followRoot.props['data-palette'] !== undefined) paletteGuards.push('palette-follow: 跟随 DSH 时不该挂 data-palette')
+const defaultRoot = rootOf('palette-default')
+if (!defaultRoot) paletteGuards.push('palette-default: 没找到根节点')
+else if (defaultRoot.props['data-palette'] !== 'glacier') paletteGuards.push('palette-default: 没设置时根节点不是 glacier')
 const nightRoot = rootOf('palette-night')
 if (!nightRoot) paletteGuards.push('palette-night: 没找到根节点')
 else if (nightRoot.props['data-palette'] !== 'night') paletteGuards.push('palette-night: 根节点没有 data-palette=night')
 const unknownRoot = rootOf('palette-unknown')
 if (!unknownRoot) paletteGuards.push('palette-unknown: 没找到根节点')
-else if (unknownRoot.props['data-palette'] !== undefined) paletteGuards.push('palette-unknown: 未知配色没有回落 follow')
+else if (unknownRoot.props['data-palette'] !== 'glacier') paletteGuards.push('palette-unknown: 未知配色没有回落 glacier')
+// 样式表里不许再留 cream 的 token 块（整套退役），也不许再出现 follow 这个状态。
+if (code.indexOf('.wr-root[data-palette="cream"]') >= 0) paletteGuards.push('CSS: cream 的 token 块还在')
+if (code.indexOf("data-palette', name") >= 0 && code.indexOf("=== 'follow' ? {}") >= 0) paletteGuards.push('CSS: 跟随 DSH 的分支还在')
 
 // 四段旅程：二层导航、六个内页、三个空/失败态、书页链路块。
 // 这里只声明断言队列，真正的求值放到 guards 初始化之后（checkJourneys）。

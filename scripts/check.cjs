@@ -61,8 +61,10 @@ if (!guardOk || guardCalls < 1) process.exitCode = 1
 
 if (!bucketOk || !usesGroup) process.exitCode = 1
 
-// 8) 配色（F-28）：客户端与宿主认同六套色板，且每套都写全了同一组 token。
+// 8) 配色（F-28）：客户端与宿主认同五套色板，且每套都写全了同一组 token。
 //    少一个 token 不会报错，只会在那套配色下悄悄用上一套的颜色 —— 所以在这里卡住。
+//    `cream` 与「跟随 DSH」都已退役：前者整套删掉，后者不再是一个可选状态（默认就是 glacier），
+//    任何一个名字若又出现在名单或样式块里，说明有人把旧方案搬回来了。
 const PALETTE_TOKENS = [
   '--wr-bg', '--wr-paper', '--wr-paper-soft', '--wr-wash', '--wr-ink', '--wr-ink-soft', '--wr-ink-mute',
   '--wr-line', '--wr-line-2', '--wr-card-line', '--wr-divider', '--wr-surface', '--wr-scrim',
@@ -73,8 +75,7 @@ const PALETTE_TOKENS = [
 ]
 const clientPalettes = [...client.matchAll(/const PALETTES = \[([^\]]*)\]/g)]
   .map((m) => [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]))
-  .filter((list) => list.length > 0)
-  .map((list) => list.filter((name) => name !== 'follow'))[0] || []
+  .filter((list) => list.length > 0)[0] || []
 const hostPalettes = (() => {
   const block = host.match(/const PALETTES = \[([^\]]*)\]/)
   return block ? [...block[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]) : []
@@ -92,12 +93,19 @@ const baseBlock = (() => {
 })()
 const tokenGaps = []
 for (const token of PALETTE_TOKENS) {
-  if (!baseBlock.includes(`${token}:`)) tokenGaps.push(`follow:${token}`)
+  if (!baseBlock.includes(`${token}:`)) tokenGaps.push(`base:${token}`)
   for (const name of clientPalettes) {
     if (!blockOf(name).includes(`${token}:`)) tokenGaps.push(`${name}:${token}`)
   }
 }
+// 退役名字回潮（`cream` 整套、`follow` 这个状态）必须在这里红，而不是等到界面里点出来。
+const retired = []
+for (const name of ['cream', 'follow']) {
+  if (clientPalettes.indexOf(name) >= 0 || hostPalettes.indexOf(name) >= 0) retired.push(`list:${name}`)
+  if (client.indexOf(`data-palette="${name}"`) >= 0) retired.push(`css:${name}`)
+}
+if (client.indexOf("'appearance.cream'") >= 0 || client.indexOf("'appearance.follow'") >= 0) retired.push('locale')
 const palettesAligned = clientPalettes.length > 0 && clientPalettes.join(',') === hostPalettes.join(',')
-console.log('[palette] client=%s host=%s aligned=%s tokenGaps=%s',
-  clientPalettes.join(',') || 'none', hostPalettes.join(',') || 'none', palettesAligned, tokenGaps.slice(0, 8).join(',') || 'none')
-if (!palettesAligned || tokenGaps.length > 0) process.exitCode = 1
+console.log('[palette] client=%s host=%s aligned=%s tokenGaps=%s retired=%s',
+  clientPalettes.join(',') || 'none', hostPalettes.join(',') || 'none', palettesAligned, tokenGaps.slice(0, 8).join(',') || 'none', retired.join(',') || 'none')
+if (!palettesAligned || tokenGaps.length > 0 || retired.length > 0) process.exitCode = 1

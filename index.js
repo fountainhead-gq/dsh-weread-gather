@@ -26,16 +26,17 @@ const MAX_NOTEBOOK_PAGES = 30
 const MAX_SHELF_BOOKS = 400
 const DEFAULT_MAX_BOOKS = 60
 /**
- * F-28: the six palettes the panel can paint itself in. `''` means "follow DSH", which is
- * stored as *no field at all* so an untouched config looks exactly like it always did.
+ * F-28: the five palettes the panel can paint itself in. Glacier is the default, not a separate
+ * "follow DSH" mode: the panel owns its paper look, and a missing/invalid value has to render
+ * something predictable, so `normalizePalette` always answers with one of these names.
  * The values are the ones documented in docs/backlog.md §2.5 — the client owns the colours,
  * this list only decides what is legal to persist.
  */
-const PALETTES = ['mint', 'night', 'cream', 'mist', 'glacier', 'iris']
-/** Anything that is not one of the six is `''`, i.e. "follow DSH" — never a guess. */
+const PALETTES = ['glacier', 'mint', 'night', 'mist', 'iris']
+/** Anything that is not one of the five becomes `glacier` — never a guess, never an empty state. */
 function normalizePalette(value) {
   const name = typeof value === 'string' ? value.trim() : ''
-  return PALETTES.indexOf(name) >= 0 ? name : ''
+  return PALETTES.indexOf(name) >= 0 ? name : 'glacier'
 }
 const DEFAULT_NOTES_PER_BOOK = 200
 const THOUGHT_PAGE_SIZE = 50
@@ -1119,13 +1120,9 @@ function createHost(options) {
 
   function saveConfig(patch) {
     const next = { ...config, ...patch }
-    // `palette` is never written as an empty/invalid value: "follow DSH" is the absence of the
-    // field, so an unknown value falls back to the default look instead of pinning junk.
-    if ('palette' in patch) {
-      const palette = normalizePalette(patch.palette)
-      if (palette === '') delete next.palette
-      else next.palette = palette
-    }
+    // `palette` is always stored as one of the five real names: there is no "follow DSH" state
+    // any more, so an unknown/legacy value is written back as `glacier` rather than as junk.
+    if ('palette' in patch) next.palette = normalizePalette(patch.palette)
     config = next
     writeJsonFile(configPath, config)
   }

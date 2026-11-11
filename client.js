@@ -208,12 +208,10 @@ window.__ModuleLoader__.load({
       'settings.restored': '已恢复 {files} 个文件',
       'settings.version': '版本 {version}',
       'appearance.title': '外观',
-      'appearance.hint': '只在书房面板生效，改完立刻应用；跟随 DSH 就是现在的样子。',
+      'appearance.hint': '只在书房面板生效，改完立刻应用；默认是冰川。',
       'appearance.sessionOnly': '这次已经换上了，但没能写进配置文件，下次打开会还原。',
-      'appearance.follow': '跟随 DSH',
       'appearance.mint': '苔纸（mint）',
       'appearance.night': '夜读（night）',
-      'appearance.cream': '米色（cream）',
       'appearance.mist': '雾青（mist）',
       'appearance.glacier': '冰川（glacier）',
       'appearance.iris': '鸢尾（iris）',
@@ -247,7 +245,7 @@ window.__ModuleLoader__.load({
       'think.empty': '想问什么？点上面的按钮，问题会先填进输入框，改完再发。',
       'think.thinking': '思考中…',
       'think.aiNote': 'AI 生成，仅供参考',
-      'think.offline': '未配置可用模型，AI 对话暂时置灰；去设置里填 API Key 后重试',
+      'think.retry': '再试一次',
       'think.mode.explain': '解释',
       'think.mode.reframe': '换角度',
       'think.mode.deeper': '深想',
@@ -618,12 +616,10 @@ window.__ModuleLoader__.load({
       'settings.restored': 'Restored {files} files',
       'settings.version': 'Version {version}',
       'appearance.title': 'Appearance',
-      'appearance.hint': 'Applies to this panel only, and takes effect immediately. “Follow DSH” is the look you already have.',
+      'appearance.hint': 'Applies to this panel only and takes effect immediately. Glacier is the default.',
       'appearance.sessionOnly': 'Applied for now, but it could not be written to the config file, so it will revert next time.',
-      'appearance.follow': 'Follow DSH',
       'appearance.mint': 'Mint paper',
       'appearance.night': 'Night',
-      'appearance.cream': 'Cream',
       'appearance.mist': 'Mist',
       'appearance.glacier': 'Glacier',
       'appearance.iris': 'Iris',
@@ -655,7 +651,7 @@ window.__ModuleLoader__.load({
       'think.empty': 'Pick a button above — the question lands in the box so you can edit it first.',
       'think.thinking': 'Thinking…',
       'think.aiNote': 'AI-generated, for reference',
-      'think.offline': 'No usable model is configured, so chat is greyed out; add an API key in Settings and retry',
+      'think.retry': 'Try again',
       'think.mode.explain': 'Explain',
       'think.mode.reframe': 'Reframe',
       'think.mode.deeper': 'Go deeper',
@@ -889,59 +885,6 @@ window.__ModuleLoader__.load({
     const apiCraftWrite = (op, payload, revision) => jsonPost('/craft', revision === undefined || revision === null ? { op, payload } : { op, payload, revision })
     const apiCraftExport = (id, mode) => jsonPost('/craft/export', { kind: 'work', id, mode })
 
-    // ---------------------------------------------------------- chat probe
-    /**
-     * F1: whether this host can talk to a model at all is a fact we ask for up
-     * front, not something the reader should discover by pressing a button and
-     * reading a 400. One probe is shared by every AI entry point, and a failed
-     * probe counts as "no model here" — a dead endpoint must not look clickable.
-     */
-    const chatAvailability = { state: 'unknown' }
-    const chatWatchers = new Set()
-    let chatProbe = null
-    function setChatAvailability(next) {
-      chatAvailability.state = next
-      chatWatchers.forEach((notify) => {
-        try {
-          notify(next)
-        } catch (issue) {
-          /* a stale component must never break the probe */
-        }
-      })
-    }
-    function probeChat() {
-      if (chatProbe) return chatProbe
-      chatProbe = request('/chat/models')
-        .then((payload) => {
-          const providers = payload && Array.isArray(payload.providers) ? payload.providers : []
-          const usable = Boolean(payload && payload.available) && providers.length > 0
-          setChatAvailability(usable ? 'ready' : 'offline')
-          return chatAvailability.state
-        })
-        .catch(() => {
-          setChatAvailability('offline')
-          return chatAvailability.state
-        })
-      return chatProbe
-    }
-    /** Settings may add a key later, so the answer is allowed to change. */
-    function forgetChatProbe() {
-      chatProbe = null
-      setChatAvailability('unknown')
-      return probeChat()
-    }
-    function useChatAvailability() {
-      const [value, setValue] = useState(chatAvailability.state)
-      useEffect(() => {
-        chatWatchers.add(setValue)
-        if (chatAvailability.state === 'unknown') probeChat()
-        return () => {
-          chatWatchers.delete(setValue)
-        }
-      }, [])
-      return value
-    }
-
     // ---------------------------------------------------------------- craft
     /** First element is the exact value the host stores; the second is the locale key. */
     const MATERIAL_TYPES = [
@@ -954,29 +897,28 @@ window.__ModuleLoader__.load({
     ]
     // ---------------------------------------------------------------- palette
     /**
-     * F-28: the seven options the Appearance section offers. `follow` means "whatever DSH already
-     * gives us", which is exactly how the panel looked before this feature existed, so every config
-     * that never wrote `palette` keeps its old look.
+     * F-28: the five palettes the Appearance section offers. Glacier is the default, not a
+     * separate "follow the host" mode: the panel has its own paper look, and following the host
+     * only made the colours change under the reader's feet when DSH switched theme. So a config
+     * with no `palette` (or with a stale/unknown one) renders glacier, and every value still
+     * accepted here — including the retired `cream` name — lands on a real palette.
      */
-    const PALETTES = ['follow', 'mint', 'night', 'cream', 'mist', 'glacier', 'iris']
+    const PALETTES = ['glacier', 'mint', 'night', 'mist', 'iris']
     const PALETTE_KEYS = {
-      follow: 'appearance.follow',
+      glacier: 'appearance.glacier',
       mint: 'appearance.mint',
       night: 'appearance.night',
-      cream: 'appearance.cream',
       mist: 'appearance.mist',
-      glacier: 'appearance.glacier',
       iris: 'appearance.iris',
     }
-    /** Anything the host (or an older build) hands us that is not one of the six becomes `follow`. */
+    /** Anything the host (or an older build) hands us that is not one of the five becomes `glacier`. */
     function paletteOf(value) {
       const name = String(value == null ? '' : value).trim()
-      return Object.prototype.hasOwnProperty.call(PALETTE_KEYS, name) ? name : 'follow'
+      return Object.prototype.hasOwnProperty.call(PALETTE_KEYS, name) ? name : 'glacier'
     }
-    /** Only the six explicit palettes become a CSS attribute; `follow` leaves the root untouched. */
+    /** The root always carries the palette it is painting in, so there is no "unstyled" state. */
     function paletteAttr(value) {
-      const name = paletteOf(value)
-      return name === 'follow' ? {} : { 'data-palette': name }
+      return { 'data-palette': paletteOf(value) }
     }
 
     const EMPTY_CRAFT = { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
@@ -1078,7 +1020,6 @@ window.__ModuleLoader__.load({
    data-view 的房间底色，所以这段必须排在上面两行之后。 */
 .wr-root[data-palette="mint"]{--wr-scrim:rgba(45,60,48,.34);--wr-bg:#f2f1e9;--wr-paper:#fbfaf5;--wr-paper-soft:#fbfaf5;--wr-wash:#dce7d4;--wr-ink:#20251f;--wr-ink-soft:#586251;--wr-ink-mute:#586251;--wr-accent:#718469;--wr-accent-deep:#253d2c;--wr-sage:#718469;--wr-moss:#253d2c;--wr-clay:#344e35;--wr-clay-soft:#dce7d4;--wr-info:#476260;--wr-info-soft:#e0e8e1;--wr-gold:#73613a;--wr-progress:#718469;--wr-track:#dce7d4;--wr-line:#b6c0ad;--wr-line-2:#b6c0ad;--wr-card-line:#b6c0ad;--wr-divider:#b6c0ad;--wr-surface:#fbfaf5;--wr-on-accent:#FFFFFF;--wr-glow:#FFFFFF;--wr-heat-0:#DCE7D4;--wr-heat-1:#A5B4A2;--wr-heat-2:#778A78;--wr-heat-3:#4A5F4E;--wr-heat-4:#253D2C;--wr-radius:3px}
 .wr-root[data-palette="night"]{--wr-bg:#0c1117;--wr-scrim:rgba(4,7,10,.66);--wr-paper:#141b24;--wr-paper-soft:#141b24;--wr-wash:#202b35;--wr-ink:#e7ebe8;--wr-ink-soft:#a6b2b6;--wr-ink-mute:#a6b2b6;--wr-accent:#83b6a5;--wr-accent-deep:#b7bce5;--wr-sage:#83b6a5;--wr-moss:#b7bce5;--wr-clay:#b7c5ab;--wr-clay-soft:#28362d;--wr-info:#b3bcdf;--wr-info-soft:#252b42;--wr-gold:#d4bf8c;--wr-progress:#83b6a5;--wr-track:#202b35;--wr-line:#33404e;--wr-line-2:#33404e;--wr-card-line:#33404e;--wr-divider:#33404e;--wr-surface:#141b24;--wr-on-accent:#0c1117;--wr-glow:#141b24;--wr-heat-0:#202B35;--wr-heat-1:#3E5557;--wr-heat-2:#567773;--wr-heat-3:#6F9A8F;--wr-heat-4:#83B6A5;--wr-radius:10px}
-.wr-root[data-palette="cream"]{--wr-scrim:rgba(45,60,48,.34);--wr-bg:#efe9d8;--wr-paper:#f9f4e5;--wr-paper-soft:#f9f4e5;--wr-wash:#e7e0c7;--wr-ink:#36382a;--wr-ink-soft:#655f4b;--wr-ink-mute:#655f4b;--wr-accent:#8c9a67;--wr-accent-deep:#4a5738;--wr-sage:#8c9a67;--wr-moss:#4a5738;--wr-clay:#a26347;--wr-clay-soft:#efddca;--wr-info:#667365;--wr-info-soft:#e3e6d6;--wr-gold:#92713f;--wr-progress:#8c9a67;--wr-track:#e7e0c7;--wr-line:#d3cbb2;--wr-line-2:#d3cbb2;--wr-card-line:#d3cbb2;--wr-divider:#d3cbb2;--wr-surface:#f9f4e5;--wr-on-accent:#FFFFFF;--wr-glow:#FFFFFF;--wr-heat-0:#E7E0C7;--wr-heat-1:#B8B79C;--wr-heat-2:#919578;--wr-heat-3:#697255;--wr-heat-4:#4A5738;--wr-radius:14px}
 .wr-root[data-palette="mist"]{--wr-scrim:rgba(45,60,48,.34);--wr-bg:#f6f9f8;--wr-paper:#FFFFFF;--wr-paper-soft:#FFFFFF;--wr-wash:#eaf3ee;--wr-ink:#22362f;--wr-ink-soft:#5e7068;--wr-ink-mute:#5e7068;--wr-accent:#75aa96;--wr-accent-deep:#287e68;--wr-sage:#75aa96;--wr-moss:#287e68;--wr-clay:#477d70;--wr-clay-soft:#eaf3ee;--wr-info:#507782;--wr-info-soft:#edf3f6;--wr-gold:#8c734a;--wr-progress:#75aa96;--wr-track:#eaf3ee;--wr-line:#e0e9e4;--wr-line-2:#e0e9e4;--wr-card-line:#e0e9e4;--wr-divider:#e0e9e4;--wr-surface:#FFFFFF;--wr-on-accent:#FFFFFF;--wr-glow:#FFFFFF;--wr-heat-0:#EAF3EE;--wr-heat-1:#B0D0C6;--wr-heat-2:#7FB3A4;--wr-heat-3:#4F9583;--wr-heat-4:#287E68;--wr-radius:10px}
 .wr-root[data-palette="glacier"]{--wr-scrim:rgba(45,60,48,.34);--wr-bg:#f5f8fc;--wr-paper:#FFFFFF;--wr-paper-soft:#FFFFFF;--wr-wash:#eaf1f8;--wr-ink:#28364a;--wr-ink-soft:#607086;--wr-ink-mute:#607086;--wr-accent:#8ba9c5;--wr-accent-deep:#456f9e;--wr-sage:#8ba9c5;--wr-moss:#456f9e;--wr-clay:#5f7e9b;--wr-clay-soft:#eaf1f8;--wr-info:#557ba5;--wr-info-soft:#eaf1f9;--wr-gold:#917652;--wr-progress:#8ba9c5;--wr-track:#eaf1f8;--wr-line:#e0e7f0;--wr-line-2:#e0e7f0;--wr-card-line:#e0e7f0;--wr-divider:#e0e7f0;--wr-surface:#FFFFFF;--wr-on-accent:#FFFFFF;--wr-glow:#FFFFFF;--wr-heat-0:#EAF1F8;--wr-heat-1:#B9CADD;--wr-heat-2:#8FAAC7;--wr-heat-3:#6689B0;--wr-heat-4:#456F9E;--wr-radius:10px}
 .wr-root[data-palette="iris"]{--wr-scrim:rgba(45,60,48,.34);--wr-bg:#f8f8fc;--wr-paper:#FFFFFF;--wr-paper-soft:#FFFFFF;--wr-wash:#efedf7;--wr-ink:#353348;--wr-ink-soft:#6c6980;--wr-ink-mute:#6c6980;--wr-accent:#a69cbd;--wr-accent-deep:#7863a0;--wr-sage:#a69cbd;--wr-moss:#7863a0;--wr-clay:#85759d;--wr-clay-soft:#efedf7;--wr-info:#746b9b;--wr-info-soft:#eeedf7;--wr-gold:#927755;--wr-progress:#a69cbd;--wr-track:#efedf7;--wr-line:#e5e2ef;--wr-line-2:#e5e2ef;--wr-card-line:#e5e2ef;--wr-divider:#e5e2ef;--wr-surface:#FFFFFF;--wr-on-accent:#FFFFFF;--wr-glow:#FFFFFF;--wr-heat-0:#EFEDF7;--wr-heat-1:#CBC4DD;--wr-heat-2:#AEA1C7;--wr-heat-3:#907FB1;--wr-heat-4:#7863A0;--wr-radius:10px}
@@ -1243,7 +1184,7 @@ window.__ModuleLoader__.load({
 .wr-think-go:hover{background:var(--wr-moss);color:var(--wr-on-accent);border-color:var(--wr-moss);filter:brightness(1.04)}
 .wr-think-msg{margin-top:6px;font-size:11px;line-height:1.5;color:var(--wr-ink-mute)}
 .wr-think[data-open=true]{opacity:1}
-.wr-ask{position:fixed;z-index:60;display:flex;flex-direction:column;max-height:min(72vh,640px);background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;box-shadow:0 18px 48px color-mix(in srgb, var(--wr-ink) 16%, transparent),0 2px 8px color-mix(in srgb, var(--wr-ink) 6%, transparent);overflow:hidden}
+.wr-ask{position:relative;margin-top:10px;width:100%;max-width:480px;display:flex;flex-direction:column;max-height:min(72vh,640px);background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;box-shadow:0 1px 2px color-mix(in srgb, var(--wr-ink) 6%, transparent);overflow:hidden}
 .wr-ask-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--wr-divider)}
 .wr-ask-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;min-width:0;flex:1}
 .wr-ask-kind{font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft)}
@@ -1262,14 +1203,16 @@ window.__ModuleLoader__.load({
 .wr-ask-msg[data-role=user]{align-self:flex-end;padding:7px 11px;border-radius:12px 12px 4px 12px;background:var(--wr-wash);color:var(--wr-ink)}
 .wr-ask-msg[data-role=assistant]{align-self:flex-start;padding:2px 0;color:var(--wr-ink)}
 .wr-ask-typing{color:var(--wr-ink-mute);font-size:11.5px}
-.wr-ask-error{margin:0 14px;padding:7px 10px;border-radius:10px;background:color-mix(in srgb, var(--dsw-alias-state-error) 10%, var(--wr-paper-soft));color:var(--dsw-alias-state-error);font-size:11.5px;line-height:1.5}
+.wr-ask-error{display:flex;align-items:center;gap:8px;justify-content:space-between;margin:0 14px;padding:7px 10px;border-radius:10px;background:color-mix(in srgb, var(--dsw-alias-state-error) 10%, var(--wr-paper-soft));color:var(--dsw-alias-state-error);font-size:11.5px;line-height:1.5}
+.wr-ask-error-text{flex:1;min-width:0}
+.wr-ask-retry{appearance:none;flex:none;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:11px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer}
+.wr-ask-retry:disabled{opacity:.5;cursor:default}
 .wr-ask-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 14px 8px;border-top:1px solid var(--wr-divider)}
 .wr-ask-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:9px 12px;min-height:52px;max-height:132px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
 .wr-ask-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
 .wr-ask-send{appearance:none;flex:none;align-self:flex-end;border:1px solid var(--wr-moss);background:var(--wr-moss);color:var(--wr-on-accent);font:inherit;font-size:11.5px;line-height:1;padding:9px 14px;border-radius:999px;cursor:pointer}
 .wr-ask-send:disabled{opacity:.45;cursor:default}
 .wr-ask-note{padding:0 14px 10px;font-size:10px;line-height:1.4;color:var(--wr-ink-mute)}
-.wr-ask-offline{margin:8px 14px 0;padding:6px 9px;border:1px solid var(--wr-line-2);border-radius:8px;background:var(--wr-wash);font-size:11px;line-height:1.5;color:var(--wr-ink-soft)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
 .wr-copy{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;flex:none;opacity:0;transition:opacity .14s ease,color .14s ease,border-color .14s ease}
@@ -2471,25 +2414,13 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       }
     }
 
+    /** 卡片的最大宽度；窄屏时由 CSS 的 max-width:100% 兜住，不再按视口坐标摆放。 */
     const ASK_WIDTH = 480
 
-    /** Where the card sits: just under the buttons, or above them near the bottom edge. */
-    function askPosition(anchor) {
-      const viewportW = typeof window !== 'undefined' ? window.innerWidth : 1200
-      const viewportH = typeof window !== 'undefined' ? window.innerHeight : 900
-      const width = Math.min(ASK_WIDTH, Math.max(300, viewportW - 28))
-      const x = Math.min(Math.max(8, (anchor && anchor.x) || 40), Math.max(8, viewportW - width - 12))
-      const y = (anchor && anchor.y) || 120
-      if (viewportH - y < 400) {
-        return { left: `${x}px`, bottom: `${Math.max(8, viewportH - y + 10)}px`, width: `${width}px` }
-      }
-      return { left: `${x}px`, top: `${y + 10}px`, width: `${width}px` }
-    }
-
     /**
-     * The conversation card that opens right where the reader is. The card it
-     * belongs to stays visible, so the question and the passage are on screen
-     * together; × closes it and the turns leave with it.
+     * The conversation card that opens right where the reader is. It is a normal
+     * block inside the record card, right under the buttons that opened it: a long
+     * answer only makes the page taller, it never covers the passage above.
      */
     /* The writing side belongs to the study, but the ask card needs exactly two
        things from it: somewhere to write, and a way to read the craft snapshot.
@@ -2611,14 +2542,14 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const [error, setError] = useState('')
       const [model, setModel] = useState('')
       const [active, setActive] = useState('')
-      // F1: an entry the host cannot serve is greyed before it is pressed.
-      const chat = useChatAvailability()
-      const offline = chat === 'offline'
+      // 不再预检 /chat/models：两个 AI 入口发的是同一个请求体，探不到模型不等于用不了，
+      // 预检只会把能用的入口误判成不能用。入口永远可点，失败由真实请求给出可读错误 + 一次重试。
       const abortRef = useRef(null)
       const bodyRef = useRef(null)
       const inputRef = useRef(null)
       const touchedRef = useRef(false)
       const turnsRef = useRef([])
+      const lastQuestionRef = useRef('')
       // The last answer with any text in it is what an adoption can keep.
       const lastAnswer = (() => {
         for (let at = messages.length - 1; at >= 0; at -= 1) {
@@ -2655,14 +2586,11 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         })
       }
 
-      const send = (raw) => {
-        const question = String(raw || '').trim()
-        if (question === '' || busy) return
-        setDraft('')
+      // 一次请求：send（新问题）与 retry（重发上一条）共用，重试时不会把同一个问题再说一遍。
+      const run = (question, history) => {
         setError('')
         setBusy(true)
-        setMessages((prev) => prev.concat([{ role: 'user', text: question }, { role: 'assistant', text: '' }]))
-        const history = turnsRef.current.slice(-6)
+        setMessages((prev) => prev.concat([{ role: 'assistant', text: '' }]))
         const controller = typeof AbortController === 'function' ? new AbortController() : null
         abortRef.current = controller
         let answer = ''
@@ -2692,6 +2620,28 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             abortRef.current = null
             turnsRef.current = turnsRef.current.concat([{ question, answer }]).slice(-6)
           })
+      }
+
+      const send = (raw) => {
+        const question = String(raw || '').trim()
+        if (question === '' || busy) return
+        setDraft('')
+        lastQuestionRef.current = question
+        setMessages((prev) => prev.concat([{ role: 'user', text: question }]))
+        run(question, turnsRef.current.slice(-6))
+      }
+
+      // 失败后只给一次重试：丢掉上一轮的半截回答，用同一个问题和同一段 history 再问一次。
+      // 不给重试的话，模型 429 这类一次性失败会逼读者从头再打一遍问题。
+      const retry = () => {
+        const question = lastQuestionRef.current
+        if (question === '' || busy) return
+        setMessages((prev) => {
+          const next = prev.slice()
+          while (next.length > 0 && next[next.length - 1].role === 'assistant') next.pop()
+          return next
+        })
+        run(question, turnsRef.current.slice(-6))
       }
 
       // 打开时只把问题放进输入框，让读者先改再发；一旦他自己动过输入框，就不再覆盖。
@@ -2728,7 +2678,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         'div',
         {
           className: 'wr-ask',
-          style: askPosition(props.anchor),
+          // 就地展开：卡片是记录卡里的普通文档流元素，长回答只把页面撑高，不再浮在按钮上面。
+          'data-inline': 'true',
           onClick: stop,
           onKeyDown: (event) => {
             if (event && event.key === 'Escape') close()
@@ -2769,7 +2720,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                 key: id,
                 type: 'button',
                 'data-on': active === id ? 'true' : 'false',
-                disabled: busy || offline,
+                disabled: busy,
                 onClick: (event) => {
                   stop(event)
                   fillMode(id, askKey)
@@ -2784,7 +2735,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
               className: 'wr-ask-chip',
               type: 'button',
               'data-on': active === 'custom' ? 'true' : 'false',
-              disabled: offline,
+              disabled: busy,
               onClick: (event) => {
                 stop(event)
                 setActive('custom')
@@ -2810,7 +2761,27 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           ),
         ),
         h(AskAdopt, { answer: lastAnswer, entry: props.entry, kind: props.kind, model }),
-        error === '' ? null : h('div', { className: 'wr-ask-error' }, `${t('error.prefix')}${error}`),
+        // 请求真的失败了才说话：错误原文 + 一次重试，不靠预检猜「能不能用」。
+        error === ''
+          ? null
+          : h(
+              'div',
+              { className: 'wr-ask-error' },
+              h('span', { className: 'wr-ask-error-text' }, `${t('error.prefix')}${error}`),
+              h(
+                'button',
+                {
+                  className: 'wr-ask-retry',
+                  type: 'button',
+                  disabled: busy,
+                  onClick: (event) => {
+                    stop(event)
+                    retry()
+                  },
+                },
+                t('think.retry'),
+              ),
+            ),
         h(
           'div',
           { className: 'wr-ask-foot' },
@@ -2836,8 +2807,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             {
               className: 'wr-ask-send',
               type: 'button',
-              disabled: busy || offline || draft.trim() === '',
-              title: offline ? t('think.offline') : undefined,
+              disabled: busy || draft.trim() === '',
               onClick: (event) => {
                 stop(event)
                 send(draft)
@@ -2846,7 +2816,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             busy ? t('think.thinking') : t('think.send'),
           ),
         ),
-        offline ? h('div', { className: 'wr-ask-offline' }, t('think.offline')) : null,
         h('div', { className: 'wr-ask-note' }, model === '' ? t('think.aiNote') : `${t('think.aiNote')} · ${model}`),
       )
     }
@@ -3742,7 +3711,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
      * streams, and a failed turn leaves no half paragraph behind.
      */
     function ParagraphAI(props) {
-      const chat = useChatAvailability()
       const [open, setOpen] = useState(false)
       const [stage, setStage] = useState('')
       const [draft, setDraft] = useState('')
@@ -3750,11 +3718,11 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const [busy, setBusy] = useState(false)
       const abortRef = useRef(null)
       const originRef = useRef('')
-      const offline = chat === 'offline'
       const sourceIds = Array.isArray(props.sourceIds) ? props.sourceIds : []
       const hasSource = sourceIds.length > 0
-      const disabled = offline || !hasSource || stage === 'running'
-      const title = !hasSource ? t('work.aiNeedSource') : offline ? t('think.offline') : t('work.aiWriteHint')
+      // 入口只在「没有出处」时禁用：有没有模型由真实请求说了算，不预检、不提前置灰。
+      const disabled = !hasSource || stage === 'running'
+      const title = !hasSource ? t('work.aiNeedSource') : t('work.aiWriteHint')
 
       const run = () => {
         if (disabled) return
@@ -3849,7 +3817,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           { className: 'wr-btn wr-btn-ghost wr-ai-trigger', type: 'button', disabled, title, onClick: run },
           t('work.aiWrite'),
         ),
-        !hasSource || offline ? h('span', { className: 'wr-ai-hint' }, title) : null,
+        !hasSource ? h('span', { className: 'wr-ai-hint' }, title) : null,
         open
           ? h(
               'div',
@@ -5188,7 +5156,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         const name = paletteOf(value)
         if (paletteOf(state.palette) === name) return
         if (typeof props.onPalette === 'function') props.onPalette(name)
-        const saved = await save({ palette: name === 'follow' ? '' : name }, false)
+        // 五套都是实体配色，没有「空值 = 跟随宿主」这一档，所以总是写回一个具体名字。
+        const saved = await save({ palette: name }, false)
         if (!saved) setMessage(t('appearance.sessionOnly'))
       }
 
@@ -5538,8 +5507,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 
       useEffect(() => {
         let cancelled = false
-        // F1: decide whether the AI entry points can work before anyone clicks.
-        void probeChat()
         ;(async () => {
           const next = await refreshState()
           if (cancelled) return
@@ -5835,8 +5802,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
               onChanged: (next) => {
       setState(next)
       void loadData()
-      // A key just added in Settings must un-grey the AI entry points.
-      void forgetChatProbe().catch(() => {})
     },
               onDataChanged: () => { void loadData(); void refreshState() },
               onSyncStarted: () => { void refreshState() },
@@ -5955,9 +5920,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
         STAGE_VIEWS,
         SourceTags,
         craftSourceHit,
-        probeChat,
-        forgetChatProbe,
-        chatAvailability,
         craftBridge,
         MATERIAL_TYPES,
         SettingsModal,

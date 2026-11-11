@@ -279,10 +279,8 @@ async function main() {
           patch = {}
         }
         const body = Object.assign({}, statePayload)
-        if ('palette' in patch) {
-          if (patch.palette) body.palette = patch.palette
-          else delete body.palette
-        }
+        // 现在没有「空字段表示跟随」这套了：palette 永远是五套里的一个名字。
+        if ('palette' in patch) body.palette = patch.palette
         return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }
       }
       if (text.includes('/craft/export')) {
@@ -583,33 +581,33 @@ async function main() {
   if (missingChip) missingChip.props.onClick({ stopPropagation() {} })
   eq('F3 来源缺失时点击仍上报原 id', openedMissing[0], 'note:nt_gone')
 
-  // --- 4. F1：无模型置灰 / 有模型恢复 ---------------------------------------
+  // --- 4. 入口永远可点：预检已拆，失败由真实请求说话 --------------------------
   const askBase = { pack: '【书房来源包】《诗经》', entry: NOTE_A1, kind: 'note', question: '', anchor: { x: 40, y: 120 }, onClose() {} }
-  const askOffline = renderComp('ask-offline', smoke.AskCard, askBase, [[], '写点什么', false, '', '', '', 'offline'])
-  const askChips = (askOffline.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
-  const askSends = (askOffline.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('F1 无模型：四个胶囊都在', askChips.length === 4, askChips.length)
-  check('F1 无模型：四个胶囊全部置灰', askChips.length === 4 && askChips.every((el) => el.props.disabled === true), JSON.stringify(askChips.map((el) => el.props.disabled)))
-  check('F1 无模型：已写字时发送键仍置灰', askSends.length === 1 && askSends[0].props.disabled === true, JSON.stringify(askSends.map((el) => el.props.disabled)))
-  has('F1 无模型：给出原因文案', askOffline.text, 'think.offline')
-  check('F1 无模型：原因挂在 wr-ask-offline 上', (askOffline.elements || []).some((el) => String(el.props.className || '') === 'wr-ask-offline'))
+  const askPlain = renderComp('ask-plain', smoke.AskCard, askBase, [[], '写点什么', false, '', '', ''])
+  const plainChips = (askPlain.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
+  const plainSends = (askPlain.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
+  check('入口不预检：四个胶囊都可点', plainChips.length === 4 && plainChips.every((el) => el.props.disabled === false), JSON.stringify(plainChips.map((el) => el.props.disabled)))
+  check('入口不预检：有输入时发送键可点', plainSends.length === 1 && plainSends[0].props.disabled === false, JSON.stringify(plainSends.map((el) => el.props.disabled)))
+  missing('入口不预检：没有「无模型」提示条', askPlain.text, 'wr-ask-offline')
 
-  const askReady = renderComp('ask-ready', smoke.AskCard, askBase, [[], '写点什么', false, '', '', '', 'ready'])
-  const readyChips = (askReady.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
-  const readySends = (askReady.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('F1 有模型：胶囊恢复可点', readyChips.length === 4 && readyChips.every((el) => el.props.disabled === false), JSON.stringify(readyChips.map((el) => el.props.disabled)))
-  check('F1 有模型：有输入时发送键可点', readySends.length === 1 && readySends[0].props.disabled === false, JSON.stringify(readySends.map((el) => el.props.disabled)))
-  missing('F1 有模型：不再显示置灰原因', askReady.text, 'wr-ask-offline')
-  const askBlank = renderComp('ask-blank', smoke.AskCard, askBase, [[], '', false, '', '', '', 'ready'])
+  // 失败之后：真实错误原文 + 一次重试，胶囊和发送键都不许被置灰。
+  const askFailed = renderComp('ask-failed', smoke.AskCard, askBase, [[{ role: 'user', text: '这句话怎么理解' }, { role: 'assistant', text: '' }], '写点什么', false, 'provider rate limited (429)', '', ''])
+  const failedChips = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-chip')
+  const failedSends = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
+  const failedRetry = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-retry')
+  check('失败后：胶囊仍然可点', failedChips.length === 4 && failedChips.every((el) => el.props.disabled === false), JSON.stringify(failedChips.map((el) => el.props.disabled)))
+  check('失败后：发送键仍然可点', failedSends.length === 1 && failedSends[0].props.disabled === false)
+  has('失败后：显示真实错误原文', askFailed.text, 'provider rate limited (429)')
+  check('失败后：给一次重试', failedRetry.length === 1 && failedRetry[0].tag === 'button' && typeof failedRetry[0].props.onClick === 'function', String(failedRetry.length))
+  missing('失败后：不再有置灰提示条', askFailed.text, 'wr-ask-offline')
+
+  const askBlank = renderComp('ask-blank', smoke.AskCard, askBase, [[], '', false, '', '', ''])
   const blankSend = (askBlank.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask-send')
-  check('F1 有模型但空输入：发送键仍禁用', blankSend.length === 1 && blankSend[0].props.disabled === true)
+  check('空输入：发送键禁用（唯一会禁用它的原因）', blankSend.length === 1 && blankSend[0].props.disabled === true)
 
-  net.modelsAvailable = false
-  const probeOffline = await smoke.forgetChatProbe()
-  eq('F1 探测到无模型 → offline', probeOffline, 'offline')
-  net.modelsAvailable = true
-  const probeReady = await smoke.forgetChatProbe()
-  eq('F1 探测到有模型 → ready', probeReady, 'ready')
+  // 预检不存在：整个过程里一次 /chat/models 都不该发出去。
+  const modelCalls = net.calls.filter((call) => String(call.url).includes('/chat/models'))
+  eq('预检已拆：没有任何 /chat/models 请求', modelCalls.length, 0)
 
   // --- 5. 空态与降级 --------------------------------------------------------
   const emptyCraft = smoke.EMPTY_CRAFT || { hasCraft: false, revision: 0, updatedAt: 0, counts: { responses: 0, materials: 0, topics: 0, works: 0 }, responses: [], materials: [], topics: [], works: [], bookIndex: [] }
@@ -642,13 +640,13 @@ async function main() {
     { type: 'text', text: '再谈感受。' },
     { type: 'done' },
   ]
-  const askLive = renderComp('ask-live', smoke.AskCard, askBase, [[], '这句话怎么理解', false, '', '', '', 'ready'])
+  const askLive = renderComp('ask-live', smoke.AskCard, askBase, [[], '这句话怎么理解', false, '', '', ''])
   const liveSend = (askLive.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
   check('对话卡渲染出可点的发送键', Boolean(liveSend) && typeof liveSend.props.onClick === 'function')
   if (liveSend) {
     liveSend.props.onClick({ stopPropagation() {} })
     await new Promise((resolve) => setTimeout(resolve, 200))
-    const replayed = [[], '这句话怎么理解', false, '', '', '', 'ready']
+    const replayed = [[], '这句话怎么理解', false, '', '', '']
     for (const entry of setterLog) {
       replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
     }
@@ -665,12 +663,12 @@ async function main() {
     { type: 'error', error: '模型调用中断' },
     { type: 'done' },
   ]
-  const askError = renderComp('ask-error', smoke.AskCard, askBase, [[], '再试一次', false, '', '', '', 'ready'])
+  const askError = renderComp('ask-error', smoke.AskCard, askBase, [[], '再试一次', false, '', '', ''])
   const errorSend = (askError.elements || []).find((el) => String(el.props.className || '') === 'wr-ask-send')
   if (errorSend) {
     errorSend.props.onClick({ stopPropagation() {} })
     await new Promise((resolve) => setTimeout(resolve, 200))
-    const replayed = [[], '再试一次', false, '', '', '', 'ready']
+    const replayed = [[], '再试一次', false, '', '', '']
     for (const entry of setterLog) {
       replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
     }
@@ -864,7 +862,6 @@ async function main() {
     '',
     'fake-1',
     '',
-    'ready',
   ])
   has('B7 有回答时出现采纳出口', chainAsk.text, 'ask.adoptHint')
   const chainWrites = []
@@ -949,12 +946,15 @@ async function main() {
   has('F-23 补写把段落自己的出处编成来源包', paraPack, '先给画面，再给判断')
   has('F-23 来源包带书名', paraPack, '《诗经》')
 
-  const paraOffline = renderComp('para-ai-offline', smoke.ParagraphAI, paraBase, ['offline', false, '', '', '', false])
-  const offlineTrigger = (paraOffline.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
-  check('F-23 无模型时补写入口置灰', Boolean(offlineTrigger) && offlineTrigger.props.disabled === true)
-  has('F-23 置灰复用 think.offline 文案', paraOffline.text, 'think.offline')
+  // ParagraphAI 的 useState 顺序：open, stage, draft, error, busy（预检拆掉后不再有 chat 位）
+  const paraFailed = renderComp('para-ai-error', smoke.ParagraphAI, paraBase, [true, 'error', '', 'provider rate limited (429)', false])
+  const failedTrigger = (paraFailed.elements || []).find((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+  check('F-23 请求失败后补写入口仍可点（不再预检置灰）', Boolean(failedTrigger) && failedTrigger.props.disabled !== true)
+  has('F-23 失败时显示真实错误', paraFailed.text, 'provider rate limited (429)')
+  const paraRetry = (paraFailed.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiRetry')
+  check('F-23 失败后给一次重试', Boolean(paraRetry) && typeof paraRetry.props.onClick === 'function', 'no retry button')
 
-  const paraNone = renderComp('para-ai-nosource', smoke.ParagraphAI, Object.assign({}, paraBase, { sourceIds: [] }), ['ready', false, '', '', '', false])
+  const paraNone = renderComp('para-ai-nosource', smoke.ParagraphAI, Object.assign({}, paraBase, { sourceIds: [] }), [false, '', '', '', false])
   const noneTrigger = (paraNone.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
   check('F-23 段落没有出处时入口置灰', Boolean(noneTrigger) && noneTrigger.props.disabled === true)
   has('F-23 没有出处时说清原因', paraNone.text, 'work.aiNeedSource')
@@ -967,8 +967,8 @@ async function main() {
     { type: 'text', text: '长出来的。' },
     { type: 'done' },
   ]
-  // ParagraphAI 的 useState 顺序：chat, open, stage, draft, error, busy
-  const liveSeeds = ['ready', false, '', '', '', false]
+  // ParagraphAI 的 useState 顺序：open, stage, draft, error, busy
+  const liveSeeds = [false, '', '', '', false]
   const revisionBefore = host.craftSummary().revision
   const paraLive = renderComp('para-ai-live', smoke.ParagraphAI, paraBase, liveSeeds.slice())
   const liveTrigger = (paraLive.elements || []).find((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
@@ -978,9 +978,9 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 250))
     const replayed = liveSeeds.slice()
     for (const entry of setterLog) replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
-    has('F-23 流式草稿落在段落行上', String(replayed[3]), '秩序感先是从画面里')
-    has('F-23 第二段流式文本也到了', String(replayed[3]), '长出来的')
-    eq('F-23 生成完是草稿态', replayed[2], 'done')
+    has('F-23 流式草稿落在段落行上', String(replayed[2]), '秩序感先是从画面里')
+    has('F-23 第二段流式文本也到了', String(replayed[2]), '长出来的')
+    eq('F-23 生成完是草稿态', replayed[1], 'done')
     eq('F-23 只生成不采纳时库里零变化', host.craftSummary().revision, revisionBefore)
     const chatCall = net.calls.filter((item) => item.url.endsWith('/chat')).pop()
     check('F-23 补写真的发了 /chat', Boolean(chatCall))
@@ -1001,7 +1001,7 @@ async function main() {
           return Promise.resolve()
         },
       }),
-      ['ready', true, 'done', '秩序感先是从画面里长出来的。', '', false],
+      [true, 'done', '秩序感先是从画面里长出来的。', '', false],
     )
     const keepBtn = (paraDone.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.aiAdopt')
     check('F-23 草稿有「采纳」出口', Boolean(keepBtn))
@@ -1082,7 +1082,7 @@ async function main() {
     { type: 'error', error: '模型调用中断' },
     { type: 'done' },
   ]
-  const failSeeds = ['ready', false, '', '', '', false]
+  const failSeeds = [false, '', '', '', false]
   const paraFail = renderComp('para-ai-fail', smoke.ParagraphAI, paraBase, failSeeds.slice())
   const failTrigger = (paraFail.elements || []).find((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
   if (failTrigger) {
@@ -1090,9 +1090,9 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 250))
     const replayed = failSeeds.slice()
     for (const entry of setterLog) replayed[entry.at] = typeof entry.updater === 'function' ? entry.updater(replayed[entry.at]) : entry.updater
-    eq('F-23 失败后不留半截草稿', String(replayed[3]), '')
-    has('F-23 失败有可见错误', String(replayed[4]), '模型调用中断')
-    eq('F-23 失败后停在错误态而不是草稿态', replayed[2], 'error')
+    eq('F-23 失败后不留半截草稿', String(replayed[2]), '')
+    has('F-23 失败有可见错误', String(replayed[3]), '模型调用中断')
+    eq('F-23 失败后停在错误态而不是草稿态', replayed[1], 'error')
   }
   net.modelsAvailable = false
 
@@ -1170,7 +1170,7 @@ async function main() {
     'think-bar-material',
     smoke.ThinkingBar,
     { entry: { bookTitle: BOOK_A.title, text: quoteMaterial.text }, kind: 'material', type: '金句', context: [] },
-    [{ mode: '', question: '', anchor: { x: 40, y: 140 } }, false, '', [], '写点什么', false, '', '', '', 'ready'],
+    [{ mode: '', question: '', anchor: { x: 40, y: 140 } }, false, '', [], '写点什么', false, '', '', ''],
   )
   has('F-29 ThinkingBar 把 type 透传到 pack', barDraw.text, 'mat.type.quote')
   check(
@@ -1340,10 +1340,10 @@ async function main() {
   eq('F-32 materialAuthorIsAI(ai) 认出来', smoke.materialAuthorIsAI('ai'), true)
 
   // --- 11.7 F-28 配色：设置里选一套，根节点立刻换色 ------------------------
-  const withPalette = (palette) => (palette === '' ? Object.assign({}, statePayload) : Object.assign({}, statePayload, { palette }))
+  const withPalette = (palette) => Object.assign({}, statePayload, { palette })
   const palettePicks = []
   const settingsDraw = renderComp('settings-palette', smoke.SettingsModal, {
-    state: withPalette(''),
+    state: Object.assign({}, statePayload),
     onClose() {},
     onChanged() {},
     onDataChanged() {},
@@ -1351,13 +1351,16 @@ async function main() {
     onPalette: (name) => palettePicks.push(name),
   }, ['', '60', '200', false, '', path.join(workDir, 'exports'), '', null, false])
   has('F-28 设置里出现「外观」段', settingsDraw.text, 'appearance.title')
-  has('F-28 默认项是「跟随 DSH」', settingsDraw.text, 'appearance.follow')
-  has('F-28 六套色板都在选择器里', settingsDraw.text, 'appearance.night')
+  has('F-28 说明里点出默认是 glacier', settingsDraw.text, 'appearance.glacier')
+  has('F-28 五套色板都在选择器里', settingsDraw.text, 'appearance.night')
+  for (const gone of ['appearance.follow', 'appearance.cream']) missing('F-28 退役选项已从文案里消失', settingsDraw.text, gone)
   const paletteSelects = settingsDraw.elements.filter((el) => el.tag === 'select' && String(el.props.className || '').includes('wr-palette-select'))
   eq('F-28 外观只有一支选择器', paletteSelects.length, 1)
   eq('F-28 没有第二个主题开关', settingsDraw.elements.filter((el) => ['checkbox', 'radio'].includes(el.props.type)).length, 0)
   const paletteValues = [...new Set(settingsDraw.elements.filter((el) => el.tag === 'option').map((el) => el.props.value))]
-  eq('F-28 选项就是七套', JSON.stringify(paletteValues), JSON.stringify(['follow', 'mint', 'night', 'cream', 'mist', 'glacier', 'iris']))
+  eq('F-28 选项就是五套', JSON.stringify(paletteValues), JSON.stringify(['glacier', 'mint', 'night', 'mist', 'iris']))
+  check('F-28 没设置时选择器停在 glacier', paletteSelects.length === 1 && paletteSelects[0].props.value === 'glacier',
+    paletteSelects.length === 1 ? String(paletteSelects[0].props.value) : 'no select')
   const beforeConfig = net.calls.length
   if (paletteSelects.length === 1 && typeof paletteSelects[0].props.onChange === 'function') {
     paletteSelects[0].props.onChange({ target: { value: 'night' } })
@@ -1379,17 +1382,17 @@ async function main() {
     net.calls.slice(beforeConfig).map((call) => call.url).join(','))
 
   const rootOf = (draw) => draw.elements.find((el) => String(el.props.className || '') === 'wr-root')
-  const followDraw = get('palette-follow', { view: 'overview', state: withPalette('') })
+  const defaultDraw = get('palette-default', { view: 'overview', state: Object.assign({}, statePayload) })
   const nightDraw = get('palette-night', { view: 'overview', state: withPalette('night') })
   const unknownDraw = get('palette-unknown', { view: 'overview', state: withPalette('neon-bogus') })
-  const followRoot = rootOf(followDraw)
+  const defaultRoot = rootOf(defaultDraw)
   const nightRoot = rootOf(nightDraw)
   const unknownRoot = rootOf(unknownDraw)
-  check('F-28 跟随 DSH 时根节点不挂 data-palette', Boolean(followRoot) && followRoot.props['data-palette'] === undefined,
-    followRoot ? String(followRoot.props['data-palette']) : 'no root')
+  eq('F-28 没设置配色时根节点就是 glacier', defaultRoot && defaultRoot.props['data-palette'], 'glacier')
   eq('F-28 选了 night 根节点挂 data-palette=night', nightRoot && nightRoot.props['data-palette'], 'night')
-  check('F-28 未知配色回落跟随 DSH', Boolean(unknownRoot) && unknownRoot.props['data-palette'] === undefined,
-    unknownRoot ? String(unknownRoot.props['data-palette']) : 'no root')
+  eq('F-28 未知配色回落 glacier', unknownRoot && unknownRoot.props['data-palette'], 'glacier')
+  eq('F-28 退役的 follow 回落 glacier', smoke.paletteOf('follow'), 'glacier')
+  eq('F-28 退役的 cream 回落 glacier', smoke.paletteOf('cream'), 'glacier')
 
   // 关键 token 真的换了，而且不是「看起来可以」——下面按 WCAG 算对比度。
   const styleOf = (draw) => {
@@ -1454,6 +1457,7 @@ async function main() {
   check('F-28 night 热力图相邻两档可分辨（≥1.2:1）', heatSteps.every((step) => step >= 1.2), heatSteps.join(' / '))
   check('F-28 浅色默认配色正文对比度 ≥4.5:1', contrast(tokenOf(baseBlock, '--wr-ink'), tokenOf(baseBlock, '--wr-paper')) >= 4.5,
     `${tokenOf(baseBlock, '--wr-ink')} on ${tokenOf(baseBlock, '--wr-paper')} = ${contrast(tokenOf(baseBlock, '--wr-ink'), tokenOf(baseBlock, '--wr-paper'))}:1`)
+  check('F-28 cream 的 token 块已经从样式表里删掉', blockOf('.wr-root[data-palette="cream"]{') === '', '仍有 cream 块')
 
   // 持久化：写进 config.json，换一个宿主实例（= 刷新/重启）再读回来仍在。
   const configFile = path.join(home, 'weread-gather', 'config.json')
@@ -1463,12 +1467,27 @@ async function main() {
   eq('F-28 config.json 里写着 palette=night', readConfig().palette, 'night')
   const reloaded = I.createHost({})
   eq('F-28 重开宿主仍是 night（刷新后仍在）', reloaded.settings().palette, 'night')
+  // 老配置里的五套继续被接受；退役的 follow 与非法值一律落成 glacier，字段仍在（不再有「空 = 跟随」）。
   host.saveConfig({ palette: 'follow' })
-  check('F-28 跟随 DSH 时 config.json 不留 palette 字段', !Object.prototype.hasOwnProperty.call(readConfig(), 'palette'),
-    JSON.stringify(readConfig()))
+  eq('F-28 退役的 follow 落盘为 glacier', readConfig().palette, 'glacier')
+  eq('F-28 退役的 follow 读回来是 glacier', host.settings().palette, 'glacier')
   host.saveConfig({ palette: 'neon-bogus' })
-  check('F-28 非法配色不落盘', !Object.prototype.hasOwnProperty.call(readConfig(), 'palette'), JSON.stringify(readConfig()))
-  eq('F-28 非法配色读回来是跟随 DSH', host.settings().palette, '')
+  eq('F-28 非法配色落盘为 glacier', readConfig().palette, 'glacier')
+  eq('F-28 非法配色读回来是 glacier', host.settings().palette, 'glacier')
+  const reloaded2 = I.createHost({})
+  eq('F-28 再开一次宿主仍是 glacier', reloaded2.settings().palette, 'glacier')
+
+  // 对话卡：就地展开，不再是按视口坐标浮起来的层。
+  const clientCode = fs.readFileSync(path.join(root, 'client.js'), 'utf8')
+  const askCssAt = clientCode.indexOf('.wr-ask{')
+  const askCss = askCssAt < 0 ? '' : clientCode.slice(askCssAt, clientCode.indexOf('}', askCssAt))
+  check('F-28 对话卡不再是 position:fixed 浮层', askCss !== '' && askCss.indexOf('position:fixed') < 0, String(askCss.length))
+  check('F-28 对话卡按文档流排（position:relative）', askCss.indexOf('position:relative') >= 0, askCss.slice(0, 120))
+  check('F-28 对话卡仍有 max-height（长答案卡内滚动）', askCss.indexOf('max-height') >= 0, askCss.slice(0, 160))
+  check('F-28 已经不再用 askPosition 摆卡片', clientCode.indexOf('askPosition') < 0)
+  const inlineCards = (askFailed.elements || []).filter((el) => String(el.props.className || '') === 'wr-ask')
+  check('F-28 对话卡带就地展开标记', inlineCards.length === 1 && inlineCards[0].props['data-inline'] === 'true', String(inlineCards.length))
+  check('F-28 对话卡上没有浮层坐标', inlineCards.length === 1 && inlineCards[0].props.style === undefined)
 
   // --- 12. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
