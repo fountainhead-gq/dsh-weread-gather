@@ -219,7 +219,10 @@ if (!loaded) {
 
 // --- 注册 & 渲染 -------------------------------------------------------------
 const registrations = []
-let localeDictionaries = {}
+// F-35：默认渲染文本里出现的是 locale key（断言好写），但「标签是不是中文、
+// 有没有把 src.xxx 直接印出来」这类事故只有用真实文案才看得见，所以留一个开关。
+let localeText = false
+const localeDictionaries = {}
 const drawCalls = []
 const ctx = {
   slots: {
@@ -235,10 +238,22 @@ const ctx = {
     register(namespace, dictionaries) {
       // F-32：把真实字典留下来。渲染文本里出现的是 locale key，但「AI 那条含 AI」这句话
       // 只有在真实文案上才有意义，所以这里既断言 pack 的返回值，也断言上架的那句中文。
-      if (dictionaries && typeof dictionaries === 'object') localeDictionaries = dictionaries
+      if (dictionaries && typeof dictionaries === 'object') {
+        localeDictionaries.zh = dictionaries.zh || localeDictionaries.zh
+        localeDictionaries.en = dictionaries.en || localeDictionaries.en
+      }
     },
     bind() {
-      return (key, params) => (params ? `${key}(${Object.values(params).join(',')})` : key)
+      return (key, params) => {
+        if (localeText) {
+          const template = (localeDictionaries.zh || {})[key]
+          if (typeof template === 'string') {
+            if (!params) return template
+            return template.replace(/\{(\w+)\}/g, (all, name) => (params[name] === undefined ? all : String(params[name])))
+          }
+        }
+        return params ? `${key}(${Object.values(params).join(',')})` : key
+      }
     },
     current: 'zh',
   },
@@ -878,8 +893,8 @@ const relateEntry = {
 const relateLookup = {
   note: new Map([(relateNote ? relateNote.id : relateEntry.id)].concat((dataset.notes || []).filter((n) => n.bookId === relateBook.bookId).map((n) => n.id)).map((id) => [String(id), (dataset.notes || []).find((n) => String(n.id) === String(id)) || relateEntry])),
   thought: new Map((dataset.thoughts || []).filter((t) => t.bookId === relateBook.bookId).map((t) => [String(t.id), t])),
-  response: new Map(),
-  material: new Map(),
+  response: new Map(((smokeCraft().responses) || []).map((item) => [String(item.id), item])),
+  material: new Map(((smokeCraft().materials) || []).map((item) => [String(item.id), item])),
 }
 const relateOpened = []
 smoke.relateBridge.data = payload
@@ -909,6 +924,14 @@ renderStandalone('relate-sending', smoke.RelateCard, { entry: relateEntry, kind:
 if (process.env.RELATE_DEBUG) console.error('[debug] parse', JSON.stringify((smoke.parseRelateAnswer(relateAnswer, relateCandidates) || {}).rows ? (smoke.parseRelateAnswer(relateAnswer, relateCandidates).rows.length) : -1), JSON.stringify(relateAnswer.slice(0, 120)))
 renderStandalone('relate-result', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
 renderStandalone('relate-dropped-id', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
+// L1: 模型给编号加列表符号（「- [note:x] …」「1. [note:x] …」）仍然是候选行，不许退化成散文。
+const bulletAnswer = [`- [${firstRow.id}] 这两条都在讲同一件事。`, `1. [${secondRow.id}] 这一条只是换个说法。`].join('\n')
+renderStandalone('relate-bullet', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', bulletAnswer, '', {}, '', ''])
+// L3: 记录已经不在 lookup 里时，这一行必须降级成不可点的状态，而不是一个按了没反应的按钮。
+const savedRelateLookup = smoke.relateBridge.lookup
+smoke.relateBridge.lookup = { note: new Map(), thought: new Map(), response: new Map(), material: new Map() }
+renderStandalone('relate-missing', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
+smoke.relateBridge.lookup = savedRelateLookup
 renderStandalone('relate-error', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['想问的问题', false, 'provider rate limited (429)', '', '', {}, '', ''])
 renderStandalone('relate-saved', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', { [firstRow.id]: { id: 'rel_smoke1', label: '呼应' } }, '', ''])
 renderStandalone(
@@ -982,6 +1005,41 @@ renderStandalone('relate-inline-thought', smoke.RelateBar, { entry: relateThough
     const chips = (dropped.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
     if (chips.some((el) => String(el.props.title || '').includes('made_up_id_9999'))) relateGuards.push('relate-dropped-id: 编造的编号成了 chip')
     if (chips.length !== 2) relateGuards.push(`relate-dropped-id: 该留 2 条对照行，实际 ${chips.length}`)
+  }
+}
+{
+  // L1: 列表符号不能把候选行吃掉。
+  const bulletDraw = byLabel0('relate-bullet')
+  if (!bulletDraw) relateGuards.push('relate-bullet: 未渲染')
+  else {
+    const parsed = smoke.parseRelateAnswer(bulletAnswer, relateCandidates) || {}
+    const parsedRows = Array.isArray(parsed.rows) ? parsed.rows : []
+    if (parsedRows.length !== 2)
+      relateGuards.push(`relate-bullet: 带列表符号的编号只解析出 ${parsedRows.length} 条对照行（应为 2）`)
+    if (parsedRows.some((row) => row.id !== firstRow.id && row.id !== secondRow.id))
+      relateGuards.push('relate-bullet: 解析出的编号对不上候选集')
+    if (String(parsed.prose || '').includes(firstRow.id)) relateGuards.push('relate-bullet: 编号落进了散文')
+    const chips = (bulletDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
+    if (chips.length !== 2) relateGuards.push(`relate-bullet: 卡片里只有 ${chips.length} 个来源 chip（应为 2）`)
+    if (bulletDraw.text.includes('- [' + firstRow.id)) relateGuards.push('relate-bullet: 列表符号被原样渲染出来了')
+  }
+}
+{
+  // L3: lookup 与 rows 不同步时，降级分支必须真的走到。
+  const missingDraw = byLabel0('relate-missing')
+  if (!missingDraw) relateGuards.push('relate-missing: 未渲染')
+  else {
+    const chips = (missingDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
+    const buttons = chips.filter((el) => el.tag === 'button')
+    const spans = chips.filter((el) => el.tag === 'span' && el.props['data-missing'] === 'true')
+    if (chips.length === 0) relateGuards.push('relate-missing: 一条 chip 都没有，无从判断降级')
+    else if (buttons.length > 0) relateGuards.push(`relate-missing: 有 ${buttons.length} 个 chip 仍可点，点了不会有反应`)
+    if (chips.length > 0 && spans.length !== chips.length)
+      relateGuards.push(`relate-missing: ${chips.length} 个 chip 里只有 ${spans.length} 个带缺失状态`)
+    if (!missingDraw.text.includes('mat.status.missing')) relateGuards.push('relate-missing: 没有写出「来源没找到」')
+    const items = (missingDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-item')
+    if (items.length > 0 && !items.every((el) => el.props['data-missing'] === 'true'))
+      relateGuards.push('relate-missing: 行级 data-missing 没有标成 true')
   }
 }
 {
@@ -1372,6 +1430,34 @@ else {
   }
 }
 
+// F-35：来源标签是 `t(`src.${kind}`)` 拼出来的，静态 grep 看不见它取了哪些键。
+// 用真实中文文案渲染一条 response: 与一条 material: 来源，确认标签是中文，
+// 而不是把 key 本身（src.response · …）印到界面上。
+const sourceGuards = []
+if (typeof smoke.SourceTags !== 'function') sourceGuards.push('client module 未暴露 SourceTags')
+else {
+  const sourceLookup = {
+    note: new Map(),
+    thought: new Map(),
+    response: new Map([['r_source', { id: 'r_source', text: '秩序感先给画面，再给判断。' }]]),
+    material: new Map([['m_source', { id: 'm_source', type: '金句', text: '诗是生命的流露。' }]]),
+  }
+  localeText = true
+  renderStandalone('source-tags-real', smoke.SourceTags, {
+    sourceIds: ['response:r_source', 'material:m_source'],
+    lookup: sourceLookup,
+  }, [])
+  localeText = false
+  const sourceDraw = byLabel0('source-tags-real')
+  if (!sourceDraw) sourceGuards.push('source-tags-real: 未渲染')
+  else {
+    if (sourceDraw.text.includes('src.')) sourceGuards.push(`source-tags-real: 来源标签把 locale key 印出来了（${sourceDraw.text.slice(0, 60)}）`)
+    if (!sourceDraw.text.includes('我采纳的 AI 回应')) sourceGuards.push('source-tags-real: 回应的来源标签不是中文')
+    if (!sourceDraw.text.includes('我整理的素材')) sourceGuards.push('source-tags-real: 素材的来源标签不是中文')
+    if (!sourceDraw.text.includes('秩序感先给画面')) sourceGuards.push('source-tags-real: 回应正文没渲染出来')
+  }
+}
+
 // 断言：页面没有退化成「加载中」空壳，分页与复制控件确实渲染出来了
 const guards = []
 const byLabel = (label) => drawCalls.find((item) => item.label === label && item.ok)
@@ -1412,6 +1498,7 @@ for (const item of bannerGuards) guards.push(item)
 for (const item of thoughtGuards) guards.push(item)
 for (const item of packGuards) guards.push(item)
 for (const item of relateGuards) guards.push(item)
+for (const item of sourceGuards) guards.push(item)
 checkJourneys(guards, byLabel, bookDraw)
 for (const item of journeyGuards) guards.push(item)
 for (const item of paragraphGuards) guards.push(item)

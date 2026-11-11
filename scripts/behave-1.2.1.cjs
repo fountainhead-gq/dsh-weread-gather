@@ -653,6 +653,32 @@ async function main() {
   const askJump = (resultDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-ask')
   check('追问建议是可点的按钮', Boolean(askJump) && askJump.tag === 'button' && typeof askJump.props.onClick === 'function')
 
+  // L1：模型给编号加列表符号时，那一行仍然是候选行，不许退化成散文
+  const bulletAnswer = '- [' + candidates[0].id + '] 这两条都在讲同一件事。\n1. [' + candidates[1].id + '] 这条只是换个说法。'
+  const parsedBullet = smoke.parseRelateAnswer(bulletAnswer, candidates)
+  eq('带列表符号的编号仍解析成对照行', parsedBullet.rows.length, 2)
+  eq('第一条编号对得上', parsedBullet.rows[0] && parsedBullet.rows[0].id, candidates[0].id)
+  check('列表符号没有被当成正文', !String(parsedBullet.prose || '').includes(candidates[0].id))
+  const bulletDraw = renderComp('relate-bullet', smoke.RelateCard, relateBase, ['', false, '', bulletAnswer, '', {}, '', ''])
+  eq('卡片里两条对照行都在', (bulletDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip').length, 2)
+  missing('列表符号没有被渲染出来', bulletDraw.text, '- [' + candidates[0].id)
+
+  // L3：记录已不在 lookup 里时，chip 必须降级成不可点的状态，而不是点了没反应的按钮
+  const savedLookup = smoke.relateBridge.lookup
+  smoke.relateBridge.lookup = { note: new Map(), thought: new Map(), response: new Map(), material: new Map() }
+  const missingDraw = renderComp('relate-missing', smoke.RelateCard, relateBase, ['', false, '', bogusAnswer, '', {}, '', ''])
+  smoke.relateBridge.lookup = savedLookup
+  const missingChips = (missingDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-chip')
+  check('缺来源时还剩 chip（否则这条断言空转）', missingChips.length > 0, String(missingChips.length))
+  eq('缺来源的 chip 一个都不可点', missingChips.filter((el) => el.tag === 'button').length, 0)
+  eq('缺来源的 chip 都带缺失状态', missingChips.filter((el) => el.props['data-missing'] === 'true').length, missingChips.length)
+  has('缺来源时写出来源没找到', missingDraw.text, 'mat.status.missing')
+  eq(
+    '缺来源的行级状态也标了',
+    (missingDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-item' && el.props['data-missing'] === 'true').length,
+    (missingDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-item').length,
+  )
+
   // 失败态：真实错误原文 + 可重试
   const failDraw = renderComp('relate-fail', smoke.RelateCard, relateBase, ['', false, 'provider rate limited (429)', '', '', {}, '', ''])
   has('失败时显示真实错误原文', failDraw.text, 'provider rate limited (429)')
@@ -1506,6 +1532,13 @@ async function main() {
     threadCheck('覆盖行由宿主算：想法数', Boolean(storedThread) && Number(storedThread.coverage.thoughts) === 1)
     const reopened = I.createHost({}).craftView()
     threadCheck('刷新后线索仍在', (reopened.threads || []).some((item) => String(item.title) === '读诗先要一个画面'))
+    // L5：卡片头是宿主快照，「这次扫了」是实时数据 —— 两个数字并排，就必须各自写明口径。
+    const zhDict = (localeDictionaries && localeDictionaries.zh) || {}
+    threadCheck('卡片头写明数字来自宿主快照', String(zhDict['thread.coverage'] || '').includes('本书导入'))
+    threadCheck('「这次扫了」写明是实时数据', String(zhDict['thread.scanned'] || '').includes('按当前数据'))
+    const threadsDraw = renderComp('threads-head-foot', smoke.BookThreads, Object.assign({}, threadBase, { craft: host.craftView() }), threadSeeds)
+    threadCheck('脉络卡上真的有覆盖行', threadsDraw.text.includes('thread.coverage'))
+    threadCheck('脉络卡上真的有「这次扫了」', threadsDraw.text.includes('thread.scanned'))
   }
 
   // 上限：模型给 6 条，前端先截到 5 条再落盘（宿主 >5 会 400，所以这里也证明没把 400 露给用户）。

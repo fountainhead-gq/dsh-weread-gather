@@ -242,19 +242,7 @@ window.__ModuleLoader__.load({
       'think.packContextMixed': '其他来源（{count} 条，供参考）：',
       'think.packOriginal': '原文：',
       'think.packFoot': '—— 以上来自「数字书房」。标「书里的原文」的是书里的句子，其余三类（我的想法 / 我采纳的 AI 回应 / 我整理的素材）是我这一侧的记录，引用时请分清归属。素材里带「AI」字样的，是我采纳过 AI 回应之后整理出来的，不是我亲手写的。',
-      'think.empty': '想问什么？点上面的按钮，问题会先填进输入框，改完再发。',
-      'think.thinking': '思考中…',
-      'think.aiNote': 'AI 生成，仅供参考',
       'think.retry': '再试一次',
-      'think.mode.explain': '解释',
-      'think.mode.reframe': '换角度',
-      'think.mode.deeper': '深想',
-      'think.mode.custom': '自己问',
-      'think.ask.explain': '这段话在说什么？先用直白的话解释一遍，再指出它成立的前提，以及它在什么情况下会不成立。',
-      'think.ask.reframe': '换一个角度：如果反过来看，这段话会变成什么样？给我 2-3 个不同的视角，并说明各自的前提。',
-      'think.ask.deeper': '顺着这条想法继续往下想：它背后更根本的问题是什么？把它拆成几个可以一步步想下去的问题。',
-      'think.customPlaceholder': '你想问什么？',
-      'think.send': '放入对话',
       'think.failed': '没能打开对话，来源包也没复制成功',
       'nav.read': '阅读',
       'nav.think': '思考',
@@ -268,57 +256,25 @@ window.__ModuleLoader__.load({
       'journey.think.hint': '把读到的东西问明白',
       'journey.create.hint': '素材 → 选题 → 初稿',
       'journey.grow.hint': '走过的路，与这一年',
-      'craft.loading': '正在读创作数据…',
       'craft.failed': '创作数据没读出来：{error}',
       'craft.retry': '重试',
       'craft.offline': '创作数据暂时读不到；阅读、书架、笔记、想法都不受影响。',
-      'craft.count.responses': '{count} 条',
-      'craft.count.materials': '{count} 条',
-      'craft.count.topics': '{count} 个',
-      'craft.count.works': '{count} 篇',
-      'ask.adopt': '想留下哪一句？',
-      'ask.adoptThought': '记成想法',
-      'ask.adoptMaterial': '收为素材',
-      'ask.adoptType': '素材类型',
-      'ask.adoptSave': '存下',
-      'ask.adoptCancel': '取消',
-      'ask.adoptDone': '已存下',
-      'ask.adoptHint': '对话本身不落盘，只有你存下的这一句会留下。',
-      'ask.adoptFailed': '没存下：{error}',
       'mat.type.quote': '金句',
       'mat.type.idea': '观点',
       'mat.type.case': '案例',
       'mat.type.evidence': '论据',
       'mat.type.question': '问题',
       'mat.type.spark': '灵感',
-      'mat.picker.title': '存为素材',
-      'mat.picker.noteHint': '想法没有记录对应哪条划线；选一条同章摘录，出处会更准。',
-      'mat.picker.skip': '不指定摘录',
-      'mat.picker.save': '存为素材',
-      'mat.picker.cancel': '取消',
-      'mat.picker.empty': '这一章没有其他划线',
-      'mat.picker.saved': '已存为素材',
-      'mat.empty.title': '还没有素材',
-      'mat.empty.next': '在思考里把一句回应收为素材，或从想法上直接存一条。',
-      'mat.empty.action': '去书里找',
-      'mat.sourceLabel': '出处',
-      'mat.status.ok': '来源还在',
-      'mat.status.changed': '来源已改',
       'mat.status.missing': '来源没找到',
-      'mat.type.switch': '改类型',
-      'mat.cached': '不在书架缓存',
       'mat.delete': '删除',
       'mat.sure': '确认删除？',
-      'mat.added': '已收为素材',
-      'mat.count': '共 {count} 条',
-      'mat.fromThink': '来自回应',
-      'mat.aiTag': 'AI 参与',
-      'mat.failed': '没存下：{error}',
       'mat.filterAll': '全部',
+      // 这四个键由 `src.${kind}` 模板拼接取用（kind 的取值来自 SOURCE_PREFIX），
+      // 静态 grep 看不见，删任何一个都会让来源标签渲染成字面量。
       'src.note': '摘录',
       'src.thought': '想法',
-      'src.response': '回应',
-      'src.material': '素材',
+      'src.response': '我采纳的 AI 回应',
+      'src.material': '我整理的素材',
       'src.materialRetired': '素材已下线，仅作来源标记',
       'nav.relate': '放回书里看',
       'relate.placeholder': '想问什么可以写，不写也行',
@@ -333,7 +289,6 @@ window.__ModuleLoader__.load({
       'relate.noneNoChapter': '如果再划一句、或写一句想法，我就能把它们放在一起看。',
       'relate.keepThought': '记成想法',
       'relate.collapse': '收起',
-      'relate.offline': '当前没有可用的模型。你仍然可以直接记想法。',
       'relate.tooFew': '这本书你现在只有这一条记录。再划一句、或写一句想法，我再帮你对照。',
       'relate.noBook': '这条记录没有关联的书，暂时没法把别的记录放回来看。',
       'relate.thisNote': '这条划线',
@@ -348,7 +303,6 @@ window.__ModuleLoader__.load({
       'relate.packWant': '我想问：{question}',
       'relate.packDefault': '我想知道：{this}，在我自己的记录里能和什么放在一起看？',
       'relate.dropped': '这条记录已经找不到了',
-      'relate.save': '存为关系',
       'relate.kept': '已记成想法',
       'relate.saved': '已存下这条关系',
       'relate.saveFailed': '没存上：{error}',
@@ -357,26 +311,7 @@ window.__ModuleLoader__.load({
       'relate.label.contrast': '对照',
       'relate.label.mine': '个人回应',
       'relate.label.check': '待核实',
-      'topic.empty.title': '还没有选题',
-      'topic.empty.next': '挑几条素材，写成一句话。',
-      'topic.empty.action': '去素材篮',
-      'topic.new': '立一个选题',
       'topic.statement': '一句话选题',
-      'topic.statementPlaceholder': '例如：为什么记住的总是细节',
-      'topic.gap': '还缺什么',
-      'topic.gapPlaceholder': '还缺的关键一环（可空）',
-      'topic.pickMaterials': '引用素材',
-      'topic.pickNone': '还没有素材可引，先去素材篮',
-      'topic.create': '立题',
-      'topic.created': '已立题',
-      'topic.needStatement': '先写一句话',
-      'topic.needMaterial': '至少选一条素材',
-      'topic.books': '涉及书目',
-      'topic.materialCount': '{count} 条素材',
-      'topic.draft': '去写初稿',
-      'topic.delete': '删除',
-      'topic.failed': '没立成：{error}',
-      'topic.count': '共 {count} 个',
       'work.empty.title': '还没有初稿',
       'work.empty.next': '选一个选题，把素材写成段落。',
       'work.empty.action': '去选题',
@@ -421,6 +356,7 @@ window.__ModuleLoader__.load({
       'thread.title': '我的阅读脉络',
       'thread.coverage': '本书导入：{chapters} 章 · 划线 {notes} 条 · 想法 {thoughts} 条 · {fullText}',
       'thread.onlyHighlights': '仅摘录，无全文',
+      'thread.hasFullText': '有全文',
       'thread.build': '梳理这本书',
       'thread.rebuild': '重新梳理',
       'thread.building': '正在读你的记录…',
@@ -442,7 +378,7 @@ window.__ModuleLoader__.load({
       'thread.stale': '这本书又有 {count} 条新记录，可以重新梳理。',
       'thread.gapNoThought': '{chapters} 章有划线但没有想法：{names}',
       'thread.gapNoChapter': '{count} 条划线没有章节名',
-      'thread.scanned': '这次扫了：{chapters}',
+      'thread.scanned': '这次扫了（按当前数据）：{chapters}',
       'thread.noChapter': '无章节',
       'thread.noEvidence': '这条线索的对照关系已经被删掉了，重新梳理一次即可。',
       'thread.needRelation': '还没有确认过的对照关系。可以点「梳理这本书」，它会先提出几条建议；也可以先去某条记录上用「放回书里看」接一对。',
@@ -463,21 +399,17 @@ window.__ModuleLoader__.load({
       'thread.packSuggest': '如果发现两条记录明显该放一起看、但还没有对照关系，可以另外提出：suggest 里放一到三对，两端都只写上面出现过的编号。',
       'thread.packSuggestOnly': '现在还没有任何已确认的对照关系，所以线索只能靠你提出建议对：suggest 里放一到三对，两端都只写上面出现过的编号。',
       'thread.packJson': '只返回 JSON，不要别的文字：{"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
-      'thinkView.title': '留下的回应',
       'thinkView.hint': '对话本身不落盘；只有你采纳的那一句留在这里，并带着出处。',
       'thinkView.empty.title': '这里还空着',
       'thinkView.empty.next': '在阅读里对一条划线或想法点「追问」，把想留的那一句存下来。',
       'thinkView.empty.action': '去书架',
       'thinkView.scope': '只看这本书',
-      'thinkView.all': '看全部',
-      'thinkView.count': '共 {count} 条',
       'thinkView.adoptedAt': '采纳于',
-      'thinkView.source': '出处',
       'thinkView.backBook': '回到《{title}》',
       'thinkView.ai': 'AI 参与',
+      // 时间线只构造 response / work 两类事件；素材与选题退场后不再有事件，
+      // 对应的 grow.event.* 键也一起删，避免留下取不到的半套文案。
       'grow.event.response': '采纳了一条回应',
-      'grow.event.material': '收了一条素材',
-      'grow.event.topic': '立了一个选题',
       'grow.event.work': '写了一篇初稿',
       'grow.empty.title': '还没有可回顾的事',
       'grow.empty.next': '走一遍阅读 → 思考 → 创作，这里就会长出记录。',
@@ -720,19 +652,7 @@ window.__ModuleLoader__.load({
       'think.packContextMixed': 'Other sources ({count}, for context):',
       'think.packOriginal': "The book's words:",
       'think.packFoot': '— From Digital Study. What is marked as the book\'s words comes from the book; the other three kinds (my own thought / an AI reply I kept / a source I filed) are my own record — keep the ownership straight when you quote. A source marked with "AI" is one I filed after keeping an AI reply: not written by me.',
-      'think.empty': 'Pick a button above — the question lands in the box so you can edit it first.',
-      'think.thinking': 'Thinking…',
-      'think.aiNote': 'AI-generated, for reference',
       'think.retry': 'Try again',
-      'think.mode.explain': 'Explain',
-      'think.mode.reframe': 'Reframe',
-      'think.mode.deeper': 'Go deeper',
-      'think.mode.custom': 'Ask',
-      'think.ask.explain': 'What is this passage saying? Explain it plainly first, then name its premises and the cases where it stops holding.',
-      'think.ask.reframe': 'Reframe it: if you reversed the claim, what would it become? Give me two or three different angles and the premise behind each.',
-      'think.ask.deeper': 'Keep going from this thought: what is the more fundamental question underneath it? Break it into several questions I can think through step by step.',
-      'think.customPlaceholder': 'What do you want to ask?',
-      'think.send': 'Put in chat',
       'think.failed': 'Could not open a conversation, and copying failed',
       'nav.read': 'Read',
       'nav.think': 'Think',
@@ -746,57 +666,23 @@ window.__ModuleLoader__.load({
       'journey.think.hint': 'Ask until it is clear',
       'journey.create.hint': 'Material → topic → draft',
       'journey.grow.hint': 'The path walked, and the year',
-      'craft.loading': 'Loading your writing…',
       'craft.failed': 'Could not load your writing: {error}',
       'craft.retry': 'Retry',
       'craft.offline': 'Writing data is unavailable right now; reading, shelf, notes and thoughts are unaffected.',
-      'craft.count.responses': '{count} kept',
-      'craft.count.materials': '{count} items',
-      'craft.count.topics': '{count} topics',
-      'craft.count.works': '{count} drafts',
-      'ask.adopt': 'Keep something?',
-      'ask.adoptThought': 'Save as thought',
-      'ask.adoptMaterial': 'Save as material',
-      'ask.adoptType': 'Material type',
-      'ask.adoptSave': 'Save',
-      'ask.adoptCancel': 'Cancel',
-      'ask.adoptDone': 'Saved',
-      'ask.adoptHint': 'The conversation itself is not saved; only what you keep here stays.',
-      'ask.adoptFailed': 'Not saved: {error}',
       'mat.type.quote': 'Quote',
       'mat.type.idea': 'Viewpoint',
       'mat.type.case': 'Case',
       'mat.type.evidence': 'Evidence',
       'mat.type.question': 'Question',
       'mat.type.spark': 'Spark',
-      'mat.picker.title': 'Save as material',
-      'mat.picker.noteHint': 'A thought does not record which highlight it answered; pick one to be precise.',
-      'mat.picker.skip': 'Skip the highlight',
-      'mat.picker.save': 'Save material',
-      'mat.picker.cancel': 'Cancel',
-      'mat.picker.empty': 'No other highlight in this chapter',
-      'mat.picker.saved': 'Saved as material',
-      'mat.empty.title': 'No material yet',
-      'mat.empty.next': 'Keep an answer from THINK, or save one from a thought.',
-      'mat.empty.action': 'Go to the books',
-      'mat.sourceLabel': 'Source',
-      'mat.status.ok': 'Source intact',
-      'mat.status.changed': 'Source changed',
       'mat.status.missing': 'Source missing',
-      'mat.type.switch': 'Change type',
-      'mat.cached': 'Not in shelf cache',
       'mat.delete': 'Delete',
       'mat.sure': 'Delete?',
-      'mat.added': 'Saved',
-      'mat.count': '{count} items',
-      'mat.fromThink': 'From an answer',
-      'mat.aiTag': 'AI-assisted',
-      'mat.failed': 'Not saved: {error}',
       'mat.filterAll': 'All',
       'src.note': 'Highlight',
       'src.thought': 'Thought',
-      'src.response': 'Answer',
-      'src.material': 'Material',
+      'src.response': 'An AI reply I kept',
+      'src.material': 'A source I filed',
       'src.materialRetired': 'Sources retired; kept as a citation only',
       'nav.relate': 'Put it back in the book',
       'relate.placeholder': 'Ask anything, or leave it empty',
@@ -811,7 +697,6 @@ window.__ModuleLoader__.load({
       'relate.noneNoChapter': 'Highlight one more line, or write one more thought, and I can read them together.',
       'relate.keepThought': 'Keep as my thought',
       'relate.collapse': 'Collapse',
-      'relate.offline': 'No model available. You can still write a thought.',
       'relate.tooFew': 'Only one record so far. Add a highlight or a thought, then I can read them together.',
       'relate.noBook': 'This record has no book attached, so there is nothing to put it back beside.',
       'relate.thisNote': 'This highlight',
@@ -826,7 +711,6 @@ window.__ModuleLoader__.load({
       'relate.packWant': 'What I want to ask: {question}',
       'relate.packDefault': 'What I want to know: {this} — what in my own records could be read alongside it?',
       'relate.dropped': 'that record can no longer be found',
-      'relate.save': 'Save as a relation',
       'relate.kept': 'Kept as a thought',
       'relate.saved': 'Relation saved',
       'relate.saveFailed': 'Not saved: {error}',
@@ -835,26 +719,7 @@ window.__ModuleLoader__.load({
       'relate.label.contrast': 'Contrast',
       'relate.label.mine': 'Personal reply',
       'relate.label.check': 'To verify',
-      'topic.empty.title': 'No topic yet',
-      'topic.empty.next': 'Pick a few materials and turn them into one sentence.',
-      'topic.empty.action': 'Go to material',
-      'topic.new': 'Start a topic',
       'topic.statement': 'One-sentence topic',
-      'topic.statementPlaceholder': 'e.g. why we remember the details',
-      'topic.gap': 'What is missing',
-      'topic.gapPlaceholder': 'The missing piece (optional)',
-      'topic.pickMaterials': 'Materials',
-      'topic.pickNone': 'No material to cite yet',
-      'topic.create': 'Create',
-      'topic.created': 'Created',
-      'topic.needStatement': 'Write the sentence first',
-      'topic.needMaterial': 'Pick at least one material',
-      'topic.books': 'Books',
-      'topic.materialCount': '{count} materials',
-      'topic.draft': 'Draft it',
-      'topic.delete': 'Delete',
-      'topic.failed': 'Not created: {error}',
-      'topic.count': '{count} topics',
       'work.empty.title': 'No draft yet',
       'work.empty.next': 'Pick a topic and turn material into paragraphs.',
       'work.empty.action': 'Go to topics',
@@ -899,6 +764,7 @@ window.__ModuleLoader__.load({
       'thread.title': 'My reading threads',
       'thread.coverage': 'Imported: {chapters} chapters · {notes} highlights · {thoughts} thoughts · {fullText}',
       'thread.onlyHighlights': 'highlights only, no full text',
+      'thread.hasFullText': 'full text',
       'thread.build': 'Read this book together',
       'thread.rebuild': 'Read it again',
       'thread.building': 'Reading your records…',
@@ -920,7 +786,7 @@ window.__ModuleLoader__.load({
       'thread.stale': '{count} new records in this book — you can read it again.',
       'thread.gapNoThought': '{chapters} chapters have highlights but no thoughts: {names}',
       'thread.gapNoChapter': '{count} highlights have no chapter name',
-      'thread.scanned': 'Scanned: {chapters}',
+      'thread.scanned': 'Scanned (live data): {chapters}',
       'thread.noChapter': 'no chapter',
       'thread.noEvidence': 'The pairs behind this thread were deleted; read the book again.',
       'thread.needRelation': 'No confirmed pairs yet. Run “Read this book together” and it will propose a few, or open a record and use “Put it back in the book” first.',
@@ -941,21 +807,15 @@ window.__ModuleLoader__.load({
       'thread.packSuggest': 'If two records clearly belong together but have no relation yet, propose them separately: one to three pairs in suggest, both ends using only ids that appear above.',
       'thread.packSuggestOnly': 'There are no confirmed pairs yet, so the threads can only come from pairs you propose: one to three pairs in suggest, both ends using only ids that appear above.',
       'thread.packJson': 'Return JSON only, nothing else: {"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
-      'thinkView.title': 'Kept answers',
       'thinkView.hint': 'Conversations are not saved; only the answer you kept stays here, with its source.',
       'thinkView.empty.title': 'Nothing kept yet',
       'thinkView.empty.next': 'In READ, ask about a highlight or thought and keep the line worth keeping.',
       'thinkView.empty.action': 'Go to the shelf',
       'thinkView.scope': 'This book only',
-      'thinkView.all': 'All books',
-      'thinkView.count': '{count} kept',
       'thinkView.adoptedAt': 'Kept',
-      'thinkView.source': 'Source',
       'thinkView.backBook': 'Back to {title}',
       'thinkView.ai': 'AI-assisted',
       'grow.event.response': 'Kept an answer',
-      'grow.event.material': 'Saved a material',
-      'grow.event.topic': 'Started a topic',
       'grow.event.work': 'Wrote a draft',
       'grow.empty.title': 'Nothing to look back on yet',
       'grow.empty.next': 'Read, think, write once and the timeline starts growing.',
@@ -2362,12 +2222,6 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
      */
     const THINK_LIMITS = { body: 600, context: 3, contextEach: 200 }
 
-    const THINK_MODES = [
-      ['explain', 'think.mode.explain', 'think.ask.explain'],
-      ['reframe', 'think.mode.reframe', 'think.ask.reframe'],
-      ['deeper', 'think.mode.deeper', 'think.ask.deeper'],
-    ]
-
     /**
      * F-29: what a source IS. A 金句 material is the book's words, not mine — the
      * pack has to say so, or the model writes in my voice about someone else's line.
@@ -2601,6 +2455,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
     const RELATE_LINE = /^\[((?:note|thought|response):[^\]]+)\]\s*(.+)$/
     const RELATE_ASK = /^问[:：]\s*(.+)$/
     const RELATE_NONE = /(没找到|没有找到|未找到|没有可靠的关联|没有依据)/
+    /** A bullet is decoration, not content: 「- [note:x] …」 still names a candidate. */
+    const RELATE_BULLET = /^(?:[-*+•]|\d+[.)、])\s+/
 
     /** What the record cards need from the study (book list, craft snapshot, jumps). */
     const relateBridge = { data: {}, craft: null, lookup: null, openSource: null }
@@ -2754,7 +2610,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const prose = []
       let saidNone = false
       for (const raw of String(text || '').split(/\r?\n/)) {
-        const line = String(raw || '').trim()
+        const trimmed = String(raw || '').trim()
+        if (trimmed === '') continue
+        // L1: models like to number their picks (「- [note:x] …」 / 「1. [note:x] …」).
+        // Drop that marker first, or the whole line falls through to prose and the
+        // candidate looks like it was never found.
+        const line = trimmed.replace(RELATE_BULLET, '')
         if (line === '') continue
         const ask = line.match(RELATE_ASK)
         if (ask) {
@@ -2770,7 +2631,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
           continue
         }
         if (RELATE_NONE.test(line)) saidNone = true
-        prose.push(line.replace(/^[-*]\s*/, ''))
+        prose.push(line)
       }
       return {
         rows,
@@ -2982,7 +2843,14 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 
       const rowsView = parsed.rows.map((row) => {
         const current = savedOf(row.id)
-        const known = craftSourceHit(row.id, relateBridge.lookup || {}) !== null || row.candidate !== null
+        const candidate = row.candidate || null
+        // L3: holding a candidate payload is not the same as the record still being
+        // here. Both ends have to resolve through lookup, or the chip becomes a
+        // button that does nothing when pressed — a missing record says so instead.
+        const known = candidate !== null && craftSourceHit(row.id, relateBridge.lookup || {}) !== null
+        const whenText = candidate === null
+          ? ''
+          : [fmtDate(candidate.time), candidate.chapter === '' ? '' : `《${candidate.chapter}》`].filter((item) => item !== '').join(' · ')
         return h(
           'div',
           { className: 'wr-relate-item', key: row.id, 'data-missing': known ? 'false' : 'true' },
@@ -3004,9 +2872,9 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                   row.id,
                 )
               : h('span', { className: 'wr-relate-chip', 'data-missing': 'true', title: row.id }, `${row.id} · ${t('mat.status.missing')}`),
-            h('span', { className: 'wr-relate-when' }, [fmtDate(row.candidate.time), row.candidate.chapter === '' ? '' : `《${row.candidate.chapter}》`].filter((item) => item !== '').join(' · ')),
+            whenText === '' ? null : h('span', { className: 'wr-relate-when' }, whenText),
           ),
-          h('p', { className: 'wr-relate-text' }, clip(row.candidate.text, 90)),
+          h('p', { className: 'wr-relate-text' }, clip(candidate === null ? '' : candidate.text, 90)),
           h('p', { className: 'wr-relate-why' }, `${t('relate.why')}${row.why}`),
           h(
             'div',
@@ -3979,7 +3847,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             chapters: (coverage.chapters || []).length,
             notes: Number(coverage.notes) || 0,
             thoughts: Number(coverage.thoughts) || 0,
-            fullText: coverage.hasFullText === true ? t('thread.onlyHighlights') : t('thread.onlyHighlights'),
+            fullText: coverage.hasFullText === true ? t('thread.hasFullText') : t('thread.onlyHighlights'),
           })
         : ''
 

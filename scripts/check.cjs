@@ -130,3 +130,57 @@ else if (!/'works'/.test(createViews) || /'materials'/.test(createViews) || /'to
 if (client.indexOf("'nav.materials'") >= 0) gone.push('nav:materials')
 console.log('[retired] %s', gone.length === 0 ? 'none' : gone.join(','))
 if (gone.length > 0) process.exitCode = 1
+
+// 10. 模板拼接取用的 key：静态 grep 查不出这类引用。
+// 删文案键之前要问「有没有模板字符串在取它」——上一轮清理把 `src.response`
+// 和 `src.material` 当无引用键删掉，而 `t(`src.${kind}`)` 照样去取它们，
+// 界面于是把 "src.response · …" 直接渲染给用户；第 2 节的模板正则虽然算出了
+// `templateKeys`，但没有枚举值域，所以 check 还是全绿。这里把「值域」写死成
+// 一处：域里每个值都必须在 zh/en 字典里有对应 key，缺一个就红。
+// 新增动态前缀时，只需在这里补一行，不要在别处散落第二份。
+const dynamicDomains = []
+
+// 10.1 SOURCE_PREFIX 的值域 → src.<kind>
+const prefixBlock = (() => {
+  const at = client.indexOf('const SOURCE_PREFIX = {')
+  if (at < 0) return null
+  const close = client.indexOf('}', at)
+  return close < 0 ? null : client.slice(at, close)
+})()
+const sourceKinds = prefixBlock === null ? [] : [...prefixBlock.matchAll(/(\w+):\s*'[^']*'/g)].map((m) => m[1])
+dynamicDomains.push({ name: 'sourceKind', values: sourceKinds, keyOf: (v) => `src.${v}` })
+
+// 10.2 STAGES 的 id → journey.<id>.hint
+const stageBlock = (() => {
+  const at = client.indexOf('const STAGES = [')
+  if (at < 0) return null
+  const close = client.indexOf('\n    ]', at)
+  return close < 0 ? null : client.slice(at, close)
+})()
+const stageIds = stageBlock === null ? [] : [...stageBlock.matchAll(/\['([a-z0-9]+)'/g)].map((m) => m[1])
+dynamicDomains.push({ name: 'stage', values: stageIds, keyOf: (v) => `journey.${v}.hint` })
+
+// 10.3 时间线实际构造的事件 kind → grow.event.<kind>
+// 只按 GrowTimeline 里真会 push 进去的 kind 算：事件没了，键也该跟着删。
+const timelineBlock = (() => {
+  const at = client.indexOf('function GrowTimeline(')
+  if (at < 0) return null
+  const rest = client.slice(at)
+  const next = rest.indexOf('\n    function ')
+  return next < 0 ? rest : rest.slice(0, next)
+})()
+const eventKinds = timelineBlock === null ? [] : [...new Set([...timelineBlock.matchAll(/kind: '([a-z]+)'/g)].map((m) => m[1]))]
+dynamicDomains.push({ name: 'eventKind', values: eventKinds, keyOf: (v) => `grow.event.${v}` })
+
+const dynamicGaps = []
+for (const domain of dynamicDomains) {
+  if (domain.values.length === 0) dynamicGaps.push(`${domain.name}:empty`)
+  for (const value of domain.values) {
+    const key = domain.keyOf(value)
+    if (!zhKeys.has(key)) dynamicGaps.push(`zh:${key}`)
+    if (!enKeys.has(key)) dynamicGaps.push(`en:${key}`)
+  }
+}
+const domainSummary = dynamicDomains.map((d) => `${d.name}=${d.values.join('/') || '-'}`).join(' ')
+console.log('[dynamickeys] %s gaps=%s', domainSummary, dynamicGaps.join(',') || 'none')
+if (dynamicGaps.length > 0) process.exitCode = 1
