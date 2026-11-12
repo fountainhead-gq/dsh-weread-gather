@@ -948,8 +948,14 @@ renderStandalone(
 )
 smoke.craftBridge.craft = savedCraftBridge
 // 就地展开：卡片在记录卡里，记录卡自己加宽；四胶囊与浮层都不该回来。
-renderStandalone('relate-inline-note', smoke.RelateBar, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, ''])
-renderStandalone('relate-inline-thought', smoke.RelateBar, { entry: relateThought || relateEntry, kind: 'thought', open: true, onToggle() {} }, ['', false, ''])
+renderStandalone('relate-modal-note', smoke.RelateBar, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, '', '', '', {}, '', '', false])
+renderStandalone('relate-modal-thought', smoke.RelateBar, { entry: relateThought || relateEntry, kind: 'thought', open: true, onToggle() {} }, ['', false, '', '', '', {}, '', '', false])
+// 很长的回答：卡片停在 max-height、正文区内部滚动，而不是把卡片撑出屏幕。
+const longAnswer = relateAnswer + '\n' + '这一段是我自己补的解释，用来把正文撑长。'.repeat(40)
+renderStandalone('relate-modal-long', smoke.RelateCard, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, '', longAnswer, '', {}, '', '', false])
+// 用户手动上滚之后：不再抢滚动条，改成给一个「回到底部」的入口。
+renderStandalone('relate-modal-stuck', smoke.RelateCard, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, '', longAnswer, '', {}, '', '', true])
+renderStandalone('relate-modal-error', smoke.RelateCard, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['想问的问题', false, 'provider rate limited (429)', '', '', {}, '', '', false])
 
 {
   const emptyDraw = byLabel0('relate-empty')
@@ -1077,12 +1083,68 @@ renderStandalone('relate-inline-thought', smoke.RelateBar, { entry: relateThough
   if (!noBook) relateGuards.push('relate-nobook: 未渲染')
   else if (!noBook.text.includes('relate.noBook')) relateGuards.push('relate-nobook: 没书时没有说明原因')
 }
+// 浮层：遮罩 + 居中卡片。卡片高度随内容，宽度与上限都写在渲染出来的 style 上。
 {
-  for (const label of ['relate-inline-note', 'relate-inline-thought']) {
+  const cap = typeof smoke.relateCardCap === 'function' ? smoke.relateCardCap(900) : 0
+  for (const label of ['relate-modal-note', 'relate-modal-thought']) {
     const draw = byLabel0(label)
     if (!draw) { relateGuards.push(`${label}: 未渲染`); continue }
-    const cards = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
-    if (cards.length !== 1) relateGuards.push(`${label}: 展开后没有就地关系卡`)
+    const elements = draw.elements || []
+    const modals = elements.filter((el) => String(el.props.className || '') === 'wr-relate-modal')
+    if (modals.length !== 1) relateGuards.push(`${label}: 没有浮层遮罩（找到 ${modals.length} 层）`)
+    else {
+      if (modals[0].props['data-backdrop'] !== 'true') relateGuards.push(`${label}: 遮罩没有标成 backdrop`)
+      if (modals[0].props.role !== 'dialog' || modals[0].props['aria-modal'] !== 'true') relateGuards.push(`${label}: 遮罩不是 dialog/aria-modal`)
+      if (typeof modals[0].props.onClick !== 'function') relateGuards.push(`${label}: 点遮罩关不掉（没有 onClick）`)
+      if (typeof modals[0].props.onKeyDown !== 'function') relateGuards.push(`${label}: Esc 关不掉（没有 onKeyDown）`)
+    }
+    const cards = elements.filter((el) => String(el.props.className || '') === 'wr-relate-card')
+    if (cards.length !== 1) relateGuards.push(`${label}: 浮层里没有卡片（找到 ${cards.length} 张）`)
+    else {
+      const style = cards[0].props.style || {}
+      if (String(style.maxHeight || '') !== `${cap}px`) relateGuards.push(`${label}: 卡片上限是 ${style.maxHeight || '无'}（应为 ${cap}px）`)
+      if (style.height !== undefined) relateGuards.push(`${label}: 卡片写死了高度，短回答也会被撑满`)
+    }
+    const bodies = elements.filter((el) => String(el.props.className || '') === 'wr-relate-body')
+    if (bodies.length !== 1) relateGuards.push(`${label}: 没有内部滚动区`)
+    else if (typeof bodies[0].props.onScroll !== 'function') relateGuards.push(`${label}: 内部滚动区没有 onScroll，跟不了底`)
+    const rowWide = elements.filter((el) => el.props['data-wide'] !== undefined)
+    if (rowWide.length > 0) relateGuards.push(`${label}: 记录卡还在用 data-wide 就地加宽`)
+  }
+}
+// 两个方向都要有证据：短回答不撑满，长回答停在 cap 且内部滚动。
+if (typeof smoke.relateCardBox !== 'function') relateGuards.push('client module 未暴露 relateCardBox')
+else {
+  const shortBox = smoke.relateCardBox({ contentHeight: 220, viewportHeight: 900 })
+  if (!(shortBox.height < shortBox.cap) || shortBox.capped) relateGuards.push(`尺寸: 短回答被撑满了（${JSON.stringify(shortBox)}）`)
+  const tallBox = smoke.relateCardBox({ contentHeight: 4200, viewportHeight: 900 })
+  if (tallBox.height !== tallBox.cap || !tallBox.capped) relateGuards.push(`尺寸: 长回答没有停在 cap（${JSON.stringify(tallBox)}）`)
+  const emptyBox = smoke.relateCardBox({ contentHeight: 0, viewportHeight: 900 })
+  if (emptyBox.height !== 0) relateGuards.push('尺寸: 空内容也占了高度')
+}
+{
+  const longDraw = byLabel0('relate-modal-long')
+  if (!longDraw) relateGuards.push('relate-modal-long: 未渲染')
+  else {
+    const cards = (longDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
+    const cap = typeof smoke.relateCardCap === 'function' ? `${smoke.relateCardCap(900)}px` : ''
+    if (cards.length !== 1) relateGuards.push('relate-modal-long: 找不到卡片')
+    else if (String((cards[0].props.style || {}).maxHeight || '') !== cap) relateGuards.push('relate-modal-long: 长回答时上限变了')
+    if (longDraw.text.length < 400) relateGuards.push(`relate-modal-long: 长回答只渲染出 ${longDraw.text.length} 字`)
+  }
+  const stuckDraw = byLabel0('relate-modal-stuck')
+  if (!stuckDraw) relateGuards.push('relate-modal-stuck: 未渲染')
+  else {
+    const jump = (stuckDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-jump')
+    if (jump.length !== 1) relateGuards.push(`relate-modal-stuck: 「回到底部」入口数量是 ${jump.length}`)
+    else if (jump[0].tag !== 'button' || typeof jump[0].props.onClick !== 'function') relateGuards.push('relate-modal-stuck: 「回到底部」入口不可点')
+    if (!stuckDraw.text.includes('relate.toBottom')) relateGuards.push('relate-modal-stuck: 没有「回到底部」文案')
+  }
+  const errorDraw = byLabel0('relate-modal-error')
+  if (!errorDraw) relateGuards.push('relate-modal-error: 未渲染')
+  else {
+    if (!errorDraw.text.includes('provider rate limited (429)')) relateGuards.push('relate-modal-error: 没有显示真实错误')
+    if (!errorDraw.text.includes('think.retry')) relateGuards.push('relate-modal-error: 没有重试入口')
   }
 }
 // 收起时只有一个入口按钮：点它就是「放回书里看」。
@@ -1098,7 +1160,7 @@ renderStandalone('relate-bar-closed', smoke.RelateBar, { entry: relateEntry, kin
     if (barDraw.text.includes('wr-relate-card')) relateGuards.push('relate-bar-closed: 收起时不该有关系卡')
   }
 }
-// 记录卡在展开时加宽（grid-column: 1/-1），不是在卡片里再挤一个小格子。
+// 浮层这张卡自己不再占位：记录卡保持原尺寸，只是浮层盖在上面。
 {
   const thoughtRow = dataset.thoughts && dataset.thoughts[0]
   renderStandalone('relate-thought-row', smoke.ThoughtRow, { thought: thoughtRow, wall: true, context: [] }, [false, false, true])
@@ -1107,25 +1169,40 @@ renderStandalone('relate-bar-closed', smoke.RelateBar, { entry: relateEntry, kin
   else {
     const rowCards = (rowDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-thought')
     if (rowCards.length === 0) relateGuards.push('ThoughtRow: 找不到想法卡')
-    else if (rowCards[0].props['data-wide'] !== 'true') relateGuards.push('ThoughtRow: 展开时记录卡没有加宽（data-wide）')
+    else if (rowCards[0].props['data-wide'] !== undefined) relateGuards.push('ThoughtRow: 记录卡还在就地加宽（data-wide）')
   }
 }
-// 布局只能从样式表看：卡片在文档流里，max-height + 内部滚动，且不再有浮层坐标。
+// 布局从样式表看：遮罩 fixed 铺满，卡片 auto 高 + max-height + 内部滚动区。
 const relateCss = (name) => {
   const at = code.indexOf(`.${name}{`)
   if (at < 0) return ''
   const end = code.indexOf('}', at)
   return end > at ? code.slice(at, end) : ''
 }
+const modalCss = relateCss('wr-relate-modal')
+if (modalCss === '') relateGuards.push('CSS: 找不到 .wr-relate-modal 规则')
+else {
+  if (modalCss.indexOf('position:fixed') < 0) relateGuards.push('CSS: 遮罩不是 fixed')
+  if (modalCss.indexOf('inset:0') < 0) relateGuards.push('CSS: 遮罩没有铺满视口')
+  if (modalCss.indexOf('z-index') < 0) relateGuards.push('CSS: 遮罩没有抬高层级')
+}
 const cardCss = relateCss('wr-relate-card')
 if (cardCss === '') relateGuards.push('CSS: 找不到 .wr-relate-card 规则')
 else {
-  if (cardCss.indexOf('position:fixed') >= 0) relateGuards.push('CSS: 关系卡还是 position:fixed 浮层')
-  if (cardCss.indexOf('position:absolute') >= 0) relateGuards.push('CSS: 关系卡是绝对定位，会盖住上面的记录')
-  if (cardCss.indexOf('max-height') < 0) relateGuards.push('CSS: 关系卡没有 max-height')
-  if (cardCss.indexOf('overflow') < 0) relateGuards.push('CSS: 关系卡没有内部滚动')
+  if (cardCss.indexOf('position:fixed') >= 0) relateGuards.push('CSS: 卡片自己 fixed 了（应该是遮罩 fixed）')
+  if (cardCss.indexOf('max-height') < 0) relateGuards.push('CSS: 卡片没有 max-height')
+  if (cardCss.indexOf('min(600px') < 0) relateGuards.push('CSS: 卡片宽度不是 min(600px, …)')
+  if (cardCss.indexOf('display:flex') < 0 || cardCss.indexOf('flex-direction:column') < 0) relateGuards.push('CSS: 卡片不是纵向 flex')
 }
-if (code.indexOf('grid-column:1/-1') < 0) relateGuards.push('CSS: 记录卡展开时不会独占一行')
+const bodyCss = relateCss('wr-relate-body')
+if (bodyCss === '') relateGuards.push('CSS: 找不到 .wr-relate-body 规则')
+else {
+  if (bodyCss.indexOf('overflow-y:auto') < 0) relateGuards.push('CSS: 正文区不是内部滚动')
+  if (bodyCss.indexOf('flex:1 1 auto') < 0) relateGuards.push('CSS: 正文区没有吃掉剩余高度')
+}
+const composeCss = relateCss('wr-relate-compose')
+if (composeCss === '') relateGuards.push('CSS: 找不到 .wr-relate-compose 规则')
+else if (composeCss.indexOf('flex:none') < 0) relateGuards.push('CSS: 输入区会跟着内容长，没有固定在底部')
 if (code.indexOf('askPosition') >= 0) relateGuards.push('CSS: 还在按视口坐标摆卡片（askPosition 未删）')
 if (code.indexOf('wr-ask{') >= 0) relateGuards.push('CSS: 旧的 .wr-ask 样式还在')
 if (code.indexOf("request('/chat/models')") >= 0) relateGuards.push('预检: 客户端还在请求 /chat/models')

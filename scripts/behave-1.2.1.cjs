@@ -594,10 +594,71 @@ async function main() {
   for (const needle of ['think.mode.explain', 'think.mode.reframe', 'think.mode.deeper', 'think.mode.custom']) {
     missing('四胶囊已经合并：没有 ' + needle, barClosed.text, needle)
   }
-  eq('收起时没有展开任何卡片', (barClosed.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card').length, 0)
-  const barOpen = renderComp('relate-open', smoke.RelateBar, Object.assign({}, relateBase, { open: true }), ['', false, ''])
-  check('点开后卡片就地出现', (barOpen.elements || []).some((el) => String(el.props.className || '') === 'wr-relate-card'))
+  eq('收起时不渲染任何卡片', (barClosed.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card').length, 0)
+  check('收起时对话仍在（卡片常挂载，只是不渲染）', Boolean(barClosed.components) && typeof barClosed.components.has === 'function' && barClosed.components.has('RelateCard'))
+  const barOpen = renderComp('relate-open', smoke.RelateBar, Object.assign({}, relateBase, { open: true }), ['', false, '', '', '', {}, '', '', false])
+  check('点开后浮层出现', (barOpen.elements || []).some((el) => String(el.props.className || '') === 'wr-relate-modal'))
   has('卡片里写着这条记录是什么', barOpen.text, 'relate.thisNote')
+
+  // 浮层：遮罩铺满、点遮罩与 Esc 都能关；卡片高度随内容（index 顺序 = 渲染顺序）。
+  {
+    const modal = (barOpen.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-modal')
+    check('遮罩标成 backdrop 且是 dialog', Boolean(modal) && modal.props['data-backdrop'] === 'true' && modal.props.role === 'dialog' && modal.props['aria-modal'] === 'true')
+    const closedBy = []
+    const withSpy = renderComp('relate-modal-spy', smoke.RelateBar, Object.assign({}, relateBase, { open: true, onToggle: (next) => closedBy.push(next) }), ['', false, '', '', '', {}, '', '', false])
+    const spyModal = (withSpy.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-modal')
+    if (spyModal) spyModal.props.onClick({ target: spyModal, currentTarget: spyModal })
+    eq('点遮罩会关闭', closedBy.length, 1)
+    eq('点遮罩关闭时传 false', closedBy[0], false)
+    const escBy = []
+    const escDraw = renderComp('relate-modal-esc', smoke.RelateBar, Object.assign({}, relateBase, { open: true, onToggle: (next) => escBy.push(next) }), ['', false, '', '', '', {}, '', '', false])
+    const escModal = (escDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-modal')
+    if (escModal) escModal.props.onKeyDown({ key: 'Escape' })
+    eq('Esc 会关闭', escBy.length, 1)
+    // 点卡片内部不该冒泡成关闭。
+    const insideBy = []
+    const insideDraw = renderComp('relate-modal-inside', smoke.RelateBar, Object.assign({}, relateBase, { open: true, onToggle: (next) => insideBy.push(next) }), ['', false, '', '', '', {}, '', '', false])
+    const insideCard = (insideDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-card')
+    const stopped = []
+    if (insideCard) insideCard.props.onClick({ stopPropagation: () => stopped.push(1) })
+    eq('点卡片内部不会关闭浮层', insideBy.length, 0)
+    check('卡片拦住了冒泡', stopped.length === 1)
+  }
+  // 尺寸：短回答 < 上限（不撑满），长回答 = 上限（内部滚动），空内容不占高。
+  {
+    const cap = smoke.relateCardCap(900)
+    const shortBox = smoke.relateCardBox({ contentHeight: 220, viewportHeight: 900 })
+    check('短回答时卡片高度小于上限', shortBox.height === 220 && shortBox.height < cap && shortBox.capped === false, JSON.stringify(shortBox))
+    const tallBox = smoke.relateCardBox({ contentHeight: 4200, viewportHeight: 900 })
+    check('长回答时卡片停在上限', tallBox.height === cap && tallBox.capped === true, JSON.stringify(tallBox))
+    eq('空内容不占高度', smoke.relateCardBox({ contentHeight: 0, viewportHeight: 900 }).height, 0)
+    const card = (barOpen.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-card')
+    eq('卡片上限写在渲染出的 style 上', card && card.props.style && card.props.style.maxHeight, `${cap}px`)
+    check('卡片没有被写死高度', Boolean(card) && (card.props.style || {}).height === undefined)
+    const body = (barOpen.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-body')
+    check('正文区是独立的滚动容器', Boolean(body) && typeof body.props.onScroll === 'function')
+    // 输入区在滚动区之外，且在卡片底部：渲染顺序 body → compose → textarea。
+    const order = (barOpen.elements || []).map((el) => String(el.props.className || ''))
+    const bodyAt = order.indexOf('wr-relate-body')
+    const composeAt = order.indexOf('wr-relate-compose')
+    const inputAt = order.indexOf('wr-relate-ask')
+    check('输入区排在正文区之后（不随内容滚动）', bodyAt >= 0 && composeAt > bodyAt && inputAt > composeAt, `${bodyAt}/${composeAt}/${inputAt}`)
+  }
+  // 滚动跟随：贴底才跟，手动上滚后不再拉回，并给「回到底部」入口。
+  {
+    const hitBottom = smoke.relateAtBottom({ scrollHeight: 1200, scrollTop: 400, clientHeight: 800 })
+    const scrolledUp = smoke.relateAtBottom({ scrollHeight: 1200, scrollTop: 120, clientHeight: 800 })
+    check('贴底时算「在底部」', hitBottom === true)
+    check('手动上滚后不再算贴底', scrolledUp === false)
+    const shortContent = smoke.relateAtBottom({ scrollHeight: 300, scrollTop: 0, clientHeight: 800 })
+    check('内容不足一屏时不算被拉回', shortContent === true)
+    const stuckDraw = renderComp('relate-stuck', smoke.RelateCard, relateBase, ['', false, '', '很长的回答'.repeat(200), '', {}, '', '', true])
+    const jump = (stuckDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-jump')
+    check('上滚后出现「回到底部」', Boolean(jump) && jump.tag === 'button' && typeof jump.props.onClick === 'function')
+    has('「回到底部」有文案', stuckDraw.text, 'relate.toBottom')
+    const normalDraw = renderComp('relate-not-stuck', smoke.RelateCard, relateBase, ['', false, '', '', '', {}, '', '', false])
+    eq('贴底时不显示「回到底部」', (normalDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-jump').length, 0)
+  }
 
   // 候选：只取同一本书，≤12 条，且永远不带 material:
   const candidates = smoke.relateCandidates({ entry: NOTE_A1, kind: 'note', data: dataPayload, craft })
@@ -1434,20 +1495,26 @@ async function main() {
   const reloaded2 = I.createHost({})
   eq('F-28 再开一次宿主仍是 glacier', reloaded2.settings().palette, 'glacier')
 
-  // 关系卡：就地展开，不再是按视口坐标浮起来的层。
+  // 关系卡：浮层里按内容自适应，遮罩负责铺满与层级。
   const clientCode = fs.readFileSync(path.join(root, 'client.js'), 'utf8')
-  const cardCssAt = clientCode.indexOf('.wr-relate-card{')
-  const cardCss = cardCssAt < 0 ? '' : clientCode.slice(cardCssAt, clientCode.indexOf('}', cardCssAt))
-  check('F-28 关系卡不再按视口坐标浮起来', cardCss !== '' && cardCss.indexOf('position:fixed') < 0 && cardCss.indexOf('position:absolute') < 0, String(cardCss.length))
-  check('F-28 关系卡按文档流排（position:relative）', cardCss.indexOf('position:relative') >= 0, cardCss.slice(0, 120))
+  const cssBlock = (name) => {
+    const at = clientCode.indexOf(`.${name}{`)
+    return at < 0 ? '' : clientCode.slice(at, clientCode.indexOf('}', at))
+  }
+  const cardCss = cssBlock('wr-relate-card')
+  const modalCss = cssBlock('wr-relate-modal')
+  const bodyCss = cssBlock('wr-relate-body')
+  check('F-28 卡片自己不再 fixed（fixed 在遮罩上）', cardCss !== '' && cardCss.indexOf('position:fixed') < 0 && cardCss.indexOf('position:absolute') < 0, String(cardCss.length))
+  check('F-28 遮罩铺满视口', modalCss.indexOf('position:fixed') >= 0 && modalCss.indexOf('inset:0') >= 0, modalCss.slice(0, 120))
   check('F-28 关系卡仍有 max-height（长答案卡内滚动）', cardCss.indexOf('max-height') >= 0, cardCss.slice(0, 160))
-  check('F-28 关系卡自己滚（overflow:auto）', cardCss.indexOf('overflow') >= 0, cardCss.slice(0, 160))
+  check('F-28 关系卡宽度是 min(600px, …)', cardCss.indexOf('min(600px') >= 0, cardCss.slice(0, 160))
+  check('F-28 正文区是内部滚动区', bodyCss.indexOf('overflow-y:auto') >= 0 && bodyCss.indexOf('flex:1 1 auto') >= 0, bodyCss.slice(0, 140))
   check('F-28 已经不再用 askPosition 摆卡片', clientCode.indexOf('askPosition') < 0)
   check('F-28 旧的浮层卡样式已清除', clientCode.indexOf('.wr-ask{') < 0)
-  const inlineDraw = renderComp('behave-inline-card', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', onToggle() {} }, ['', false, '', '', '', {}, '', ''])
-  const inlineCards = (inlineDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
-  check('F-28 关系卡挂在记录卡内部（一行一个）', inlineCards.length === 1, String(inlineCards.length))
-  check('F-28 关系卡上没有浮层坐标', inlineCards.length === 1 && inlineCards[0].props.style === undefined)
+  const modalDraw = renderComp('behave-modal-card', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', onToggle() {} }, ['', false, '', '', '', {}, '', '', false])
+  const modalCards = (modalDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
+  check('F-28 浮层里只有一张卡', modalCards.length === 1, String(modalCards.length))
+  check('F-28 卡片只带高度上限、不带坐标', modalCards.length === 1 && modalCards[0].props.style && modalCards[0].props.style.maxHeight !== undefined && modalCards[0].props.style.top === undefined && modalCards[0].props.style.left === undefined, JSON.stringify(modalCards.length === 1 ? modalCards[0].props.style : null))
 
 // --- 11.8 我的阅读脉络（F-33）：生成 → 校验 → 落盘 → 采纳建议对 ---------------
   // 这条链每一步都真跑：真宿主写数据、真 SSE 帧、真 threads.save。断言数单独累计。

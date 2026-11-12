@@ -289,6 +289,7 @@ window.__ModuleLoader__.load({
       'relate.noneNoChapter': '如果再划一句、或写一句想法，我就能把它们放在一起看。',
       'relate.keepThought': '记成想法',
       'relate.collapse': '收起',
+      'relate.toBottom': '回到底部',
       'relate.tooFew': '这本书你现在只有这一条记录。再划一句、或写一句想法，我再帮你对照。',
       'relate.noBook': '这条记录没有关联的书，暂时没法把别的记录放回来看。',
       'relate.thisNote': '这条划线',
@@ -697,6 +698,7 @@ window.__ModuleLoader__.load({
       'relate.noneNoChapter': 'Highlight one more line, or write one more thought, and I can read them together.',
       'relate.keepThought': 'Keep as my thought',
       'relate.collapse': 'Collapse',
+      'relate.toBottom': 'Back to bottom',
       'relate.tooFew': 'Only one record so far. Add a highlight or a thought, then I can read them together.',
       'relate.noBook': 'This record has no book attached, so there is nothing to put it back beside.',
       'relate.thisNote': 'This highlight',
@@ -1184,15 +1186,18 @@ window.__ModuleLoader__.load({
 .wr-relate-go{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:5px 10px;border-radius:999px;cursor:pointer;transition:border-color .14s ease,color .14s ease,background .14s ease}
 .wr-relate-go:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
 .wr-relate-go:disabled{opacity:.45;cursor:default}
-.wr-cols > .wr-quote[data-wide=true],.wr-cols > .wr-thought[data-wide=true]{grid-column:1/-1}
-.wr-relate-card{position:relative;margin-top:10px;display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--wr-line);border-radius:14px;background:var(--wr-paper-soft);max-height:min(70vh,560px);overflow:auto}
+.wr-relate-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--wr-scrim)}
+.wr-relate-card{position:relative;display:flex;flex-direction:column;width:min(600px,calc(100vw - 32px));max-width:600px;max-height:min(84vh,760px);padding:12px 14px;border:1px solid var(--wr-line);border-radius:14px;background:var(--wr-paper-soft);box-shadow:0 14px 44px color-mix(in srgb, var(--wr-ink) 20%, transparent);overflow:hidden}
+.wr-relate-body{display:flex;flex:1 1 auto;flex-direction:column;gap:10px;min-height:0;overflow-y:auto;padding-right:2px}
+.wr-relate-compose{display:flex;flex:none;align-items:flex-end;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid var(--wr-line)}
+.wr-relate-jump{appearance:none;flex:none;border:1px dashed var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:5px 9px;border-radius:999px;cursor:pointer}
+.wr-relate-jump:hover{border-color:var(--wr-moss);color:var(--wr-ink)}
 .wr-relate-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .wr-relate-kind{font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;background:var(--wr-wash);color:var(--wr-ink-soft)}
 .wr-relate-book{font-size:12px;color:var(--wr-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wr-relate-close{appearance:none;margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:15px;line-height:1;cursor:pointer}
 .wr-relate-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
 .wr-relate-summary{font-size:11px;color:var(--wr-ink-mute);line-height:1.5}
-.wr-relate-ask-line{display:flex;gap:8px;align-items:flex-end}
 .wr-relate-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:8px 11px;min-height:44px;max-height:120px;resize:none;overflow-y:auto;border-radius:11px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
 .wr-relate-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
 .wr-relate-send{appearance:none;flex:none;border:1px solid var(--wr-moss);background:var(--wr-moss);color:var(--wr-on-accent);font:inherit;font-size:11.5px;line-height:1;padding:8px 13px;border-radius:999px;cursor:pointer}
@@ -2457,6 +2462,47 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
     const RELATE_NONE = /(没找到|没有找到|未找到|没有可靠的关联|没有依据)/
     /** A bullet is decoration, not content: 「- [note:x] …」 still names a candidate. */
     const RELATE_BULLET = /^(?:[-*+•]|\d+[.)、])\s+/
+    // The reply card floats over the panel: 600px wide, at most 84% of the viewport
+    // or 760px, whichever is smaller. Height is never fixed — a short answer keeps
+    // the card short, and a long one stops at the cap and scrolls inside.
+    const RELATE_CARD_MAX = 760
+    const RELATE_CARD_VH = 0.84
+    const RELATE_CARD_MIN_WIDTH = 32
+
+    const relateViewportHeight = () => {
+      const view = typeof window !== 'undefined' ? window : null
+      const height = view && Number(view.innerHeight) > 0 ? Number(view.innerHeight) : 0
+      return height > 0 ? height : 900
+    }
+
+    /** The tallest the card may get on this viewport (px). */
+    const relateCardCap = (viewportHeight) => {
+      const height = Number(viewportHeight) > 0 ? Number(viewportHeight) : relateViewportHeight()
+      return Math.min(Math.round(height * RELATE_CARD_VH), RELATE_CARD_MAX)
+    }
+
+    /**
+     * How tall the card actually is, given its content: never taller than the cap,
+     * never taller than the content itself (so a short answer does not leave a
+     * half-empty sheet), and 0 when there is nothing to show.
+     */
+    const relateCardBox = (options) => {
+      const input = options || {}
+      const cap = relateCardCap(input.viewportHeight)
+      const content = Number(input.contentHeight) > 0 ? Number(input.contentHeight) : 0
+      const height = Math.min(content, cap)
+      return { cap, height, capped: content > cap }
+    }
+
+    /** Sticky-to-bottom check: within 8px of the end still counts as 「at bottom」. */
+    const relateAtBottom = (box) => {
+      if (!box) return true
+      const scrollHeight = Number(box.scrollHeight) || 0
+      const scrollTop = Number(box.scrollTop) || 0
+      const clientHeight = Number(box.clientHeight) || 0
+      if (scrollHeight <= clientHeight) return true
+      return scrollHeight - scrollTop - clientHeight <= 8
+    }
 
     /** What the record cards need from the study (book list, craft snapshot, jumps). */
     const relateBridge = { data: {}, craft: null, lookup: null, openSource: null }
@@ -2670,9 +2716,15 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const [saved, setSaved] = useState({})
       const [rowBusy, setRowBusy] = useState('')
       const [rowError, setRowError] = useState('')
+      const [stuck, setStuck] = useState(false)
       const abortRef = useRef(null)
       const turnsRef = useRef([])
       const lastQuestionRef = useRef('')
+      const bodyRef = useRef(null)
+      const inputRef = useRef(null)
+      // Closed it is mounted but renders nothing, so the kept answer, the rows and
+      // the saved labels survive a close/reopen instead of starting over.
+      const open = props.open === undefined ? true : Boolean(props.open)
 
       const candidates = useMemo(
         () => relateCandidates({ entry, kind, data, craft: store }),
@@ -2696,6 +2748,34 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       useEffect(() => () => {
         if (abortRef.current && typeof abortRef.current.abort === 'function') abortRef.current.abort()
       }, [])
+
+      // Typing should work the moment the sheet opens, without a second click.
+      useEffect(() => {
+        const field = inputRef.current
+        if (!open || !field || typeof field.focus !== 'function') return
+        field.focus()
+      }, [open])
+
+      // Follow the stream while the reader is still at the bottom; once they scroll
+      // up we stop moving the viewport and offer 「回到底部」 instead.
+      useEffect(() => {
+        const box = bodyRef.current
+        if (!open || !box || stuck) return
+        if (typeof box.scrollHeight !== 'number') return
+        box.scrollTop = box.scrollHeight
+      }, [answer, busy, open, stuck])
+
+      const onBodyScroll = (event) => {
+        const box = event && event.target ? event.target : null
+        if (!box) return
+        setStuck(!relateAtBottom(box))
+      }
+
+      const jumpToBottom = () => {
+        const box = bodyRef.current
+        if (box && typeof box.scrollHeight === 'number') box.scrollTop = box.scrollHeight
+        setStuck(false)
+      }
 
       const run = (raw) => {
         const question = String(raw || '').trim()
@@ -2959,132 +3039,174 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
             ),
           )
 
+if (!open) return null
+
+      const cap = relateCardCap(relateViewportHeight())
+
       return h(
         'div',
         {
-          className: 'wr-relate-card',
-          'data-kind': kind,
-          onClick: stop,
+          className: 'wr-relate-modal',
+          role: 'dialog',
+          'aria-modal': 'true',
+          'data-backdrop': 'true',
+          onClick: (event) => {
+            const target = event && event.target ? event.target : null
+            const current = event && event.currentTarget ? event.currentTarget : null
+            // Only the backdrop closes: a click that started inside the card must not.
+            if (target !== null && current !== null && target !== current) return
+            stop(event)
+            close()
+          },
           onKeyDown: (event) => {
-            if (event && event.key === 'Escape') close()
+            if (event && event.key === 'Escape') {
+              stop(event)
+              close()
+            }
           },
         },
         h(
           'div',
-          { className: 'wr-relate-head' },
-          h('span', { className: 'wr-relate-kind' }, t(kind === 'thought' ? 'src.thought' : 'src.note')),
-          h('strong', { className: 'wr-relate-book', title: book }, book === '' ? t('think.packUnknown') : `《${book}》`),
-          h(
-            'button',
-            {
-              className: 'wr-relate-close',
-              type: 'button',
-              'aria-label': t('action.dismiss'),
-              onClick: (event) => {
-                stop(event)
-                close()
-              },
-            },
-            '×',
-          ),
-        ),
-        h('p', { className: 'wr-relate-summary' }, summary),
-        noBook
-          ? h('p', { className: 'wr-relate-offline' }, t('relate.noBook'))
-          : null,
-        tooFew && !noBook
-          ? h('p', { className: 'wr-relate-offline' }, t('relate.tooFew'))
-          : null,
-        noBook || tooFew
-          ? null
-          : h(
-              'div',
-              { className: 'wr-relate-ask-line' },
-              h('textarea', {
-                className: 'wr-relate-input',
-                rows: 2,
-                value: draft,
-                placeholder: t('relate.placeholder'),
-                disabled: busy,
-                onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
-                onKeyDown: (event) => {
-                  if (!event || event.key !== 'Enter' || event.shiftKey) return
-                  stop(event)
-                  run(draft)
-                },
-              }),
-              h(
-                'button',
-                {
-                  className: 'wr-relate-send',
-                  type: 'button',
-                  disabled: busy,
-                  onClick: (event) => {
-                    stop(event)
-                    run(draft)
-                  },
-                },
-                busy ? t('relate.thinking') : t('relate.send'),
-              ),
-            ),
-        busy && answer === '' ? h('p', { className: 'wr-relate-offline' }, t('relate.thinking')) : null,
-        resultView,
-        asksView,
-        error === ''
-          ? null
-          : h(
-              'div',
-              { className: 'wr-relate-error' },
-              `${t('error.prefix')}${error}`,
-              h(
-                'button',
-                {
-                  className: 'wr-relate-ask',
-                  type: 'button',
-                  disabled: busy,
-                  style: { marginLeft: '8px' },
-                  onClick: (event) => {
-                    stop(event)
-                    run(lastQuestionRef.current)
-                  },
-                },
-                t('think.retry'),
-              ),
-            ),
-        h(
-          'div',
-          { className: 'wr-relate-foot' },
-          kept === ''
-            ? null
-            : h('span', { className: 'wr-relate-notice' }, `${t('relate.kept')} · ${t('nav.responses')}`),
-          rowError === '' ? null : h('span', { className: 'wr-relate-error' }, rowError),
+          {
+            className: 'wr-relate-card',
+            'data-kind': kind,
+            style: { maxHeight: `${cap}px` },
+            onClick: stop,
+          },
           h(
             'div',
-            { className: 'wr-relate-actions' },
+            { className: 'wr-relate-head' },
+            h('span', { className: 'wr-relate-kind' }, t(kind === 'thought' ? 'src.thought' : 'src.note')),
+            h('strong', { className: 'wr-relate-book', title: book }, book === '' ? t('think.packUnknown') : `《${book}》`),
             h(
               'button',
               {
-                className: 'wr-btn wr-btn-ghost',
+                className: 'wr-relate-close',
                 type: 'button',
-                disabled: rowBusy !== '' || answer === '',
-                onClick: (event) => {
-                  stop(event)
-                  keepThought()
-                },
-              },
-              t('relate.keepThought'),
-            ),
-            h(
-              'button',
-              {
-                className: 'wr-relate-ask',
-                type: 'button',
+                'aria-label': t('action.dismiss'),
                 onClick: (event) => {
                   stop(event)
                   close()
                 },
               },
-              t('relate.collapse'),
+              '×',
+            ),
+          ),
+          // The scrolling part: it takes whatever height is left and never grows
+          // past the card, so a long answer stays inside the sheet.
+          h(
+            'div',
+            { className: 'wr-relate-body', ref: bodyRef, onScroll: onBodyScroll },
+            h('p', { className: 'wr-relate-summary' }, summary),
+            noBook ? h('p', { className: 'wr-relate-offline' }, t('relate.noBook')) : null,
+            tooFew && !noBook ? h('p', { className: 'wr-relate-offline' }, t('relate.tooFew')) : null,
+            busy && answer === '' ? h('p', { className: 'wr-relate-offline' }, t('relate.thinking')) : null,
+            resultView,
+            asksView,
+            error === ''
+              ? null
+              : h(
+                  'div',
+                  { className: 'wr-relate-error' },
+                  `${t('error.prefix')}${error}`,
+                  h(
+                    'button',
+                    {
+                      className: 'wr-relate-ask',
+                      type: 'button',
+                      disabled: busy,
+                      onClick: (event) => {
+                        stop(event)
+                        run(lastQuestionRef.current)
+                      },
+                    },
+                    t('think.retry'),
+                  ),
+                ),
+          ),
+          // The compose row stays pinned to the bottom edge of the card.
+          noBook || tooFew
+            ? null
+            : h(
+                'div',
+                { className: 'wr-relate-compose' },
+                stuck
+                  ? h(
+                      'button',
+                      {
+                        className: 'wr-relate-jump',
+                        type: 'button',
+                        onClick: (event) => {
+                          stop(event)
+                          jumpToBottom()
+                        },
+                      },
+                      t('relate.toBottom'),
+                    )
+                  : null,
+                h('textarea', {
+                  className: 'wr-relate-input',
+                  ref: inputRef,
+                  rows: 2,
+                  value: draft,
+                  placeholder: t('relate.placeholder'),
+                  disabled: busy,
+                  onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
+                  onKeyDown: (event) => {
+                    if (!event || event.key !== 'Enter' || event.shiftKey) return
+                    stop(event)
+                    run(draft)
+                  },
+                }),
+                h(
+                  'button',
+                  {
+                    className: 'wr-relate-send',
+                    type: 'button',
+                    disabled: busy,
+                    onClick: (event) => {
+                      stop(event)
+                      run(draft)
+                    },
+                  },
+                  busy ? t('relate.thinking') : t('relate.send'),
+                ),
+              ),
+          h(
+            'div',
+            { className: 'wr-relate-foot' },
+            kept === ''
+              ? null
+              : h('span', { className: 'wr-relate-notice' }, `${t('relate.kept')} · ${t('nav.responses')}`),
+            rowError === '' ? null : h('span', { className: 'wr-relate-error' }, rowError),
+            h(
+              'div',
+              { className: 'wr-relate-actions' },
+              h(
+                'button',
+                {
+                  className: 'wr-btn wr-btn-ghost',
+                  type: 'button',
+                  disabled: rowBusy !== '' || answer === '',
+                  onClick: (event) => {
+                    stop(event)
+                    keepThought()
+                  },
+                },
+                t('relate.keepThought'),
+              ),
+              h(
+                'button',
+                {
+                  className: 'wr-relate-ask',
+                  type: 'button',
+                  onClick: (event) => {
+                    stop(event)
+                    close()
+                  },
+                },
+                t('relate.collapse'),
+              ),
             ),
           ),
         ),
@@ -3120,15 +3242,16 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
                 t('nav.relate'),
               ),
         ),
-        open
-          ? h(RelateCard, {
-              entry,
-              kind,
-              onToggle: (next) => {
-                if (typeof props.onToggle === 'function') props.onToggle(next)
-              },
-            })
-          : null,
+        // Mounted from the first open on, hidden when closed: the kept answer and the
+        // saved labels must survive a close/reopen instead of starting over.
+        h(RelateCard, {
+          entry,
+          kind,
+          open,
+          onToggle: (next) => {
+            if (typeof props.onToggle === 'function') props.onToggle(next)
+          },
+        }),
       )
     }
 
@@ -3136,12 +3259,11 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const note = props.note
       const open = typeof props.onOpen === 'function' ? props.onOpen : null
       const pick = typeof props.onToggle === 'function' ? h(PickButton, { on: Boolean(props.selected), onChange: props.onToggle }) : null
-      // The card itself widens while it is showing the relate card, so the rows have
-      // the full column instead of wrapping in a 300px tile.
+      // The relate sheet is a layer of its own now, so the card keeps its size.
       const [relate, setRelate] = useState(false)
       return h(
         'div',
-        { className: 'wr-quote', 'data-wide': relate ? 'true' : 'false', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-quote', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: 'wr-quote-text', text: note.text, needle: props.needle }),
         h(RelateBar, { entry: note, kind: 'note', open: relate, onToggle: setRelate }),
@@ -3180,7 +3302,7 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const showClamped = clampable && !expanded
       return h(
         'div',
-        { className: 'wr-thought', 'data-wide': relate ? 'true' : 'false', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
+        { className: 'wr-thought', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: showClamped ? 'wr-quote-text wr-clamp' : 'wr-quote-text', text: content, needle: props.needle }),
         clampable
@@ -6248,6 +6370,9 @@ function threadPairLabel(id, recordById) {
         storedRelation,
         RELATION_LABELS,
         relateBridge,
+        relateCardCap,
+        relateCardBox,
+        relateAtBottom,
         ParagraphRow,
         ParagraphAI,
         buildParagraphPack,
