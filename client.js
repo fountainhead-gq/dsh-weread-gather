@@ -337,10 +337,15 @@ window.__ModuleLoader__.load({
       'work.failed': '没存下：{error}',
       'work.emptyParagraphs': '还没有段落',
       'work.aiTag': 'AI 参与',
-      'work.frontMatter': 'front-matter 带 workId / bookIds / containsAI',
-      'work.saved': '已保存',
+      'work.frontMatter': 'front-matter 带 workId 与 containsAI',
+      'work.previewTitle': 'Markdown 预览',
+      'work.hidePreview': '隐藏预览',
+      'work.menu': '本篇操作',
+      'work.deleteWhole': '删除整篇，无法恢复',
+      'work.deleteConfirm': '再点一次，确认删除整篇',
+      'work.deleteCancel': '算了',
       'work.delete': '删除',
-      'work.hint': '段落挂着出处，导出时可回溯。',
+      'work.saved': '已保存',
       'work.exported': '已导出：{path}',
       'work.paragraphDeleted': '已删除这一段',
       'work.pickFirst': '先建一篇初稿',
@@ -400,7 +405,6 @@ window.__ModuleLoader__.load({
       'thread.packSuggest': '如果发现两条记录明显该放一起看、但还没有对照关系，可以另外提出：suggest 里放一到三对，两端都只写上面出现过的编号。',
       'thread.packSuggestOnly': '现在还没有任何已确认的对照关系，所以线索只能靠你提出建议对：suggest 里放一到三对，两端都只写上面出现过的编号。',
       'thread.packJson': '只返回 JSON，不要别的文字：{"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
-      'thinkView.hint': '对话本身不落盘；只有你采纳的那一句留在这里，并带着出处。',
       'thinkView.empty.title': '这里还空着',
       'thinkView.empty.next': '在阅读里对一条划线或想法点「追问」，把想留的那一句存下来。',
       'thinkView.empty.action': '去书架',
@@ -746,10 +750,15 @@ window.__ModuleLoader__.load({
       'work.failed': 'Not saved: {error}',
       'work.emptyParagraphs': 'No paragraph yet',
       'work.aiTag': 'AI-assisted',
-      'work.frontMatter': 'front-matter carries workId / bookIds / containsAI',
-      'work.saved': 'Saved',
+      'work.frontMatter': 'front-matter carries workId and containsAI',
+      'work.previewTitle': 'Markdown preview',
+      'work.hidePreview': 'Hide preview',
+      'work.menu': 'This draft',
+      'work.deleteWhole': 'Delete the whole draft — cannot be undone',
+      'work.deleteConfirm': 'Click again to delete the whole draft',
+      'work.deleteCancel': 'Never mind',
       'work.delete': 'Delete',
-      'work.hint': 'Paragraphs carry their sources, so the export stays traceable.',
+      'work.saved': 'Saved',
       'work.exported': 'Exported: {path}',
       'work.paragraphDeleted': 'Paragraph deleted',
       'work.pickFirst': 'Create a draft first',
@@ -809,7 +818,6 @@ window.__ModuleLoader__.load({
       'thread.packSuggest': 'If two records clearly belong together but have no relation yet, propose them separately: one to three pairs in suggest, both ends using only ids that appear above.',
       'thread.packSuggestOnly': 'There are no confirmed pairs yet, so the threads can only come from pairs you propose: one to three pairs in suggest, both ends using only ids that appear above.',
       'thread.packJson': 'Return JSON only, nothing else: {"threads":[{"title":"…","why":"…","relations":["rel_xxx"],"suggest":[["note:1","thought:2"]]}]}',
-      'thinkView.hint': 'Conversations are not saved; only the answer you kept stays here, with its source.',
       'thinkView.empty.title': 'Nothing kept yet',
       'thinkView.empty.next': 'In READ, ask about a highlight or thought and keep the line worth keeping.',
       'thinkView.empty.action': 'Go to the shelf',
@@ -1228,7 +1236,7 @@ window.__ModuleLoader__.load({
 .wr-relate-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
 .wr-relate-notice{margin:0;font-size:11px;line-height:1.5;color:var(--wr-ink-soft)}
 .wr-relate-offline{margin:0;font-size:11.5px;line-height:1.6;color:var(--wr-ink-mute)}
-.wr-line-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:9px 12px;min-height:52px;max-height:132px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
+.wr-line-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:8px 12px;min-height:38px;max-height:150px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
 .wr-line-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
 .wr-quote[data-clickable=true],.wr-thought[data-clickable=true]{cursor:pointer;transition:border-color .12s ease}
 .wr-quote[data-clickable=true]:hover,.wr-thought[data-clickable=true]:hover{border-color:var(--dsw-alias-border-l2)}
@@ -1355,6 +1363,20 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-ai-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .wr-ai-running{font-size:12px;color:var(--wr-ink-soft)}
 .wr-draft-export{background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:12px;padding:10px 12px;max-height:260px;overflow:auto;margin-top:10px}
+/* 初稿页：整篇删除收进「⋯」菜单，默认折叠，避免和「加这一段」挤在同一排误点。 */
+.wr-draft-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wr-draft-head-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;flex:1}
+.wr-menu{position:relative;display:inline-flex;flex:none}
+.wr-menu-btn{width:28px;padding:0;font-size:14px;line-height:1}
+.wr-menu-panel{position:absolute;right:0;top:calc(100% + 6px);z-index:10;min-width:210px;display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--wr-line);border-radius:10px;background:var(--wr-paper-soft);box-shadow:0 10px 26px color-mix(in srgb, var(--wr-ink) 16%, transparent)}
+.wr-menu-danger{appearance:none;text-align:left;font:inherit;font-size:11.5px;line-height:1.5;padding:6px 9px;border-radius:8px;border:1px dashed var(--wr-clay);background:transparent;color:var(--wr-clay);cursor:pointer}
+.wr-menu-danger[data-armed=true]{border-style:solid;background:color-mix(in srgb, var(--wr-clay) 14%, transparent);font-weight:600}
+.wr-menu-cancel{appearance:none;text-align:left;font:inherit;font-size:11px;padding:4px 9px;border:0;background:transparent;color:var(--wr-ink-soft);cursor:pointer}
+/* 次级按钮：比主操作小一号、浅底，用在浮层底部这类「顺手一下」的动作上。 */
+.wr-btn-quiet{height:26px;font-size:11.5px;padding:0 10px;border:1px solid var(--wr-line);background:var(--wr-wash);color:var(--wr-ink-soft)}
+.wr-btn-quiet:hover{color:var(--wr-ink);border-color:var(--wr-line-2)}
+.wr-draft-preview{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.wr-draft-preview .wr-draft-export{margin-top:0}
 .wr-empty-next{margin:6px auto 12px;max-width:440px;font-size:12px;line-height:1.65;color:var(--wr-ink-soft)}
 .wr-notice-line{font-size:11.5px;color:var(--wr-ink-soft);margin:0 0 10px}
 .wr-adopt-error{font-size:10.5px;color:var(--dsw-alias-state-error-primary);width:100%}
@@ -2504,6 +2526,25 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       return scrollHeight - scrollTop - clientHeight <= 8
     }
 
+    // Textareas that grow with what is typed. `field-sizing: content` is not in
+    // every browser this panel runs in, so the row count is computed here and
+    // handed to the textarea as `rows`; CSS caps the height at the same number.
+    const TEXTAREA_MAX_ROWS = 6
+    const TEXTAREA_CHARS_PER_ROW = 46
+
+    /** How many visual rows a draft needs (explicit breaks + soft wraps). */
+    const textareaRowsOf = (text) => {
+      const value = String(text === undefined || text === null ? '' : text)
+      if (value === '') return 1
+      return value.split('\n').reduce((total, line) => {
+        if (line === '') return total + 1
+        return total + Math.max(1, Math.ceil(line.length / TEXTAREA_CHARS_PER_ROW))
+      }, 0)
+    }
+
+    /** The `rows` attribute: one row to start, never more than six. */
+    const textareaRows = (text) => Math.min(TEXTAREA_MAX_ROWS, Math.max(1, textareaRowsOf(text)))
+
     /** What the record cards need from the study (book list, craft snapshot, jumps). */
     const relateBridge = { data: {}, craft: null, lookup: null, openSource: null }
 
@@ -3147,7 +3188,7 @@ if (!open) return null
                 h('textarea', {
                   className: 'wr-relate-input',
                   ref: inputRef,
-                  rows: 2,
+                  rows: textareaRows(draft),
                   value: draft,
                   placeholder: t('relate.placeholder'),
                   disabled: busy,
@@ -3185,7 +3226,9 @@ if (!open) return null
               h(
                 'button',
                 {
-                  className: 'wr-btn wr-btn-ghost',
+                  // Secondary weight on purpose: keeping a thought and closing the
+                  // card are follow-ups, not the send action they sit next to.
+                  className: 'wr-btn wr-btn-ghost wr-btn-quiet',
                   type: 'button',
                   disabled: rowBusy !== '' || answer === '',
                   onClick: (event) => {
@@ -3198,7 +3241,7 @@ if (!open) return null
               h(
                 'button',
                 {
-                  className: 'wr-relate-ask',
+                  className: 'wr-btn wr-btn-ghost wr-btn-quiet',
                   type: 'button',
                   onClick: (event) => {
                     stop(event)
@@ -4181,7 +4224,6 @@ function threadPairLabel(id, recordById) {
       return h(
         'div',
         { className: 'wr-stack' },
-        h('p', { className: 'wr-notice-line' }, t('thinkView.hint')),
         rows.map((item) =>
           h(
             'div',
@@ -4322,7 +4364,8 @@ function threadPairLabel(id, recordById) {
           { className: 'wr-btn wr-btn-ghost wr-ai-trigger', type: 'button', disabled, title, onClick: run },
           t('work.aiWrite'),
         ),
-        !hasSource ? h('span', { className: 'wr-ai-hint' }, title) : null,
+        // No visible hint line: "no source yet" belongs in the button's title, not
+        // in the paragraph's reading width.
         open
           ? h(
               'div',
@@ -4407,6 +4450,69 @@ function threadPairLabel(id, recordById) {
           ),
           error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
         ),
+      )
+    }
+
+    /**
+     * 「⋯」for a whole draft. Deleting a draft is the one irreversible thing on
+     * this page, so it lives behind a menu and behind a second click that says
+     * what it does — it used to sit in the same row as 「加这一段」, where people
+     * mistook it for clearing the input.
+     */
+    function WorkMenu(props) {
+      const [open, setOpen] = useState(false)
+      const [armed, setArmed] = useState(false)
+      const work = props.work || null
+      return h(
+        'div',
+        { className: 'wr-menu' },
+        h(
+          'button',
+          {
+            className: 'wr-btn wr-btn-ghost wr-menu-btn',
+            type: 'button',
+            'aria-label': t('work.menu'),
+            title: t('work.menu'),
+            'aria-expanded': open ? 'true' : 'false',
+            disabled: Boolean(props.busy) || !work,
+            onClick: () => {
+              setArmed(false)
+              setOpen((prev) => !prev)
+            },
+          },
+          '⋯',
+        ),
+        open
+          ? h(
+              'div',
+              { className: 'wr-menu-panel', role: 'menu' },
+              h(
+                'button',
+                {
+                  className: 'wr-menu-danger',
+                  type: 'button',
+                  role: 'menuitem',
+                  'data-armed': armed ? 'true' : 'false',
+                  disabled: Boolean(props.busy),
+                  onClick: () => {
+                    if (!armed) {
+                      setArmed(true)
+                      return
+                    }
+                    setArmed(false)
+                    setOpen(false)
+                    props.onDelete()
+                  },
+                },
+                armed ? t('work.deleteConfirm') : t('work.deleteWhole'),
+              ),
+              h(
+                'button',
+                { className: 'wr-menu-cancel', type: 'button', onClick: () => { setArmed(false); setOpen(false) } },
+                t('work.deleteCancel'),
+              ),
+            )
+          : null,
       )
     }
 
@@ -4558,14 +4664,26 @@ function threadPairLabel(id, recordById) {
                     { className: 'wr-draft' },
                     h(
                       'div',
-                      { className: 'wr-item-head' },
-                      h('strong', null, String(work.title || t('work.new'))),
-                      work.status === 'confirmed'
-                        ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.confirmed'))
-                        : h('span', { className: 'wr-tag' }, t('nav.works')),
-                      work.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
+                      { className: 'wr-item-head wr-draft-head' },
+                      h(
+                        'div',
+                        { className: 'wr-draft-head-title' },
+                        h('strong', null, String(work.title || t('work.new'))),
+                        work.status === 'confirmed'
+                          ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.confirmed'))
+                          : h('span', { className: 'wr-tag' }, t('nav.works')),
+                        work.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
+                      ),
+                      // Deleting the whole draft stays behind this menu, away from
+                      // the row where a new paragraph is added.
+                      h(WorkMenu, {
+                        work,
+                        busy,
+                        onDelete: () => {
+                          call('work.delete', { id: work.id }).catch(() => {})
+                        },
+                      }),
                     ),
-                    h('p', { className: 'wr-notice-line' }, t('work.hint')),
                     paragraphs.length === 0
                       ? h('p', { className: 'wr-muted' }, t('work.emptyParagraphs'))
                       : paragraphs.map((paragraph, index) =>
@@ -4600,7 +4718,7 @@ function threadPairLabel(id, recordById) {
                       { className: 'wr-form' },
                       h('textarea', {
                         className: 'wr-line-input',
-                        rows: 3,
+                        rows: textareaRows(draft),
                         value: draft,
                         placeholder: t('work.paragraphPlaceholder'),
                         onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
@@ -4647,21 +4765,48 @@ function threadPairLabel(id, recordById) {
                           },
                           t('work.confirm'),
                         ),
-                        h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: () => exportWork('preview') }, t('work.exportPreview')),
+                        // One button, two states: opening the preview and hiding it
+                        // are the same control, so the YAML never lingers under the input.
+                        h(
+                          'button',
+                          {
+                            className: 'wr-btn wr-btn-ghost',
+                            type: 'button',
+                            'data-on': markdown === '' ? 'false' : 'true',
+                            'aria-expanded': markdown === '' ? 'false' : 'true',
+                            disabled: busy,
+                            onClick: () => {
+                              if (markdown !== '') {
+                                setMarkdown('')
+                                return
+                              }
+                              exportWork('preview')
+                            },
+                          },
+                          markdown === '' ? t('work.exportPreview') : t('work.hidePreview'),
+                        ),
                         h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: () => exportWork('file') }, t('work.exportFile')),
-                        h(DangerButton, { onDelete: () => { call('work.delete', { id: work.id }).catch(() => {}) } }),
                       ),
                     ),
                     error === '' ? null : h('p', { className: 'wr-adopt-error' }, error),
-                    h('p', { className: 'wr-notice-line' }, t('work.frontMatter')),
                     path === '' ? null : h('p', { className: 'wr-notice-line' }, t('work.exported', { path })),
                     markdown === ''
                       ? null
                       : h(
                           'div',
-                          { className: 'wr-draft-export' },
-                          h('pre', { className: 'wr-export-text' }, markdown),
-                          h(CopyButton, { text: markdown }),
+                          { className: 'wr-draft-preview' },
+                          h(
+                            'div',
+                            { className: 'wr-item-head' },
+                            h('strong', null, t('work.previewTitle')),
+                            h('span', { className: 'wr-muted' }, t('work.frontMatter')),
+                          ),
+                          h(
+                            'div',
+                            { className: 'wr-draft-export' },
+                            h('pre', { className: 'wr-export-text' }, markdown),
+                            h(CopyButton, { text: markdown }),
+                          ),
                         ),
                   ),
             ),
@@ -6373,6 +6518,11 @@ function threadPairLabel(id, recordById) {
         relateCardCap,
         relateCardBox,
         relateAtBottom,
+        WorkBoard,
+        WorkMenu,
+        textareaRows,
+        textareaRowsOf,
+        TEXTAREA_MAX_ROWS,
         ParagraphRow,
         ParagraphAI,
         buildParagraphPack,

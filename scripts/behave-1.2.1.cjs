@@ -641,7 +641,7 @@ async function main() {
     const order = (barOpen.elements || []).map((el) => String(el.props.className || ''))
     const bodyAt = order.indexOf('wr-relate-body')
     const composeAt = order.indexOf('wr-relate-compose')
-    const inputAt = order.indexOf('wr-relate-ask')
+    const inputAt = order.indexOf('wr-relate-input')
     check('输入区排在正文区之后（不随内容滚动）', bodyAt >= 0 && composeAt > bodyAt && inputAt > composeAt, `${bodyAt}/${composeAt}/${inputAt}`)
   }
   // 滚动跟随：贴底才跟，手动上滚后不再拉回，并给「回到底部」入口。
@@ -1001,7 +1001,8 @@ async function main() {
   const paraNone = renderComp('para-ai-nosource', smoke.ParagraphAI, Object.assign({}, paraBase, { sourceIds: [] }), [false, '', '', '', false])
   const noneTrigger = (paraNone.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
   check('F-23 段落没有出处时入口置灰', Boolean(noneTrigger) && noneTrigger.props.disabled === true)
-  has('F-23 没有出处时说清原因', paraNone.text, 'work.aiNeedSource')
+  eq('F-23 没有出处时原因写在按钮 title 上', noneTrigger && noneTrigger.props.title, 'work.aiNeedSource')
+  eq('F-23 没有出处时不再占一行灰字', (paraNone.elements || []).filter((el) => String(el.props.className || '') === 'wr-ai-hint').length, 0)
 
   net.modelsAvailable = true
   net.chatStatus = 200
@@ -1670,7 +1671,95 @@ async function main() {
 
   console.log('[behave] 阅读脉络链路断言 %d 条（含「建议对 → 采纳 → 落 relation → 重存 threads」）', threadChain)
 
-  // --- 12. 防回潮 ------------------------------------------------------------
+  // --- 12. 初稿页快修：删除要两步、预览是开关、输入框跟着长 ----------------------
+  {
+    const deletes = []
+    const menuProps = { work: workA, busy: false, onDelete: () => deletes.push(1) }
+    const menuClosed = renderComp('work-menu-closed', smoke.WorkMenu, menuProps, [false, false])
+    check('初稿头部的「⋯」默认是收起的', (menuClosed.elements || []).filter((el) => String(el.props.className || '') === 'wr-menu-panel').length === 0)
+    const menuOpen = renderComp('work-menu-open', smoke.WorkMenu, menuProps, [true, false])
+    const firstDanger = (menuOpen.elements || []).find((el) => String(el.props.className || '') === 'wr-menu-danger')
+    check('「⋯」里写明删的是整篇', Boolean(firstDanger) && String(firstDanger.props.children || '') === 'work.deleteWhole', firstDanger && firstDanger.props.children)
+    if (firstDanger) firstDanger.props.onClick()
+    eq('第一次点不删、只是换成确认', deletes.length, 0)
+    const menuArmed = renderComp('work-menu-armed', smoke.WorkMenu, menuProps, [true, true])
+    const secondDanger = (menuArmed.elements || []).find((el) => String(el.props.className || '') === 'wr-menu-danger')
+    check('第二步的文案是「再点一次，确认删除整篇」', Boolean(secondDanger) && String(secondDanger.props.children || '') === 'work.deleteConfirm', secondDanger && secondDanger.props.children)
+    if (secondDanger) secondDanger.props.onClick()
+    eq('确认之后才真的发 work.delete', deletes.length, 1)
+
+    const boardBase = {
+      craft,
+      data: dataPayload,
+      scopeBookId: '',
+      bookIdOf: () => BOOK_A.bookId,
+      onOpenSource() {},
+      onGoShelf() {},
+      write: () => Promise.resolve({}),
+    }
+    const boardEmpty = renderComp('work-board-empty', smoke.WorkBoard, boardBase, [workA.id, '', false, '', [], false, '', '', ''])
+    const boardLong = renderComp('work-board-long', smoke.WorkBoard, boardBase, [workA.id, '', false, '长草稿。'.repeat(120), [], false, '', '', ''])
+    const boardPreview = renderComp('work-board-preview', smoke.WorkBoard, boardBase, [workA.id, '', false, '', [], false, '', '## 预览', ''])
+    const rowsOf = (draw) => {
+      const areas = (draw.elements || []).filter((el) => el.tag === 'textarea' && String(el.props.className || '').indexOf('wr-line-input') >= 0)
+      return areas.length === 1 ? areas[0].props.rows : null
+    }
+    eq('空输入框只占一行', rowsOf(boardEmpty), 1)
+    eq('长草稿把输入框撑到六行封顶', rowsOf(boardLong), 6)
+    eq('三行文本对应三行', smoke.textareaRows('a\nb\nc'), 3)
+    check('rows 永远在 1..6 之间', [0, 1, 3, 6, 20, 200].every((lines) => {
+      const rows = smoke.textareaRows('x\n'.repeat(lines))
+      return rows >= 1 && rows <= smoke.TEXTAREA_MAX_ROWS
+    }))
+
+    const menuInHead = (boardEmpty.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-menu-btn') >= 0)
+    eq('作品头部有唯一「⋯」', menuInHead.length, 1)
+    const formRows = (boardEmpty.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-form-row') >= 0)
+    check('「加这一段」那一排不再有整篇删除', formRows.every((el) => JSON.stringify(el.props).indexOf('wr-menu-danger') < 0))
+
+    const previewOff = (boardEmpty.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.exportPreview')
+    check('预览按钮默认写着「预览」', Boolean(previewOff))
+    eq('预览区默认收起', (boardEmpty.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-export').length, 0)
+    const previewOn = (boardPreview.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.hidePreview')
+    check('预览打开后按钮变成「隐藏预览」', Boolean(previewOn))
+    eq('预览打开后能看到 YAML 区', (boardPreview.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-export').length, 1)
+    const exportCallsBefore = net.calls.filter((item) => item.url.indexOf('/export') >= 0).length
+    if (previewOn) previewOn.props.onClick()
+    const exportCallsAfter = net.calls.filter((item) => item.url.indexOf('/export') >= 0).length
+    eq('点「隐藏预览」不再发导出请求', exportCallsAfter, exportCallsBefore)
+
+    // 提示清理：说错的那句里不再提 bookIds；两句灰字提示都不在了。
+    const boardText = boardEmpty.text
+    check('front-matter 说明里不再提 bookIds', !boardText.includes('bookIds'))
+    check('初稿页那句「段落挂着出处」的说明已经删掉', !boardText.includes('work.hint'))
+
+    const responsesView = get('responses-copy', { view: 'responses' })
+    check('思考页那句「对话本身不落盘」已经删掉', !responsesView.text.includes('thinkView.hint'))
+    has('思考页仍然写着采纳时间', responsesView.text, 'thinkView.adoptedAt')
+
+    // 段落行：没出处的说明只在按钮 title 里，不占正文。
+    const paraRow = renderComp(
+      'paragraph-no-source-row',
+      smoke.ParagraphRow,
+      { paragraph: { id: 'p_ns', text: '这一段没有出处。', sourceIds: [] }, index: 0, work: { id: workA.id }, lookup, titleOf: () => '诗经', onSave: () => Promise.resolve(), onDelete() {}, onAdopt: () => Promise.resolve() },
+      [false, '', false, ''],
+    )
+    const aiTrigger = (paraRow.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    check('没出处时说明放进按钮 title', Boolean(aiTrigger) && String(aiTrigger.props.title || '') === 'work.aiNeedSource', aiTrigger && aiTrigger.props.title)
+    eq('没出处时不再多一行灰字', (paraRow.elements || []).filter((el) => String(el.props.className || '') === 'wr-ai-hint').length, 0)
+
+    // 浮层底部：记成想法 / 收起 是次级按钮，输入框也是一行起。
+    const relateFoot = renderComp('relate-foot-quiet', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', open: true, onToggle() {} }, ['', false, '', '秩序感先给画面，再给判断。', '', {}, '', '', false])
+    const quietButtons = (relateFoot.elements || []).filter((el) => el.tag === 'button' && ['relate.keepThought', 'relate.collapse'].includes(String(el.props.children || '')))
+    eq('浮层底部两个次动作都在', quietButtons.length, 2)
+    check('两个次动作都是次级按钮样式', quietButtons.every((el) => String(el.props.className || '').split(' ').includes('wr-btn-quiet')), quietButtons.map((el) => el.props.className).join('|'))
+    const sendButton = (relateFoot.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-send')
+    check('发送键没被降级', Boolean(sendButton) && String(sendButton.props.className).indexOf('wr-btn-quiet') < 0)
+    const relateInput = (relateFoot.elements || []).find((el) => el.tag === 'textarea' && String(el.props.className || '').indexOf('wr-relate-input') >= 0)
+    eq('浮层输入框空态是一行', relateInput && relateInput.props.rows, 1)
+  }
+
+  // --- 13. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
   const banned = ['打卡', '排行榜', '徽章', '进度环', '连续天数']
   const hits = banned.filter((word) => sources.includes(word))

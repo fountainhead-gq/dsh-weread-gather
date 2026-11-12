@@ -956,6 +956,100 @@ renderStandalone('relate-modal-long', smoke.RelateCard, { entry: relateEntry, ki
 // 用户手动上滚之后：不再抢滚动条，改成给一个「回到底部」的入口。
 renderStandalone('relate-modal-stuck', smoke.RelateCard, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['', false, '', longAnswer, '', {}, '', '', true])
 renderStandalone('relate-modal-error', smoke.RelateCard, { entry: relateEntry, kind: 'note', open: true, onToggle() {} }, ['想问的问题', false, 'provider rate limited (429)', '', '', {}, '', '', false])
+// 初稿页：整篇删除在「⋯」菜单里，两步确认；预览是开关，不是常驻块。
+const draftCraft = smokeCraft()
+const draftWork = draftCraft.works[0]
+const draftWrite = () => Promise.resolve({})
+const draftBase = {
+  craft: draftCraft,
+  data: dataset,
+  scopeBookId: '',
+  bookIdOf: (sourceId) => smoke.craftSourceHit(sourceId, { note: new Map(), thought: new Map(), response: new Map(), material: new Map() }) ? '' : '',
+  onOpenSource() {},
+  onGoShelf() {},
+  write: draftWrite,
+}
+{
+  const deletes = []
+  const menuProps = { work: draftWork, busy: false, onDelete: () => deletes.push(1) }
+  renderStandalone('work-menu-closed', smoke.WorkMenu, menuProps, [false, false])
+  renderStandalone('work-menu-open', smoke.WorkMenu, menuProps, [true, false])
+  renderStandalone('work-menu-armed', smoke.WorkMenu, menuProps, [true, true])
+  const closed = byLabel0('work-menu-closed')
+  if (!closed) relateGuards.push('work-menu-closed: 未渲染')
+  else if ((closed.elements || []).filter((el) => String(el.props.className || '') === 'wr-menu-panel').length !== 0) relateGuards.push('work-menu-closed: 菜单默认是展开的')
+  const armed = byLabel0('work-menu-armed')
+  const opened = byLabel0('work-menu-open')
+  if (!armed) relateGuards.push('work-menu-armed: 未渲染')
+  if (!opened) relateGuards.push('work-menu-open: 未渲染')
+  else {
+    const first = (opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-menu-danger')
+    if (first.length !== 1) relateGuards.push(`work-menu-open: 删除项数量是 ${first.length}`)
+    else {
+      // 第一步只把按钮换成「再点一次」，绝不发请求。
+      if (String(first[0].props.children || '') !== 'work.deleteWhole') relateGuards.push('work-menu-open: 第一步没有说清删的是整篇')
+      first[0].props.onClick()
+      if (deletes.length !== 0) relateGuards.push('work-menu-open: 第一次点就删了（没有二次确认）')
+      if (first[0].props['data-armed'] !== 'false') relateGuards.push('work-menu-open: 第一步就把按钮标成了已确认')
+    }
+  }
+  if (armed) {
+    const danger = (armed.elements || []).filter((el) => String(el.props.className || '') === 'wr-menu-danger')
+    if (danger.length !== 1) relateGuards.push(`work-menu-armed: 删除项数量是 ${danger.length}`)
+    else {
+      if (String(danger[0].props.children || '') !== 'work.deleteConfirm') relateGuards.push('work-menu-armed: 第二次点之前没有换成确认文案')
+      danger[0].props.onClick()
+      if (deletes.length !== 1) relateGuards.push('work-menu-armed: 确认后没有发删除')
+    }
+  }
+}
+renderStandalone('work-draft-short', smoke.WorkBoard, Object.assign({}, draftBase, {}), [draftWork.id, '', false, '', [], false, '', '', ''])
+renderStandalone('work-draft-long', smoke.WorkBoard, Object.assign({}, draftBase, {}), [draftWork.id, '', false, '很长的段落草稿。'.repeat(30), [], false, '', '', ''])
+renderStandalone('work-preview-open', smoke.WorkBoard, Object.assign({}, draftBase, {}), [draftWork.id, '', false, '', [], false, '', '## 预览\n正文', ''])
+{
+  const shortDraw = byLabel0('work-draft-short')
+  const longDraw = byLabel0('work-draft-long')
+  for (const [label, draw] of [['work-draft-short', shortDraw], ['work-draft-long', longDraw]]) {
+    if (!draw) { relateGuards.push(label + ': 未渲染'); continue }
+    const areas = (draw.elements || []).filter((el) => el.tag === 'textarea' && String(el.props.className || '').indexOf('wr-line-input') >= 0)
+    if (areas.length !== 1) relateGuards.push(`${label}: 新段落输入框数量是 ${areas.length}`)
+    const want = label === 'work-draft-short' ? 1 : 6
+    if (areas.length === 1 && areas[0].props.rows !== want) relateGuards.push(`${label}: 输入框 rows 是 ${areas[0].props.rows}（应为 ${want}）`)
+    // 入参为空时不该有 100px 的固定高度占位。
+    if (areas.length === 1 && areas[0].props.style && areas[0].props.style.height) relateGuards.push(`${label}: 输入框写死了高度`)
+  }
+  const opened = byLabel0('work-preview-open')
+  if (!opened) relateGuards.push('work-preview-open: 未渲染')
+  else {
+    if ((opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-export').length !== 1) relateGuards.push('work-preview-open: 预览区没有打开')
+    const toggle = (opened.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.hidePreview')
+    if (!toggle) relateGuards.push('work-preview-open: 没有「隐藏预览」按钮')
+    else if (toggle.props['aria-expanded'] !== 'true') relateGuards.push('work-preview-open: 按钮没有标成已展开')
+  }
+  if (shortDraw) {
+    if ((shortDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-export').length !== 0) relateGuards.push('work-draft-short: 预览默认没有收起')
+    const previewBtn = (shortDraw.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.exportPreview')
+    if (!previewBtn) relateGuards.push('work-draft-short: 找不到预览按钮')
+    else if (previewBtn.props['aria-expanded'] !== 'false') relateGuards.push('work-draft-short: 预览按钮没有标成收起')
+  }
+  // 整篇删除不能出现在「加这一段」那一排。
+  if (shortDraw) {
+    const forms = (shortDraw.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-form-row') >= 0)
+    const dangerInRow = forms.some((el) => JSON.stringify(el.props).indexOf('wr-menu-danger') >= 0)
+    if (dangerInRow) relateGuards.push('work-draft-short: 删除还在按钮排里')
+    const menu = (shortDraw.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-menu-btn') >= 0)
+    if (menu.length !== 1) relateGuards.push(`work-draft-short: 作品头部没有「⋯」入口（${menu.length}）`)
+  }
+  // rows 的纯函数：一行起、六行封顶。
+  if (typeof smoke.textareaRows !== 'function') relateGuards.push('client module 未暴露 textareaRows')
+  else {
+    if (smoke.textareaRows('') !== 1) relateGuards.push('textareaRows: 空内容是 ' + smoke.textareaRows(''))
+    if (smoke.textareaRows('一行') !== 1) relateGuards.push('textareaRows: 单行被算成了多行')
+    if (smoke.textareaRows('a\nb\nc') !== 3) relateGuards.push('textareaRows: 三行被算成 ' + smoke.textareaRows('a\nb\nc'))
+    if (smoke.textareaRows('x'.repeat(400)) !== 6) relateGuards.push('textareaRows: 长文本没有封顶到 6')
+    if (smoke.textareaRows('a\n'.repeat(30)) !== 6) relateGuards.push('textareaRows: 很多换行没有封顶到 6')
+  }
+}
 
 {
   const emptyDraw = byLabel0('relate-empty')
@@ -1293,7 +1387,10 @@ if (typeof smoke.ParagraphAI === 'function') {
     const triggers = (aiNoSource.elements || []).filter((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
     if (triggers.length === 0) paragraphGuards.push('paragraph-ai-nosource: 缺入口')
     else if (!triggers.every((el) => el.props.disabled === true)) paragraphGuards.push('paragraph-ai-nosource: 没出处时入口没有置灰')
-    if (!aiNoSource.text.includes('work.aiNeedSource')) paragraphGuards.push('paragraph-ai-nosource: 没出处时没有说明')
+    // 说明搬进按钮的 title，不在正文里另占一行灰字。
+    else if (!triggers.every((el) => String(el.props.title || '') === 'work.aiNeedSource')) paragraphGuards.push('paragraph-ai-nosource: 没出处时按钮没有 title 说明')
+    const hintNodes = (aiNoSource.elements || []).filter((el) => String(el.props.className || '') === 'wr-ai-hint')
+    if (hintNodes.length > 0) paragraphGuards.push('paragraph-ai-nosource: 正文里还留着「先挑素材」的灰字')
   }
 } else {
   paragraphGuards.push('client module 未暴露 ParagraphAI')
@@ -1378,7 +1475,11 @@ function checkJourneys(guards, byLabel, bookDraw) {
     const stage = CRAFT_STAGE[label]
     if (!draw.text.includes(`journey.${stage}.hint`)) journeyGuards.push(`${label}: 第二行导航缺 journey.${stage}.hint`)
   }
-  if (byLabel('responses') && !byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 缺「对话不落盘」的口径')
+  if (byLabel('responses')) {
+    // 「对话本身不落盘」那句说明已按用户要求删掉；这一页要留的是出处与采纳时间。
+    if (!byLabel('responses').text.includes('thinkView.adoptedAt')) journeyGuards.push('responses: 缺采纳时间')
+    if (byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 那句「对话不落盘」的提示还在')
+  }
   if (byLabel('works') && !byLabel('works').text.includes('work.export')) journeyGuards.push('works: 缺导出按钮')
   if (byLabel('timeline') && !byLabel('timeline').text.includes('grow.total')) journeyGuards.push('timeline: 缺事件总数')
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
