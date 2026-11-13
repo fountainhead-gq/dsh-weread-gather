@@ -396,6 +396,10 @@ async function main() {
   has('front-matter 的 exportId 稳定形态', doc1 && doc1.markdown, `craft:work/${workAId}`)
   has('front-matter containsAI 与段落一致', doc1 && doc1.markdown, 'containsAI: true')
   has('front-matter 书名取自来源书', doc1 && doc1.markdown, BOOK_A.title)
+  // 「确认初稿」退场：导出件不再写这两行，其余字段照旧。
+  eq('front-matter 不再写 status', (doc1 && doc1.markdown) ? /^status:/m.test(doc1.markdown) : true, false)
+  eq('front-matter 不再写 confirmedAt', (doc1 && doc1.markdown) ? /^confirmedAt:/m.test(doc1.markdown) : true, false)
+  has('front-matter 仍有 source / bookIds / bookTitles / contentHash', doc1 && doc1.markdown, 'contentHash:')
   has('导出正文标出处', doc1 && doc1.markdown, `> 来源：[material:${materialAId}]`)
   has('导出出处带书名', doc1 && doc1.markdown, `《${BOOK_A.title}》`)
   has('导出文件名按作品名', doc1 && doc1.filename, '关雎里的秩序感 - 初稿.md')

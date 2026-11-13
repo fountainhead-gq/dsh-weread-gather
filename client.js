@@ -330,9 +330,7 @@ window.__ModuleLoader__.load({
       'work.noSource': '不挂来源',
       'work.addParagraph': '加这一段',
       'work.deleteParagraph': '删除这一段',
-      'work.confirm': '确认初稿',
-      'work.confirmed': '已确认',
-      'work.export': '导出',
+          'work.export': '导出',
       'work.exportPreview': '预览 Markdown',
       'work.exportFile': '写进导出目录',
       'work.exportPreviewLabel': '预览',
@@ -420,8 +418,7 @@ window.__ModuleLoader__.load({
       'grow.event.thought': '写了想法',
       'grow.event.response': '采纳了回应',
       'grow.event.work': '新建初稿',
-      'grow.event.workConfirmed': '确认初稿',
-      'grow.empty.title': '还没有可回顾的事',
+        'grow.empty.title': '还没有可回顾的事',
       'grow.empty.next': '走一遍阅读 → 思考 → 创作，这里就会长出记录。',
       'grow.empty.action': '去阅读',
       'grow.monthLabel': '{year} 年 {month} 月',
@@ -747,9 +744,7 @@ window.__ModuleLoader__.load({
       'work.noSource': 'No source',
       'work.addParagraph': 'Add paragraph',
       'work.deleteParagraph': 'Delete paragraph',
-      'work.confirm': 'Confirm draft',
-      'work.confirmed': 'Confirmed',
-      'work.export': 'Export',
+          'work.export': 'Export',
       'work.exportPreview': 'Preview Markdown',
       'work.exportFile': 'Write file',
       'work.exportPreviewLabel': 'Preview',
@@ -835,8 +830,7 @@ window.__ModuleLoader__.load({
       'grow.event.thought': 'Wrote a thought',
       'grow.event.response': 'Kept an answer',
       'grow.event.work': 'Started a draft',
-      'grow.event.workConfirmed': 'Confirmed a draft',
-      'grow.empty.title': 'Nothing to look back on yet',
+        'grow.empty.title': 'Nothing to look back on yet',
       'grow.empty.next': 'Read, think, write once and the timeline starts growing.',
       'grow.empty.action': 'Go read',
       'grow.monthLabel': '{month}/{year}',
@@ -4990,9 +4984,6 @@ function threadPairLabel(id, recordById) {
                         'div',
                         { className: 'wr-draft-head-title' },
                         h('strong', null, String(work.title || t('work.new'))),
-                        work.status === 'confirmed'
-                          ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.confirmed'))
-                          : h('span', { className: 'wr-tag' }, t('nav.works')),
                         work.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
                       ),
                       // Deleting the whole draft stays behind this menu, away from
@@ -5086,18 +5077,6 @@ function threadPairLabel(id, recordById) {
                         'div',
                         { className: 'wr-form-row' },
                         h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: addParagraph }, t('work.addParagraph')),
-                        h(
-                          'button',
-                          {
-                            className: 'wr-btn wr-btn-ghost',
-                            type: 'button',
-                            disabled: busy || paragraphs.length === 0,
-                            onClick: () => {
-                              call('work.confirm', { id: work.id }).catch(() => {})
-                            },
-                          },
-                          t('work.confirm'),
-                        ),
                         // One button, two states: opening the preview and hiding it
                         // are the same control, so the YAML never lingers under the input.
                         h(
@@ -5216,7 +5195,7 @@ function threadPairLabel(id, recordById) {
         events.push({
           key: `work:${item.id}`,
           kind: 'work',
-          actionKey: item.status === 'confirmed' ? 'grow.event.workConfirmed' : 'grow.event.work',
+          actionKey: 'grow.event.work',
           at: item.updatedAt || item.createdAt,
           text: item.title,
           chapter: '',

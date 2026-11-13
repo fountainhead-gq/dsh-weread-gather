@@ -358,9 +358,15 @@ async function main() {
   const markdown = exported.document.markdown
   const fm = frontMatter(markdown)
   check('导出：以 front-matter 开头', fm !== null)
-  for (const key of ['title', 'kind', 'workId', 'exportId', 'status', 'bookIds', 'containsAI', 'contentHash', 'exportedAt']) {
+  for (const key of ['title', 'kind', 'workId', 'exportId', 'source', 'bookIds', 'bookTitles', 'containsAI', 'contentHash', 'exportedAt']) {
     check(`导出：front-matter 含 ${key}`, fmValue(fm, key) !== undefined)
   }
+  // 「确认初稿」退场：导出件不再写状态字段，数据里的原字段仍在。
+  check('导出：不再写 status', fmValue(fm, 'status') === undefined)
+  check('导出：不再写 confirmedAt', fmValue(fm, 'confirmedAt') === undefined)
+  const storedWork = host.craft.works.find((item) => item.id === work.id)
+  check('数据：status / confirmedAt 字段仍保留在 craft.json 里（只停止输出）', Boolean(storedWork) && storedWork.status === 'confirmed' && storedWork.confirmedAt > 0)
+  check('数据：前端不再写入新状态，导出也不读它', fmValue(fm, 'status') === undefined && fmValue(fm, 'confirmedAt') === undefined)
   check('导出：workId 指回初稿', fmValue(fm, 'workId') === `"${work.id}"`)
   check('导出：exportId 与初稿一致', fmValue(fm, 'exportId') === `"${work.exportId}"`)
   check('导出：bookIds 由段落推导', (fmValue(fm, 'bookIds') || '').includes(BOOK_ID))

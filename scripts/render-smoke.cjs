@@ -1670,6 +1670,13 @@ function checkJourneys(guards, byLabel, bookDraw) {
     if (byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 那句「对话不落盘」的提示还在')
   }
   if (byLabel('works') && !byLabel('works').text.includes('work.export')) journeyGuards.push('works: 缺导出按钮')
+  const worksDraw = byLabel('works')
+  if (worksDraw) {
+    if (worksDraw.text.indexOf('work.confirm') >= 0) journeyGuards.push('works: 还渲染了「确认初稿」按钮')
+    if (worksDraw.text.indexOf('work.confirmed') >= 0) journeyGuards.push('works: 还渲染了「已确认」标签')
+    const confirmButton = (worksDraw.elements || []).some((el) => el.tag === 'button' && (el.props.children || '') === 'work.confirm')
+    if (confirmButton) journeyGuards.push('works: 「确认初稿」按钮仍在')
+  }
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
   // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。
   const emptyExpect = {
@@ -1924,9 +1931,10 @@ if (typeof smoke.GrowTimeline === 'function') {
   if (draw && draw.text.includes('grow.cross')) timelineGuards.push('timeline-rows: 还在显示「跨书」')
   if (draw && draw.text.indexOf('grow.noBook') < 0) timelineGuards.push('timeline-rows: 没有书归属的记录没写「未关联书」')
   if (draw && draw.text.indexOf('grow.multiBooks') < 0) timelineGuards.push('timeline-rows: 跨两本书的稿子没写「等 N 本」')
-  // 四种动作都要出现过。
-  for (const key of ['grow.event.thought', 'grow.event.response', 'grow.event.work', 'grow.event.workConfirmed'])
+  // 三种动作都要出现过（「确认初稿」这一类已随状态退场）。
+  for (const key of ['grow.event.thought', 'grow.event.response', 'grow.event.work'])
     if (draw && draw.text.indexOf(key) < 0) timelineGuards.push(`timeline-rows: 缺动作 ${key}`)
+  if (draw && draw.text.indexOf('grow.event.workConfirmed') >= 0) timelineGuards.push('timeline-rows: 还在显示「确认初稿」这类动作')
   // 点一行 = 回到它该去的地方：想法/回应带 sourceId，作品带 workId。
   const click = (kind, needle) => {
     const row = items.find((el) => el.props['data-kind'] === kind && (!needle || String(el.props.title || '').includes(needle)))

@@ -829,14 +829,18 @@ async function main() {
     for (const row of workRows) row.props.onClick({ stopPropagation() {} })
     check('B1 点作品事件回到那本书', tlOpened.books.some((entry) => entry[0] === BOOK_A.bookId), JSON.stringify(tlOpened.books))
   }
-  const responseRow = tlRows.find((el) => el.props['data-kind'] === 'response')
-  if (responseRow) {
-    responseRow.props.onClick({ stopPropagation() {} })
-    check('B1 点回应事件回到那条回应', tlOpened.sources[0] === 'response:' + responseA.id, JSON.stringify(tlOpened.sources))
-  }
   const timelineA = renderComp('timeline-scoped-a', smoke.GrowTimeline, Object.assign({}, tlProps, { scopeBookId: BOOK_A.bookId }), [])
   const timelineB = renderComp('timeline-scoped-b', smoke.GrowTimeline, Object.assign({}, tlProps, { scopeBookId: BOOK_B.bookId }), [])
   has('B4 按 A 书筛时间线留下 A 的回应', timelineA.text, '秩序感先给画面')
+  // 未筛时间线里 A/B 两本书的回应都在，谁排前面取决于时间；所以点到「那一条」这件事在 A 的视图上验。
+  const responseRowA = tlItems(timelineA).find((el) => el.props['data-kind'] === 'response')
+  if (responseRowA) {
+    tlOpened.sources.length = 0
+    responseRowA.props.onClick({ stopPropagation() {} })
+    check('B1 点回应事件回到那条回应', tlOpened.sources[0] === 'response:' + responseA.id, JSON.stringify(tlOpened.sources))
+  } else {
+    check('B1 A 的时间线里有回应事件', false, 'no response row in scoped timeline')
+  }
   missing('B4 按 A 书筛时间线不出现 B 的回应', timelineA.text, '第二本书的回应')
   has('B4 按 B 书筛时间线留下 B 的回应', timelineB.text, '第二本书的回应')
   missing('B4 按 B 书筛时间线不出现 A 的回应', timelineB.text, '秩序感先给画面')
@@ -1739,7 +1743,8 @@ async function main() {
     const metae = tlNodes.map((el) => (el.props.children || [])[0])
     check('第一行是时:分', metae.every((meta) => /^\d{1,2}:\d{2}$/.test(plain((meta.props.children || [])[0]))), plain((metae[0].props.children || [])[0]))
     const actions = new Set(metae.map((meta) => plain((meta.props.children || [])[1])))
-    check('第一行还有动作（写了想法/采纳了回应/新建初稿/确认初稿）', actions.size === 4 && [...actions].every((name) => name.indexOf('grow.event.') === 0), [...actions].join(','))
+    check('第一行还有动作（写了想法/采纳了回应/新建初稿）', actions.size === 3 && [...actions].every((name) => name.indexOf('grow.event.') === 0), [...actions].join(','))
+    check('不再出现「确认初稿」这类动作', !tlDraw.text.includes('grow.event.workConfirmed'))
     check('第三行没有书归属时写明「未关联书」', tlDraw.text.includes('grow.noBook'))
     check('第三行跨两本书时写「等 N 本」', tlDraw.text.includes('grow.multiBooks'))
     const thoughtRow = tlNodes.find((el) => el.props['data-kind'] === 'thought')
@@ -1981,6 +1986,12 @@ async function main() {
     const failedArea = (failingRow.elements || []).find((el) => el.tag === 'textarea')
     eq('保存失败后用户改的字没丢', failedArea && failedArea.props.value, '改过的句子，保存失败了。')
 
+    // 「确认初稿」退场：作品页有确认入口或「已确认」标签都算回潮。
+    const worksView = get('works-confirm-gone', { view: 'works', scopeBookId: BOOK_A.bookId })
+    check('初稿页没有「确认初稿」按钮', !(worksView.elements || []).some((el) => el.tag === 'button' && (el.props.children || '') === 'work.confirm'))
+    check('初稿页没有「已确认」标签', !worksView.text.includes('work.confirmed') && !worksView.text.includes('work.confirm'))
+    check('时间线也不再出现「确认初稿」动作', !get('timeline-no-confirm', { view: 'timeline' }).text.includes('grow.event.workConfirmed'))
+
     const confirmedRow = renderComp(
       'row-confirmed',
       smoke.ParagraphRow,
@@ -1988,7 +1999,8 @@ async function main() {
       [false, '', false, ''],
     )
     const confirmedBody = (confirmedRow.elements || []).find((el) => String(el.props.className || '') === 'wr-item-text')
-    check('已确认作品的段落也能点开改', Boolean(confirmedBody) && typeof confirmedBody.props.onClick === 'function')
+    check('旧数据里的 confirmed 作品段落仍能点开改', Boolean(confirmedBody) && typeof confirmedBody.props.onClick === 'function')
+    check('旧数据不再显示任何确认相关字样', !confirmedRow.text.includes('work.confirmed'))
 
     // 挂出处：composer 列这本书的划线/想法/回应，选中后写进 sourceIds。
     const writes = []
