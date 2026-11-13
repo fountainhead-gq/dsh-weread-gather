@@ -820,7 +820,7 @@ async function main() {
   const tlRows = tlItems(timeline)
   check('B1 时间线事件行都是可点 button', tlRows.length >= 2 && tlRows.every((el) => el.tag === 'button'), tlRows.length)
   const kinds = new Set(tlRows.map((el) => el.props['data-kind']))
-  eq('时间线只剩「回应」和「作品」两类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'work']))
+  eq('时间线的事件只有想法/回应/作品三类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'thought', 'work']))
   const workRows = tlRows.filter((el) => el.props['data-kind'] === 'work')
   check('B1 时间线里有作品事件', workRows.length > 0)
   has('B1 事件行显示书名', timeline.text, String(BOOK_A.title).slice(0, 6))
@@ -859,10 +859,11 @@ async function main() {
   })
   const crossTimeline = renderComp('timeline-cross', smoke.GrowTimeline, Object.assign({}, tlProps, { craft: crossCraft }), [])
   const crossRows = tlItems(crossTimeline)
-  const crossRow = crossRows.find((el) => el.props['data-cross'] === 'true')
-  check('B1 跨书事件降级为不可点', Boolean(crossRow) && crossRow.props.disabled === true)
-  has('B1 跨书事件有明确标注', crossTimeline.text, 'grow.cross')
-  check('B1 单书事件仍然可点', crossRows.some((el) => el.props['data-cross'] === 'false' && el.props.disabled !== true))
+  const crossRow = crossRows.find((el) => el.props['data-kind'] === 'work' && String(el.props.title || '').includes('跨两本书'))
+  check('B1 跨书作品仍然可点（靠 focusWorkId 打开那一篇）', Boolean(crossRow) && crossRow.props.disabled !== true)
+  has('B1 跨书作品写明「等 N 本」', crossTimeline.text, 'grow.multiBooks')
+  check('B1 不再出现「跨书」这种后台标签', crossTimeline.text.indexOf('grow.cross') < 0)
+  check('B1 单书事件仍然可点', crossRows.some((el) => el.props.disabled !== true && String(el.props['data-kind']) !== ''))
 
   // --- 9. 素材/选题从界面上撤下来（数据与宿主路由都还在） -------------------------
   check('素材卡组件已退役', !smoke.MaterialBoard)
@@ -1670,6 +1671,136 @@ async function main() {
   }
 
   console.log('[behave] 阅读脉络链路断言 %d 条（含「建议对 → 采纳 → 落 relation → 重存 threads」）', threadChain)
+
+// --- 11.9 积累页时间线：按月分组、每条三行、整行可点（作品带 focusWorkId） --------
+  {
+    const at = (iso) => Math.floor(Date.parse(iso) / 1000)
+    const tlBookA = { bookId: 'weread:book/T1', title: '时间线之书', author: '作者甲' }
+    const tlBookB = { bookId: 'weread:book/T2', title: '另一本', author: '作者乙' }
+    const tlData = {
+      books: [tlBookA, tlBookB],
+      notes: [],
+      thoughts: [
+        { id: 'th_t1', bookId: tlBookA.bookId, chapterName: '第一卷', content: '三月的想法：把整段文字放上来，看它会不会在第二行被截断。'.repeat(2), createTime: at('2026-03-05T10:20:00Z') },
+        { id: 'th_t2', bookId: tlBookA.bookId, chapterName: '第二卷', content: '一月的想法。', createTime: at('2026-01-09T08:05:00Z') },
+        { id: 'th_t3', bookId: '', chapterName: '', content: '没有书归属的想法。', createTime: at('2026-01-02T09:00:00Z') },
+      ],
+      counts: { notes: 0, thoughts: 3 },
+    }
+    const tlCraft = {
+      hasCraft: true,
+      revision: 3,
+      updatedAt: at('2026-03-06T00:00:00Z'),
+      counts: { responses: 1, materials: 0, topics: 0, works: 2 },
+      responses: [{ id: 'r_t1', bookId: tlBookA.bookId, sourceIds: [], text: '采纳的一句回应。', origin: 'think', containsAI: true, model: 'fake-1', promptVersion: 'think-v1', adoptedAt: at('2026-03-06T21:40:00Z'), createdAt: at('2026-03-06T21:40:00Z') }],
+      materials: [],
+      topics: [],
+      works: [
+        { id: 'w_t1', title: '单书初稿', status: 'confirmed', exportId: 'craft:work/w_t1', containsAI: false, paragraphs: [{ id: 'p_t1', text: '单书的一段。', sourceIds: ['note:n_t1'], ai: false, aiOriginIds: [], editedAt: 0 }], createdAt: at('2026-02-20T11:00:00Z'), updatedAt: at('2026-02-20T11:00:00Z'), confirmedAt: at('2026-02-20T11:30:00Z') },
+        { id: 'w_t2', title: '跨两本书的初稿', status: 'draft', exportId: 'craft:work/w_t2', containsAI: false, paragraphs: [{ id: 'p_t2', text: '两本书的一段。', sourceIds: ['note:n_t1', 'note:n_t2'], ai: false, aiOriginIds: [], editedAt: 0 }], createdAt: at('2026-02-11T09:00:00Z'), updatedAt: at('2026-02-11T09:00:00Z'), confirmedAt: 0 },
+      ],
+      bookIndex: [],
+      relations: [],
+      threads: [],
+    }
+    const tlBookIdOf = (sourceId) => {
+      const id = String(sourceId || '')
+      if (id === 'note:n_t1') return tlBookA.bookId
+      if (id === 'note:n_t2') return tlBookB.bookId
+      return ''
+    }
+    const trail = []
+    const tlDraw = renderComp('timeline-rows', smoke.GrowTimeline, {
+      craft: tlCraft,
+      craftState: 'ready',
+      craftError: '',
+      data: tlData,
+      bookIdOf: tlBookIdOf,
+      scopeBookId: '',
+      onOpenSource: (sourceId) => trail.push(String(sourceId)),
+      onOpenWork: (workId) => trail.push(`work:${workId}`),
+      onOpenBook: (bookId) => trail.push(`book:${bookId}`),
+      onGoShelf: () => {},
+      onRetry: () => {},
+    }, [0])
+    const tlNodes = (tlDraw.elements || []).filter((el) => String(el.props.className || '').split(' ').includes('wr-tl-item'))
+    const plain = (node) => {
+      if (node === null || node === undefined || node === false) return ''
+      if (typeof node === 'string' || typeof node === 'number') return String(node)
+      if (Array.isArray(node)) return node.map(plain).join('')
+      if (node.type === '__fragment__') return plain(node.props && node.props.children)
+      if (typeof node.type === 'function') return plain(node.type(node.props || {}))
+      const kids = node.props ? node.props.children : undefined
+      return kids === undefined ? '' : plain(kids)
+    }
+    eq('时间线六条记录都在', tlNodes.length, 6)
+    const tlShapes = tlNodes.map((el) => (el.props.children || []).filter((kid) => kid && typeof kid === 'object').map((kid) => String(kid.props.className || '')).join(','))
+    check('每条记录都是三行（时间+动作 / 正文 / 书名·章节）', tlShapes.every((shape) => shape === 'wr-tl-meta,wr-tl-body,wr-tl-where'), tlShapes[0])
+    const metae = tlNodes.map((el) => (el.props.children || [])[0])
+    check('第一行是时:分', metae.every((meta) => /^\d{1,2}:\d{2}$/.test(plain((meta.props.children || [])[0]))), plain((metae[0].props.children || [])[0]))
+    const actions = new Set(metae.map((meta) => plain((meta.props.children || [])[1])))
+    check('第一行还有动作（写了想法/采纳了回应/新建初稿/确认初稿）', actions.size === 4 && [...actions].every((name) => name.indexOf('grow.event.') === 0), [...actions].join(','))
+    check('第三行没有书归属时写明「未关联书」', tlDraw.text.includes('grow.noBook'))
+    check('第三行跨两本书时写「等 N 本」', tlDraw.text.includes('grow.multiBooks'))
+    const thoughtRow = tlNodes.find((el) => el.props['data-kind'] === 'thought')
+    const thoughtWhere = thoughtRow ? plain((thoughtRow.props.children || [])[2]) : ''
+    check('第三行带章节（书名 · 章节）', thoughtWhere.includes(' · ') && thoughtWhere.includes('第一卷'), thoughtWhere)
+    const months = (tlDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-tl-month')
+    eq('按月分成三组', months.length, 3)
+    check('月份标题带该月条数', tlDraw.text.includes('grow.monthCountInline'))
+    const monthTexts = months.map((el) => plain(el))
+    const monthOrder = monthTexts.map((item) => String(item.split(',')[1] || '').slice(0, 2))
+    check('组内组间都是时间倒序（三月在前）', monthTexts.length === 3 && monthOrder.join(',') === '03,02,01', JSON.stringify(monthOrder))
+    check('不再有「共 N 条」', !tlDraw.text.includes('grow.total'))
+    check('不再有「跨书」这种后台标签', !tlDraw.text.includes('grow.cross'))
+    const clickRow = (kind, needle) => {
+      const row = tlNodes.find((el) => el.props['data-kind'] === kind && (!needle || String(el.props.title || '').includes(needle)))
+      if (row) row.props.onClick({ stopPropagation() {} })
+      return Boolean(row)
+    }
+    check('想法行可点', clickRow('thought'))
+    check('回应行可点', clickRow('response'))
+    check('作品行可点', clickRow('work', '跨两本书'))
+    eq('想法行回到原记录', trail[0], 'thought:th_t1')
+    eq('回应行回到原记录', trail[1], 'response:r_t1')
+    eq('作品行带 focusWorkId 打开那一篇', trail[2], 'work:w_t2')
+
+    const headTitle = (draw) => {
+      const head = ((draw && draw.elements) || []).find((el) => String(el.props.className || '') === 'wr-draft-head-title')
+      return head ? plain(head) : ''
+    }
+    const focusDraw = renderComp('works-focus', smoke.WorkBoard, {
+      craft: tlCraft,
+      craftState: 'ready',
+      craftError: '',
+      data: tlData,
+      bookIdOf: tlBookIdOf,
+      scopeBookId: '',
+      focusWorkId: 'w_t2',
+      lookup: {},
+      write: () => Promise.resolve({}),
+      onOpenSource: () => {},
+      onOpenBook: () => {},
+    }, [])
+    const noFocusDraw = renderComp('works-nofocus', smoke.WorkBoard, {
+      craft: tlCraft,
+      craftState: 'ready',
+      craftError: '',
+      data: tlData,
+      bookIdOf: tlBookIdOf,
+      scopeBookId: '',
+      focusWorkId: '',
+      lookup: {},
+      write: () => Promise.resolve({}),
+      onOpenSource: () => {},
+      onOpenBook: () => {},
+    }, [])
+    check('带 focusWorkId 时打开的是那一篇（不是最近更新的那篇）', headTitle(focusDraw).includes('跨两本书的初稿'), headTitle(focusDraw))
+    check('不带 focusWorkId 时仍选最近更新的一篇', headTitle(noFocusDraw).includes('单书初稿'), headTitle(noFocusDraw))
+    const annualDraw = renderComp('annual-plain', smoke.GrowAnnual, { data: tlData, craft: tlCraft, onGoShelf: () => {}, onOpenBook: () => {} }, [2026, {}, { totalReadTime: 0 }, '', false, ''])
+    check('年度回顾不再挂常驻说明', !annualDraw.text.includes('grow.annual.note'))
+    check('年度回顾不再重复画热力图', !(annualDraw.elements || []).some((el) => String(el.props.className || '').indexOf('wr-heat') >= 0))
+  }
 
   // --- 12. 初稿页快修：删除要两步、预览是开关、输入框跟着长 ----------------------
   {

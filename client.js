@@ -417,14 +417,17 @@ window.__ModuleLoader__.load({
       'thinkView.ai': 'AI 参与',
       // 时间线只构造 response / work 两类事件；素材与选题退场后不再有事件，
       // 对应的 grow.event.* 键也一起删，避免留下取不到的半套文案。
-      'grow.event.response': '采纳了一条回应',
-      'grow.event.work': '写了一篇初稿',
+      'grow.event.thought': '写了想法',
+      'grow.event.response': '采纳了回应',
+      'grow.event.work': '新建初稿',
+      'grow.event.workConfirmed': '确认初稿',
       'grow.empty.title': '还没有可回顾的事',
       'grow.empty.next': '走一遍阅读 → 思考 → 创作，这里就会长出记录。',
       'grow.empty.action': '去阅读',
       'grow.monthLabel': '{year} 年 {month} 月',
-      'grow.monthCount': '本月 {count} 条',
-      'grow.total': '共 {count} 条',
+      'grow.monthCountInline': '{count} 条',
+      'grow.multiBooks': '{title} 等 {count} 本',
+      'grow.noBook': '未关联书',
       'grow.annual.title': '这一年读过的',
       'grow.annual.hint': '只用已有的年度阅读数据，不做评分，也不催更。',
       'grow.annual.empty': '这一年还没有阅读时长记录',
@@ -436,8 +439,6 @@ window.__ModuleLoader__.load({
       'grow.annual.books': '这一年读过的书',
       'grow.annual.noBooks': '这一年没有书目记录',
       'grow.annual.export': '导出这一年',
-      'grow.cross': '跨书',
-      'grow.annual.note': '年度回顾只统计阅读，不代表产出。',
       'grow.annual.total': '全年阅读',
       'grow.annual.days': '有阅读的天',
       'synced.craftAt': '创作更新于 {time}',
@@ -831,14 +832,17 @@ window.__ModuleLoader__.load({
       'thinkView.adoptedAt': 'Kept',
       'thinkView.backBook': 'Back to {title}',
       'thinkView.ai': 'AI-assisted',
+      'grow.event.thought': 'Wrote a thought',
       'grow.event.response': 'Kept an answer',
-      'grow.event.work': 'Wrote a draft',
+      'grow.event.work': 'Started a draft',
+      'grow.event.workConfirmed': 'Confirmed a draft',
       'grow.empty.title': 'Nothing to look back on yet',
       'grow.empty.next': 'Read, think, write once and the timeline starts growing.',
       'grow.empty.action': 'Go read',
       'grow.monthLabel': '{month}/{year}',
-      'grow.monthCount': '{count} in this month',
-      'grow.total': '{count} events',
+      'grow.monthCountInline': '{count} entries',
+      'grow.multiBooks': '{title} and {count} books',
+      'grow.noBook': 'No book attached',
       'grow.annual.title': 'The year in reading',
       'grow.annual.hint': 'Reuses the yearly reading data only — no scoring, no streak pressure.',
       'grow.annual.empty': 'No reading time in this year',
@@ -850,8 +854,6 @@ window.__ModuleLoader__.load({
       'grow.annual.books': 'Books read this year',
       'grow.annual.noBooks': 'No books recorded for this year',
       'grow.annual.export': 'Export this year',
-      'grow.cross': 'Across books',
-      'grow.annual.note': 'This review counts reading only, not output.',
       'grow.annual.total': 'Total reading',
       'grow.annual.days': 'Days read',
       'synced.craftAt': 'Writing updated {time}',
@@ -1345,19 +1347,19 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-pickrow[data-on=true]{background:var(--wr-wash);color:var(--wr-ink)}
 .wr-pickrow-mark{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--wr-line-2);display:grid;place-items:center;font-size:9px;line-height:1;margin-top:2px}
 .wr-pickrow[data-on=true] .wr-pickrow-mark{background:var(--wr-moss);border-color:var(--wr-moss);color:var(--wr-on-accent)}
-.wr-tl{display:flex;flex-direction:column;gap:18px}
-.wr-tl-month{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.03em}
-.wr-tl-items{display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--wr-line);padding-left:14px}
-.wr-tl-item{display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.6;min-width:0;position:relative}
-.wr-tl-item{background:none;border:0;border-radius:6px;padding:0 6px 0 0;margin:0;font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}
-.wr-tl-item:not(:disabled):hover{background:var(--wr-wash)}
-.wr-tl-item:disabled{cursor:default;opacity:.72}
-.wr-tl-cross{flex:none;font-size:10px;padding:0 5px}
-.wr-tl-book{flex:none;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wr-type-switch{flex:none;height:24px;font-size:11px;padding:0 4px}
-.wr-tl-item:before{content:'';position:absolute;left:-19px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--wr-sage)}
-.wr-tl-kind{flex:none;font-size:10.5px;color:var(--wr-ink-mute);white-space:nowrap}
-.wr-tl-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-tl{display:flex;flex-direction:column;gap:22px}
+.wr-tl-month{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--wr-ink)}
+.wr-tl-month-count{font-weight:400;font-size:11.5px;color:var(--wr-ink-mute)}
+.wr-tl-items{display:flex;flex-direction:column;gap:4px;border-left:2px solid var(--wr-line);padding-left:16px}
+.wr-tl-item{display:flex;flex-direction:column;gap:3px;align-items:stretch;position:relative;min-width:0;width:100%;margin:0;background:none;border:0;border-radius:8px;padding:8px 10px 8px 0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.wr-tl-item:hover{background:var(--wr-wash)}
+.wr-tl-item:focus-visible{outline:2px solid var(--wr-moss);outline-offset:1px}
+.wr-tl-item:before{content:'';position:absolute;left:-21px;top:14px;width:7px;height:7px;border-radius:50%;background:var(--wr-sage)}
+.wr-tl-meta{display:flex;align-items:baseline;gap:8px;font-size:12px;line-height:1.4;color:var(--wr-ink-soft)}
+.wr-tl-time{font-variant-numeric:tabular-nums;color:var(--wr-ink-mute)}
+.wr-tl-action{color:var(--wr-ink-soft)}
+.wr-tl-body{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14.5px;line-height:1.6;color:var(--wr-ink);word-break:break-word}
+.wr-tl-where{display:block;font-size:12px;line-height:1.4;color:var(--wr-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wr-draft{display:flex;flex-direction:column;gap:8px}
 .wr-paragraph{display:flex;gap:10px;align-items:flex-start;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:12px;padding:11px 13px}
 .wr-paragraph-index{flex:none;font-size:11px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums;padding-top:2px;width:46px}
@@ -4829,7 +4831,10 @@ function threadPairLabel(id, recordById) {
               ),
             )
       const works = scopedWorks.slice().sort((left, right) => (Number(right.updatedAt) || 0) - (Number(left.updatedAt) || 0))
-      const [activeId, setActiveId] = useState('')
+      // 时间线里点「作品」必须打开那一篇：多书作品本来就没有唯一归属书，
+      // 靠书过滤会开错篇，所以这里按 id 定位。
+      const focusWorkId = String(props.focusWorkId || '')
+      const [activeId, setActiveId] = useState(focusWorkId)
       const [title, setTitle] = useState('')
       const [creating, setCreating] = useState(false)
       const [draft, setDraft] = useState('')
@@ -4856,6 +4861,11 @@ function threadPairLabel(id, recordById) {
         return books.length === 1 ? books[0] : ''
       })()
       const sourcePool = sourcePoolOf(props.data, craft, composerBookId)
+      // 从时间线跳进来时 focusWorkId 会变，组件若已经挂着就同步选中的那一篇。
+      useEffect(() => {
+        if (focusWorkId === '') return
+        if (works.some((item) => item.id === focusWorkId)) setActiveId(focusWorkId)
+      }, [focusWorkId])
       const call = (op, payload) => {
         setBusy(true)
         setError('')
@@ -5136,15 +5146,17 @@ function threadPairLabel(id, recordById) {
       )
     }
 
+// 1.2.3：时间线是给人看的，不是给后台看的。每条只有三行——
+    // 什么时候做了什么（小字次要色）、做了什么内容的摘要（主字号、两行封顶）、
+    // 出自哪本书的哪一章（小字、单行省略）。整行可点，不再有「跨书」这类后台标签。
     function GrowTimeline(props) {
       const craft = props.craft || EMPTY_CRAFT
       const bookIdOf = typeof props.bookIdOf === 'function' ? props.bookIdOf : null
-      // B1: every event has to know which book it came from, so a timeline row
-      // can go back to the shelf instead of being decoration. Works stop holding
-      // bookId on purpose — the books come from what they cite.
-      //
-      // 1.2.2 §5.1: materials and topics left the interface, so their events are no
-      // longer shown. The records themselves stay in craft.json untouched.
+      const titleOf = (bookId) => bookTitleOf(bookId, props.data, craft) || bookId
+      const clockOf = (at) => {
+        const stamp = fmtDateTime(at)
+        return stamp.length >= 16 ? stamp.slice(11, 16) : ''
+      }
       const booksOf = (sourceIds) => {
         const seen = []
         for (const sourceId of Array.isArray(sourceIds) ? sourceIds : []) {
@@ -5153,14 +5165,42 @@ function threadPairLabel(id, recordById) {
         }
         return seen
       }
+      // 第三行：一本书就写书名，多本就写「第一本 等 N 本」，没有就直说未关联书。
+      const whereOf = (bookIds, chapter) => {
+        if (bookIds.length === 0) return t('grow.noBook')
+        const head = bookIds.length > 1
+          ? t('grow.multiBooks', { title: titleOf(bookIds[0]), count: String(bookIds.length) })
+          : titleOf(bookIds[0])
+        const name = String(chapter || '')
+        return name === '' ? head : `${head} · ${name}`
+      }
+      // 1.2.2 §5.1: materials and topics left the interface, so their events are no
+      // longer shown. The records themselves stay in craft.json untouched.
       const events = []
+      for (const item of Array.isArray(props.data && props.data.thoughts) ? props.data.thoughts : []) {
+        const bookId = String(item.bookId || '')
+        events.push({
+          key: `thought:${item.id}`,
+          kind: 'thought',
+          actionKey: 'grow.event.thought',
+          at: item.createTime,
+          text: item.content,
+          chapter: item.chapterName,
+          bookIds: bookId === '' ? [] : [bookId],
+          open: () => {
+            if (typeof props.onOpenSource === 'function') props.onOpenSource(`thought:${item.id}`)
+          },
+        })
+      }
       for (const item of Array.isArray(craft.responses) ? craft.responses : []) {
         const bookId = String(item.bookId || '')
         events.push({
           key: `response:${item.id}`,
           kind: 'response',
+          actionKey: 'grow.event.response',
           at: item.adoptedAt || item.createdAt,
           text: item.text,
+          chapter: '',
           bookIds: bookId === '' ? [] : [bookId],
           open: () => {
             if (typeof props.onOpenSource === 'function') props.onOpenSource(`response:${item.id}`)
@@ -5176,10 +5216,19 @@ function threadPairLabel(id, recordById) {
         events.push({
           key: `work:${item.id}`,
           kind: 'work',
+          actionKey: item.status === 'confirmed' ? 'grow.event.workConfirmed' : 'grow.event.work',
           at: item.updatedAt || item.createdAt,
           text: item.title,
+          chapter: '',
           bookIds,
-          open: bookIds.length === 1 ? () => props.onOpenBook(bookIds[0], 'thoughts') : null,
+          // 多书作品也必须能打开「那一篇」：交给上层按 id 定位，而不是猜一本书。
+          open: () => {
+            if (typeof props.onOpenWork === 'function') {
+              props.onOpenWork(item.id)
+              return
+            }
+            if (bookIds.length === 1 && typeof props.onOpenBook === 'function') props.onOpenBook(bookIds[0], 'thoughts')
+          },
         })
       }
       const [page, setPage] = useState(0)
@@ -5213,58 +5262,44 @@ function threadPairLabel(id, recordById) {
       }
       return h(
         'div',
-        null,
-        h(
-          'p',
-          { className: 'wr-notice-line' },
-          `${t('grow.total', { count: String(sorted.length) })}${scope === '' ? '' : ' · ' + t('thinkView.scope')}`,
-        ),
-        h(
-          'div',
-          { className: 'wr-tl' },
-          shown.map((group) =>
+        { className: 'wr-tl' },
+        shown.map((group) =>
+          h(
+            'div',
+            { key: group.month, className: 'wr-tl-group' },
+            // 月份只有一行：2026 年 3 月 · 7 条。不再另起一行「本月 N 条」。
             h(
               'div',
-              { key: group.month },
-              h(
-                'div',
-                { className: 'wr-tl-month' },
-                h('span', null, t('grow.monthLabel', { year: group.month.slice(0, 4), month: group.month.slice(5, 7) })),
-                h('span', { className: 'wr-muted' }, t('grow.monthCount', { count: String(group.items.length) })),
-              ),
-              h(
-                'div',
-                { className: 'wr-tl-items' },
-                group.items.map((event) => {
-                  const cross = event.bookIds.length !== 1
-                  return h(
-                    'button',
-                    {
-                      className: 'wr-tl-item',
-                      key: event.key,
-                      type: 'button',
-                      'data-kind': event.kind,
-                      'data-cross': cross ? 'true' : 'false',
-                      disabled: cross || typeof event.open !== 'function',
-                      onClick: (clickEvent) => {
-                        if (cross || typeof event.open !== 'function') return
-                        if (clickEvent && typeof clickEvent.stopPropagation === 'function') clickEvent.stopPropagation()
-                        event.open()
-                      },
+              { className: 'wr-tl-month' },
+              h('span', null, t('grow.monthLabel', { year: group.month.slice(0, 4), month: group.month.slice(5, 7) })),
+              h('span', { className: 'wr-tl-month-count' }, t('grow.monthCountInline', { count: String(group.items.length) })),
+            ),
+            h(
+              'div',
+              { className: 'wr-tl-items' },
+              group.items.map((event) =>
+                h(
+                  'button',
+                  {
+                    className: 'wr-tl-item',
+                    key: event.key,
+                    type: 'button',
+                    'data-kind': event.kind,
+                    title: String(event.text || ''),
+                    onClick: (clickEvent) => {
+                      if (clickEvent && typeof clickEvent.stopPropagation === 'function') clickEvent.stopPropagation()
+                      if (typeof event.open === 'function') event.open()
                     },
-                    h('span', { className: 'wr-tl-kind' }, t(`grow.event.${event.kind}`)),
-                    h('span', { className: 'wr-tl-text', title: String(event.text || '') }, clip(String(event.text || '—'), 64)),
-                    event.bookIds.length === 1
-                      ? h(
-                          'span',
-                          { className: 'wr-muted wr-tl-book' },
-                          clip(bookTitleOf(event.bookIds[0], props.data, craft) || event.bookIds[0], 16),
-                        )
-                      : null,
-                    cross ? h('span', { className: 'wr-tag wr-tl-cross' }, t('grow.cross')) : null,
-                    h('span', { className: 'wr-muted' }, fmtDate(event.at)),
-                  )
-                }),
+                  },
+                  h(
+                    'span',
+                    { className: 'wr-tl-meta' },
+                    h('span', { className: 'wr-tl-time' }, clockOf(event.at)),
+                    h('span', { className: 'wr-tl-action' }, t(event.actionKey)),
+                  ),
+                  h('span', { className: 'wr-tl-body' }, clip(String(event.text || ''), 180)),
+                  h('span', { className: 'wr-tl-where' }, whereOf(event.bookIds, event.chapter)),
+                ),
               ),
             ),
           ),
@@ -5288,6 +5323,7 @@ function threadPairLabel(id, recordById) {
             ),
       )
     }
+
 
     /** GROW reads only the yearly numbers that already exist; nothing here scores you. */
     function GrowAnnual(props) {
@@ -5363,7 +5399,6 @@ function threadPairLabel(id, recordById) {
               ),
             ),
           ),
-          h('span', { className: 'wr-muted' }, t('grow.annual.note')),
           h(
             'button',
             {
@@ -5433,7 +5468,7 @@ function threadPairLabel(id, recordById) {
                       ),
                     ),
                 exported === '' ? null : h('p', { className: 'wr-notice-line' }, t('export.saved', { files: exported })),
-                readDays === 0 ? null : h(Heatmap, { year, days }),
+                // 热力图在总览里已经有了，积累页再画一遍只是重复。
               ),
       )
     }
@@ -6518,7 +6553,7 @@ function threadPairLabel(id, recordById) {
         // 1.2.2 §5.1: materials and topics left the interface, so they no longer
         // advertise themselves in the journey bar either.
         create: (craft.works || []).length,
-        grow: (craft.responses || []).length + (craft.works || []).length,
+        grow: (Number(counts.thoughts) || 0) + (craft.responses || []).length + (craft.works || []).length,
       }
       const scopeTitle = scopeBookId === '' ? '' : bookTitleOf(scopeBookId, data, craft) || ''
       const openCraftView = (nextView, bookId) => {
@@ -6531,6 +6566,15 @@ function threadPairLabel(id, recordById) {
       // thought opens the book it sits in, a kept reply opens in THINK. Materials
       // are retired from the interface, so their chips stay inert (see SourceTags).
       const sourceFocus = useRef('')
+      // 时间线点作品时用它指定「哪一篇」；用 ref 是因为 setView 已经会触发重渲染。
+      const focusWorkRef = useRef('')
+      const openWork = (workId) => {
+        focusWorkRef.current = String(workId || '')
+        setQuery('')
+        setActiveBookId('')
+        setScopeBookId('')
+        setView('works')
+      }
       const openSource = (sourceId) => {
         const hit = craftSourceHit(sourceId, lookup)
         if (!hit) return
@@ -6573,6 +6617,8 @@ function threadPairLabel(id, recordById) {
           void loadCraft()
         },
         onOpenBook: (bookId, tab) => openBookById(bookId, tab),
+        onOpenWork: openWork,
+        focusWorkId: focusWorkRef.current,
         onGoShelf: () => {
           setScopeBookId('')
           setView('shelf')

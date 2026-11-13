@@ -445,6 +445,60 @@ function crossCraft() {
   })].concat(base.works)
   return base
 }
+// 时间线夹具：三个月、四种动作、一条没有书归属、一篇跨两本书的稿子。
+// 时间写死，月份分组才是可断言的（不跟着今天跑）。
+function timelineFixture() {
+  const at = (iso) => Math.floor(Date.parse(iso) / 1000)
+  const bookA = { bookId: 'weread:book/T1', title: '时间线之书', author: '作者甲' }
+  const bookB = { bookId: 'weread:book/T2', title: '另一本', author: '作者乙' }
+  const data = {
+    books: [bookA, bookB],
+    notes: [],
+    thoughts: [
+      { id: 'th_t1', bookId: bookA.bookId, chapterName: '第一卷', content: '三月的想法：把整段文字放上来，看它会不会在第二行被截断。'.repeat(2), createTime: at('2026-03-05T10:20:00Z') },
+      { id: 'th_t2', bookId: bookA.bookId, chapterName: '第二卷', content: '一月的想法。', createTime: at('2026-01-09T08:05:00Z') },
+      { id: 'th_t3', bookId: '', chapterName: '', content: '没有书归属的想法。', createTime: at('2026-01-02T09:00:00Z') },
+    ],
+    counts: { notes: 0, thoughts: 3 },
+  }
+  const craft = {
+    hasCraft: true,
+    revision: 3,
+    updatedAt: at('2026-03-06T00:00:00Z'),
+    counts: { responses: 1, materials: 0, topics: 0, works: 2 },
+    responses: [{
+      id: 'r_t1',
+      bookId: bookA.bookId,
+      bookTitle: bookA.title,
+      author: bookA.author,
+      sourceIds: [],
+      text: '采纳的一句回应。',
+      origin: 'think',
+      containsAI: true,
+      model: 'gpt-4o-mini',
+      promptVersion: 'think-v1',
+      adoptedAt: at('2026-03-06T21:40:00Z'),
+      createdAt: at('2026-03-06T21:40:00Z'),
+    }],
+    materials: [],
+    topics: [],
+    works: [
+      // 更新更早的那篇更新，默认选中它是第一次；从时间线点它时 focusWorkId 必须赢。
+      { id: 'w_t1', title: '单书初稿', status: 'confirmed', exportId: 'craft:work/w_t1', containsAI: false, paragraphs: [{ id: 'p_t1', text: '单书的一段。', sourceIds: ['note:n_t1'], ai: false, aiOriginIds: [], editedAt: 0 }], createdAt: at('2026-02-20T11:00:00Z'), updatedAt: at('2026-02-20T11:00:00Z'), confirmedAt: at('2026-02-20T11:30:00Z') },
+      { id: 'w_t2', title: '跨两本书的初稿', status: 'draft', exportId: 'craft:work/w_t2', containsAI: false, paragraphs: [{ id: 'p_t2', text: '两本书的一段。', sourceIds: ['note:n_t1', 'note:n_t2'], ai: false, aiOriginIds: [], editedAt: 0 }], createdAt: at('2026-02-11T09:00:00Z'), updatedAt: at('2026-02-11T09:00:00Z'), confirmedAt: 0 },
+    ],
+    bookIndex: [],
+    relations: [],
+    threads: [],
+  }
+  const bookIdOf = (sourceId) => {
+    const id = String(sourceId || '')
+    if (id === 'note:n_t1') return bookA.bookId
+    if (id === 'note:n_t2') return bookB.bookId
+    return ''
+  }
+  return { data, craft, bookIdOf }
+}
 // 已存下来的关系：对照行上的标签要能读回来（改标签、删除都靠它）。
 function relatedCraft() {
   const base = smokeCraft()
@@ -532,7 +586,7 @@ renderPanel('annual', seedBase('annual'))
 renderPanel('craft-empty', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE }))
 renderPanel('craft-empty-think', seeds({ view: 'responses', craft: EMPTY_CRAFT_FIXTURE }))
 renderPanel('craft-empty-works', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE }))
-renderPanel('craft-empty-grow', seeds({ view: 'timeline', craft: EMPTY_CRAFT_FIXTURE }))
+renderPanel('craft-empty-grow', seeds({ view: 'timeline', craft: EMPTY_CRAFT_FIXTURE, data: Object.assign({}, payload, { notes: [], thoughts: [], books: [], counts: {} }) }))
 renderPanel('craft-failed', seeds({ view: 'works', craft: EMPTY_CRAFT_FIXTURE, craftState: 'failed', craftError: '网络开小差了' }))
 renderPanel('craft-scoped', seeds({ view: 'works', scopeBookId: anyBook.bookId }))
 // F2：换一本书进 CREATE，别的书的稿子不能跟过来。用一本夹具里不存在的书做
@@ -1616,7 +1670,6 @@ function checkJourneys(guards, byLabel, bookDraw) {
     if (byLabel('responses').text.includes('thinkView.hint')) journeyGuards.push('responses: 那句「对话不落盘」的提示还在')
   }
   if (byLabel('works') && !byLabel('works').text.includes('work.export')) journeyGuards.push('works: 缺导出按钮')
-  if (byLabel('timeline') && !byLabel('timeline').text.includes('grow.total')) journeyGuards.push('timeline: 缺事件总数')
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
   // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。
   const emptyExpect = {
@@ -1703,16 +1756,23 @@ else {
     journeyGuards.push('timeline: 没有任何一条能点回书页')
   if (!timelineItems.some((el) => el.props['data-kind'] === 'work' && el.props.disabled !== true))
     journeyGuards.push('timeline: 作品事件不能点回书页')
-  const crossItems = tlItems('timeline-cross')
-  if (!crossItems.some((el) => el.props['data-cross'] === 'true' && el.props.disabled === true))
-    journeyGuards.push('timeline-cross: 跨书事件没有降级为不可点')
-  if (byLabel('timeline-cross') && !byLabel('timeline-cross').text.includes('grow.cross')) journeyGuards.push('timeline-cross: 缺「跨书」标注')
+  if (byLabel('timeline-cross') && byLabel('timeline-cross').text.includes('grow.cross'))
+    journeyGuards.push('timeline-cross: 还在显示「跨书」这种后台标签')
+  if (byLabel('timeline-cross') && byLabel('timeline-cross').text.indexOf('grow.multiBooks') < 0)
+    journeyGuards.push('timeline-cross: 跨两本书的稿子没写「等 N 本」')
 
   // B4：把一本书放进 GROW，时间线只留这本书的事件；别的书进来必须是空态。
   const scopedTimeline = tlItems('timeline-scoped')
-  if (scopedTimeline.length !== timelineItems.length) journeyGuards.push(`timeline-scoped: 该书的事件没全留下（${scopedTimeline.length}/${timelineItems.length}）`)
-  if (scopedTimeline.some((el) => el.props['data-cross'] === 'true')) journeyGuards.push('timeline-scoped: 按书过滤后不该还有跨书事件')
-  if (byLabel('timeline-scoped') && !byLabel('timeline-scoped').text.includes('thinkView.scope')) journeyGuards.push('timeline-scoped: 没写明只看这本书')
+  if (scopedTimeline.length === 0) journeyGuards.push('timeline-scoped: 这本书的事件一条都没留下')
+  if (scopedTimeline.length >= timelineItems.length) journeyGuards.push(`timeline-scoped: 按书过滤后行数没有变少（${scopedTimeline.length}/${timelineItems.length}）`)
+  const scopedBookTitle = String((anyBook && anyBook.title) || '')
+  const whereOf = (el) => {
+    const kids = (el.props.children || []).filter((kid) => kid && typeof kid === 'object')
+    const where = kids[2]
+    return where ? nodeText(where) : ''
+  }
+  if (scopedBookTitle !== '' && scopedTimeline.some((el) => whereOf(el).indexOf(scopedBookTitle) < 0))
+    journeyGuards.push('timeline-scoped: 混进了别的书的记录')
   if (byLabel('timeline-scoped-other') && !byLabel('timeline-scoped-other').text.includes('grow.empty.title'))
     journeyGuards.push('timeline-scoped-other: 别的书的事件串进了这本书的时间线')
 
@@ -1720,7 +1780,7 @@ else {
   // B6：年度回顾要能说出「这一年」，也要能把这一年导出去。
   const annualDraw = byLabel('annual')
   if (annualDraw) {
-    for (const needle of ['grow.annual.title', 'grow.annual.export', 'grow.annual.note']) {
+    for (const needle of ['grow.annual.title', 'grow.annual.export']) {
       if (!annualDraw.text.includes(needle)) journeyGuards.push(`annual: 缺 ${needle}`)
     }
     const exportButton = (annualDraw.elements || []).find(
@@ -1807,7 +1867,151 @@ else {
 }
 const overviewDraw = byLabel('overview')
 if (overviewDraw && !overviewDraw.text.includes('dash.heat.none')) guards.push('overview: 热力图图例缺「无阅读」')
+// 从渲染树里取纯文本：children 可能是字符串、数组或嵌套节点。
+const nodeText = (node) => {
+  if (node === null || node === undefined || node === false) return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeText).join('')
+  const kids = node && node.props ? node.props.children : undefined
+  return kids === undefined ? '' : nodeText(kids)
+}
+// 时间线：按月分组、每条三行、整行可点（作品带 focusWorkId 的那一篇）。
+const timelineGuards = []
+if (typeof smoke.GrowTimeline === 'function') {
+  const fixture = timelineFixture()
+  const opened = []
+  const timelineProps = {
+    craft: fixture.craft,
+    craftState: 'ready',
+    craftError: '',
+    data: fixture.data,
+    bookIdOf: fixture.bookIdOf,
+    scopeBookId: '',
+    onOpenSource: (sourceId) => opened.push(sourceId),
+    onOpenWork: (workId) => opened.push(`work:${workId}`),
+    onOpenBook: (bookId) => opened.push(`book:${bookId}`),
+    onGoShelf: () => {},
+    onRetry: () => {},
+  }
+  renderStandalone('timeline-rows', smoke.GrowTimeline, timelineProps, [0])
+  const draw = byLabel0('timeline-rows')
+  const elements = (draw && draw.elements) || []
+  const itemOf = (el) => String(el.props.className || '').split(' ').includes('wr-tl-item')
+  const items = elements.filter(itemOf)
+  if (items.length !== 6) timelineGuards.push(`timeline-rows: 事件行 ${items.length}（应为 6）`)
+  // 一条 = 三行：时间+动作 / 正文 / 书名·章节。
+  for (const item of items) {
+    const kids = (item.props.children || []).filter((kid) => kid && typeof kid === 'object')
+    if (kids.length !== 3) timelineGuards.push(`timeline-rows: 一条记录不是三行（${kids.length}）`)
+    const classes = kids.map((kid) => String((kid.props && kid.props.className) || ''))
+    if (classes.join(',') !== 'wr-tl-meta,wr-tl-body,wr-tl-where') timelineGuards.push('timeline-rows: 三行的层级不是 meta/body/where')
+    const meta = kids[0] && (kids[0].props.children || []).filter((kid) => kid && typeof kid === 'object')
+    if (!meta || meta.length !== 2) timelineGuards.push('timeline-rows: 第一行不是「时间 + 动作」')
+    if (item.tag !== 'button' || typeof item.props.onClick !== 'function' || item.props.disabled === true)
+      timelineGuards.push('timeline-rows: 事件行不可点')
+  }
+  // 月份标题一行就说完：月份 + 该月条数；不再有「共 N 条」。
+  const months = elements.filter((el) => String(el.props.className || '') === 'wr-tl-month')
+  if (months.length !== 3) timelineGuards.push(`timeline-rows: 月份分组 ${months.length}（应为 3）`)
+  if (months[0]) {
+    const kids = (months[0].props.children || []).filter((kid) => kid && typeof kid === 'object')
+    const texts = kids.map(nodeText)
+    if (kids.length !== 2) timelineGuards.push('timeline-rows: 月份标题不是「月份 + 条数」')
+    if (!String(texts[0] || '').includes('grow.monthLabel')) timelineGuards.push('timeline-rows: 月份标题缺月份')
+    if (!String(texts[1] || '').includes('grow.monthCountInline')) timelineGuards.push('timeline-rows: 月份标题缺条数')
+  }
+  if (draw && draw.text.includes('grow.total')) timelineGuards.push('timeline-rows: 还在显示「共 N 条」')
+  if (draw && draw.text.includes('grow.cross')) timelineGuards.push('timeline-rows: 还在显示「跨书」')
+  if (draw && draw.text.indexOf('grow.noBook') < 0) timelineGuards.push('timeline-rows: 没有书归属的记录没写「未关联书」')
+  if (draw && draw.text.indexOf('grow.multiBooks') < 0) timelineGuards.push('timeline-rows: 跨两本书的稿子没写「等 N 本」')
+  // 四种动作都要出现过。
+  for (const key of ['grow.event.thought', 'grow.event.response', 'grow.event.work', 'grow.event.workConfirmed'])
+    if (draw && draw.text.indexOf(key) < 0) timelineGuards.push(`timeline-rows: 缺动作 ${key}`)
+  // 点一行 = 回到它该去的地方：想法/回应带 sourceId，作品带 workId。
+  const click = (kind, needle) => {
+    const row = items.find((el) => el.props['data-kind'] === kind && (!needle || String(el.props.title || '').includes(needle)))
+    if (!row) {
+      timelineGuards.push(`timeline-rows: 找不到 ${kind} 行`)
+      return
+    }
+    row.props.onClick({ stopPropagation() {} })
+  }
+  click('thought')
+  click('response')
+  click('work', '跨两本书')
+  if (opened[0] !== 'thought:th_t1') timelineGuards.push(`timeline-rows: 想法行没回到原记录（${opened[0]}）`)
+  if (opened[1] !== 'response:r_t1') timelineGuards.push(`timeline-rows: 回应行没回到原记录（${opened[1]}）`)
+  if (opened[2] !== 'work:w_t2') timelineGuards.push(`timeline-rows: 作品行没带 focusWorkId（${opened[2]}）`)
+} else {
+  timelineGuards.push('client module 未暴露 GrowTimeline')
+}
+
+// 作品页：带着 focusWorkId 进来时必须选中的就是那一篇（否则多书作品会开错篇）。
+if (typeof smoke.WorkBoard === 'function') {
+  const fixture = timelineFixture()
+  const writes = []
+  renderStandalone(
+    'works-focus',
+    smoke.WorkBoard,
+    {
+      craft: fixture.craft,
+      craftState: 'ready',
+      craftError: '',
+      data: fixture.data,
+      bookIdOf: fixture.bookIdOf,
+      scopeBookId: '',
+      focusWorkId: 'w_t2',
+      lookup: {},
+      write: (op, resPayload) => {
+        writes.push([op, resPayload])
+        return Promise.resolve({})
+      },
+      onOpenSource: () => {},
+      onOpenBook: () => {},
+    },
+    [],
+  )
+  const activeTitle = (label) => {
+    const draw = byLabel0(label)
+    const head = ((draw && draw.elements) || []).find((el) => String(el.props.className || '') === 'wr-draft-head-title')
+    if (!head) return null
+    const kids = head.props.children || []
+    return nodeText(kids)
+  }
+  const focusTitle = activeTitle('works-focus')
+  if (focusTitle === null) timelineGuards.push('works-focus: 未渲染')
+  else {
+    if (focusTitle.indexOf('跨两本书的初稿') < 0) timelineGuards.push(`works-focus: 没打开 focusWorkId 指定的那一篇（${focusTitle}）`)
+    if (focusTitle.indexOf('单书初稿') >= 0) timelineGuards.push('works-focus: 打开了另一篇（focusWorkId 没生效）')
+  }
+  // 反向：不传 focusWorkId 时，默认选中更新时间最新的那篇。
+  renderStandalone(
+    'works-nofocus',
+    smoke.WorkBoard,
+    Object.assign({}, {
+      craft: fixture.craft,
+      data: fixture.data,
+      bookIdOf: fixture.bookIdOf,
+      lookup: {},
+      write: () => Promise.resolve({}),
+      onOpenSource: () => {},
+      onOpenBook: () => {},
+    }, { focusWorkId: '' }),
+    [],
+  )
+  const noFocusTitle = activeTitle('works-nofocus')
+  if (noFocusTitle === null || noFocusTitle.indexOf('单书初稿') < 0) timelineGuards.push(`works-nofocus: 没有 focusWorkId 时应选中最近更新的一篇（${noFocusTitle}）`)
+}
+
+// 年度回顾：不再挂常驻说明，也不再重复画一次热力图。
+const annualDraw2 = byLabel('annual')
+if (annualDraw2) {
+  if (annualDraw2.text.includes('grow.annual.note')) journeyGuards.push('annual: 还挂着常驻说明')
+  const hasHeat = (annualDraw2.elements || []).some((el) => String(el.props.className || '').indexOf('wr-heat') >= 0)
+  if (hasHeat) journeyGuards.push('annual: 又画了一次热力图（总览里已经有了）')
+}
 for (const item of bannerGuards) guards.push(item)
+for (const item of timelineGuards) guards.push(item)
 for (const item of thoughtGuards) guards.push(item)
 for (const item of packGuards) guards.push(item)
 for (const item of relateGuards) guards.push(item)
