@@ -24,17 +24,27 @@ function makeH() {
 
 let hookSeeds = []
 let hookIndex = 0
+// Setters are no-ops here (nothing re-renders), but recording them lets a guard
+// tell "this button calls setState" from "this button does nothing".
+let smokeSetters = []
 function resetHooks(seeds) {
   hookSeeds = seeds || []
   hookIndex = 0
+  smokeSetters = []
 }
 const ReactShim = {
   Fragment: '__fragment__',
   createElement: makeH(),
   useState(initial) {
+    const at = hookIndex
     const seeded = hookSeeds[hookIndex]
     hookIndex += 1
-    return [seeded === undefined ? initial : seeded, () => {}]
+    return [
+      seeded === undefined ? initial : seeded,
+      (updater) => {
+        smokeSetters.push({ at, updater })
+      },
+    ]
   },
   useRef(initial) {
     return { current: initial }
@@ -1396,6 +1406,131 @@ if (typeof smoke.ParagraphAI === 'function') {
   paragraphGuards.push('client module 未暴露 ParagraphAI')
 }
 
+// 段落可编辑（t39）：点正文进编辑态、Esc/失焦/快捷键、失败不丢输入；出处只能从
+// 这本书的记录里挂，不再读已经下线的 materials。
+const editGuards = paragraphGuards
+if (typeof smoke.ParagraphRow === 'function') {
+  const editCraft = smokeCraft()
+  const editParagraph = Object.assign({}, editCraft.works[0].paragraphs[0], {
+    text: '秩序感先给画面，再给判断。',
+    sourceIds: ['note:n_smoke1'],
+  })
+  const editRows = smoke.sourcePoolOf(payload, editCraft, editParagraph.bookId === undefined ? '' : editParagraph.bookId)
+  const editProps = {
+    paragraph: editParagraph,
+    index: 0,
+    work: { id: editCraft.works[0].id, title: editCraft.works[0].title },
+    lookup: { note: new Map(), thought: new Map(), response: new Map(), material: new Map() },
+    titleOf: () => '示例书',
+    sourcePool: editRows,
+    onOpenSource: () => {},
+    onSave: () => Promise.resolve(),
+    onAttachSources: () => Promise.resolve(),
+    onDelete: () => {},
+    onAdopt: () => Promise.resolve(),
+  }
+  renderStandalone('paragraph-read', smoke.ParagraphRow, editProps, [false, '', false, ''])
+  renderStandalone('paragraph-edit', smoke.ParagraphRow, editProps, [true, '改过的句子，还没保存。', false, ''])
+  renderStandalone('paragraph-edit-failed', smoke.ParagraphRow, editProps, [true, '改过的句子，保存失败了。', false, 'provider rate limited (429)'])
+
+  const readDraw = byLabel0('paragraph-read')
+  if (!readDraw) editGuards.push('paragraph-read: 未渲染')
+  else {
+    const texts = (readDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-item-text')
+    if (texts.length === 0) editGuards.push('paragraph-read: 正文没有渲染')
+    else {
+      if (texts[0].props['data-editable'] !== 'true') editGuards.push('paragraph-read: 正文没有标成可编辑')
+      if (typeof texts[0].props.onClick !== 'function') editGuards.push('paragraph-read: 点正文不进编辑态')
+      if (String(texts[0].props.title || '') !== 'work.editHint') editGuards.push('paragraph-read: 正文没有说明「点一下就能改」')
+      if (typeof texts[0].props.onClick === 'function') {
+        const before = smokeSetters.length
+        texts[0].props.onClick({ currentTarget: { textContent: '秩序感先给画面，再给判断。', contains: () => true }, clientX: 0, clientY: 0 })
+        if (smokeSetters.length === before) editGuards.push('paragraph-read: 点正文没有触发任何状态变化（进不了编辑态）')
+      }
+    }
+    if ((readDraw.elements || []).some((el) => el.tag === 'textarea')) editGuards.push('paragraph-read: 未进入编辑态却渲染了输入框')
+    for (const needle of ['work.attach', 'action.edit']) if (!readDraw.text.includes(needle)) editGuards.push('paragraph-read: 缺 ' + needle)
+  }
+
+  const editDraw = byLabel0('paragraph-edit')
+  if (!editDraw) editGuards.push('paragraph-edit: 未渲染')
+  else {
+    const areas = (editDraw.elements || []).filter((el) => el.tag === 'textarea')
+    if (areas.length === 0) editGuards.push('paragraph-edit: 编辑态没有输入框')
+    else {
+      if (String(areas[0].props.value || '') !== '改过的句子，还没保存。') editGuards.push('paragraph-edit: 输入框没有带上正在改的文字')
+      if (typeof areas[0].props.onChange !== 'function') editGuards.push('paragraph-edit: 输入框不可编辑')
+      if (typeof areas[0].props.onBlur !== 'function') editGuards.push('paragraph-edit: 失焦不保存')
+      if (typeof areas[0].props.onKeyDown !== 'function') editGuards.push('paragraph-edit: 没有键盘处理（Esc / Ctrl+Enter）')
+    }
+    const buttons = (editDraw.elements || []).filter((el) => el.tag === 'button')
+    const hasSave = buttons.some((el) => String(el.props.children || '') === 'action.save' && typeof el.props.onClick === 'function')
+    const hasCancel = buttons.some((el) => String(el.props.children || '') === 'action.cancel' && typeof el.props.onClick === 'function')
+    if (!hasSave) editGuards.push('paragraph-edit: 编辑态没有「保存」按钮')
+    if (!hasCancel) editGuards.push('paragraph-edit: 编辑态没有「取消」按钮')
+    if (editDraw.text.indexOf('action.edit') >= 0) editGuards.push('paragraph-edit: 编辑态还留着「编辑」按钮')
+  }
+
+  const failedDraw = byLabel0('paragraph-edit-failed')
+  if (!failedDraw) editGuards.push('paragraph-edit-failed: 未渲染')
+  else {
+    if (!failedDraw.text.includes('provider rate limited (429)')) editGuards.push('paragraph-edit-failed: 保存失败没有显示原因')
+    const areas = (failedDraw.elements || []).filter((el) => el.tag === 'textarea')
+    if (areas.length === 0) editGuards.push('paragraph-edit-failed: 失败后输入框消失了')
+    else if (String(areas[0].props.value || '') !== '改过的句子，保存失败了。') editGuards.push('paragraph-edit-failed: 失败后把用户改的文字丢了')
+  }
+
+  // 出处选择器：三类记录都能挂，且不接受 material:（那条线已经下线）。
+  if (typeof smoke.ParagraphSources === 'function') {
+    const pool = [
+      { sourceId: 'note:n_smoke1', kind: 'note', chapter: '开场白', text: '诗是生命的流露。', at: 3 },
+      { sourceId: 'thought:t_smoke1', kind: 'thought', chapter: '开场白', text: '读诗要先把自己放进去。', at: 2 },
+      { sourceId: 'response:r_smoke1', kind: 'response', chapter: '', text: '秩序感先给画面。', at: 1 },
+    ]
+    renderStandalone('paragraph-sources', smoke.ParagraphSources, { paragraph: editParagraph, pool, onAttach: () => Promise.resolve() }, [true, [], false, ''])
+    const sourceDraw = byLabel0('paragraph-sources')
+    if (!sourceDraw) editGuards.push('paragraph-sources: 未渲染')
+    else {
+      const rows = (sourceDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-pickrow')
+      if (rows.length !== 3) editGuards.push(`paragraph-sources: 出处行数 ${rows.length}（应为 3）`)
+      for (const needle of ['src.note', 'src.thought', 'src.response'])
+        if (!sourceDraw.text.includes(needle)) editGuards.push('paragraph-sources: 缺 ' + needle)
+      if (sourceDraw.text.indexOf('material:') >= 0) editGuards.push('paragraph-sources: 还在用已经下线的 material: 来源')
+      if (rows.some((el) => typeof el.props.onClick !== 'function')) editGuards.push('paragraph-sources: 出处行不可点')
+    }
+  } else {
+    editGuards.push('client module 未暴露 ParagraphSources')
+  }
+
+  // composer 里的出处选择器：换掉恒空的 materials，改列这本书的划线/想法/回应。
+  const composerDraw = byLabel0('works')
+  if (!composerDraw) editGuards.push('works: 未渲染，无法断言 composer 的出处选择器')
+  else {
+    const rows = (composerDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-pickrow')
+    if (rows.length === 0) editGuards.push('works: composer 没有渲染出处选择器')
+    const kinds = new Set(rows.map((el) => (String(el.props.key || '').split(':')[0] || '')))
+    if (![...kinds].every((kind) => ['note', 'thought', 'response'].indexOf(kind) >= 0))
+      editGuards.push('works: composer 的出处里混进了 ' + [...kinds].filter((kind) => ['note', 'thought', 'response'].indexOf(kind) < 0).join(','))
+    if (!composerDraw.text.includes('work.pickSource')) editGuards.push('works: composer 没有出处选择器的说明')
+  }
+} else {
+  editGuards.push('client module 未暴露 ParagraphRow')
+}
+
+if (typeof smoke.sourcePoolOf !== 'function') editGuards.push('client module 未暴露 sourcePoolOf')
+else {
+  const poolCraft = smokeCraft()
+  const poolRows = smoke.sourcePoolOf(payload, poolCraft, '')
+  if (poolRows.length === 0) editGuards.push('sourcePoolOf: 没有从真实数据里取出任何记录')
+  if (poolRows.length > 40) editGuards.push('sourcePoolOf: 超过 40 条上限')
+  if (poolRows.some((row) => String(row.sourceId).indexOf('material:') === 0)) editGuards.push('sourcePoolOf: 素材不该再出现在出处里')
+  const firstBookId = poolRows.length > 0 ? payload.notes.find((note) => `note:${note.id}` === poolRows[0].sourceId) : null
+  if (firstBookId) {
+    const scopedRows = smoke.sourcePoolOf(payload, poolCraft, firstBookId.bookId)
+    if (scopedRows.some((row) => !String(row.sourceId).startsWith('note:') && !String(row.sourceId).startsWith('thought:')))
+      editGuards.push('sourcePoolOf: 按书过滤后混进了别的书的记录')
+  }
+}
 // F-28 外观：只有一支选择器、五套预设，默认就是 glacier（没有「跟随 DSH」这一档）。
 // SettingsModal 的 useState 顺序：key, maxBooks, notesPerBook, busy, message, dir, dataMessage, pending, busyData
 const paletteGuards = []

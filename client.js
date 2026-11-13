@@ -254,7 +254,7 @@ window.__ModuleLoader__.load({
       'nav.annual': '年度回顾',
       'journey.read.hint': '摘录与想法，按书看',
       'journey.think.hint': '把读到的东西问明白',
-      'journey.create.hint': '素材 → 选题 → 初稿',
+      'journey.create.hint': '把读到的写成自己的段落',
       'journey.grow.hint': '走过的路，与这一年',
       'craft.failed': '创作数据没读出来：{error}',
       'craft.retry': '重试',
@@ -314,8 +314,7 @@ window.__ModuleLoader__.load({
       'relate.label.check': '待核实',
       'topic.statement': '一句话选题',
       'work.empty.title': '还没有初稿',
-      'work.empty.next': '选一个选题，把素材写成段落。',
-      'work.empty.action': '去选题',
+      'work.empty.next': '新建一篇初稿，把你的想法写成自己的段落。',
       'work.empty.actionShelf': '去书架',
       'work.new': '新建初稿',
       'work.titlePlaceholder': '初稿标题',
@@ -324,6 +323,10 @@ window.__ModuleLoader__.load({
       'work.paragraph': '第 {index} 段',
       'work.paragraphPlaceholder': '用自己的话写这一段',
       'work.attach': '挂来源',
+      'work.pickSource': '挂上这本书里的记录（可多选）',
+      'work.pickTitle': '这本书里的记录',
+      'work.pickEmpty': '这本书还没有划线和想法，先去读几页',
+      'work.editHint': '点一下就能改',
       'work.noSource': '不挂来源',
       'work.addParagraph': '加这一段',
       'work.deleteParagraph': '删除这一段',
@@ -356,7 +359,7 @@ window.__ModuleLoader__.load({
       'work.aiAdopt': '采纳这段',
       'work.aiRetry': '重新生成',
       'work.aiDiscard': '不用了',
-      'work.aiNeedSource': '这一段还没有出处，先挑素材再让它补写',
+      'work.aiNeedSource': '这一段还没有出处，先挂一条来源',
       'work.aiNoSource': '这一段挂着的出处都找不到了，先补出处再试',
       'work.aiFailed': '没写出来：{error}',
       'thread.title': '我的阅读脉络',
@@ -669,7 +672,7 @@ window.__ModuleLoader__.load({
       'nav.annual': 'Yearly review',
       'journey.read.hint': 'Highlights and thoughts, book by book',
       'journey.think.hint': 'Ask until it is clear',
-      'journey.create.hint': 'Material → topic → draft',
+      'journey.create.hint': 'Turn what you read into paragraphs of your own',
       'journey.grow.hint': 'The path walked, and the year',
       'craft.failed': 'Could not load your writing: {error}',
       'craft.retry': 'Retry',
@@ -727,8 +730,7 @@ window.__ModuleLoader__.load({
       'relate.label.check': 'To verify',
       'topic.statement': 'One-sentence topic',
       'work.empty.title': 'No draft yet',
-      'work.empty.next': 'Pick a topic and turn material into paragraphs.',
-      'work.empty.action': 'Go to topics',
+      'work.empty.next': 'Start a draft and write your thoughts as paragraphs.',
       'work.empty.actionShelf': 'Go to the shelf',
       'work.new': 'New draft',
       'work.titlePlaceholder': 'Draft title',
@@ -737,6 +739,10 @@ window.__ModuleLoader__.load({
       'work.paragraph': 'Paragraph {index}',
       'work.paragraphPlaceholder': 'Write this paragraph in your own words',
       'work.attach': 'Attach sources',
+      'work.pickSource': 'Attach records from this book (pick as many as you like)',
+      'work.pickTitle': 'Records in this book',
+      'work.pickEmpty': 'No highlights or thoughts in this book yet — read a few pages first',
+      'work.editHint': 'Click to edit',
       'work.noSource': 'No source',
       'work.addParagraph': 'Add paragraph',
       'work.deleteParagraph': 'Delete paragraph',
@@ -769,7 +775,7 @@ window.__ModuleLoader__.load({
       'work.aiAdopt': 'Keep this paragraph',
       'work.aiRetry': 'Generate again',
       'work.aiDiscard': 'Discard',
-      'work.aiNeedSource': 'This paragraph has no source yet — pick materials first',
+      'work.aiNeedSource': 'This paragraph has no source yet — attach a source first',
       'work.aiNoSource': 'None of this paragraph’s sources can be found any more — restore them first',
       'work.aiFailed': 'Not written: {error}',
       'thread.title': 'My reading threads',
@@ -1356,6 +1362,11 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-paragraph{display:flex;gap:10px;align-items:flex-start;background:var(--wr-paper-soft);border:1px solid var(--wr-card-line);border-radius:12px;padding:11px 13px}
 .wr-paragraph-index{flex:none;font-size:11px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums;padding-top:2px;width:46px}
 .wr-paragraph-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.wr-item-text[data-editable=true]{cursor:text;border-radius:6px;padding:2px 4px;margin:-2px -4px;transition:background .12s ease}
+.wr-item-text[data-editable=true]:hover{background:var(--wr-wash)}
+.wr-paragraph-input{min-height:64px}
+.wr-paragraph-sources{display:contents}
+.wr-paragraph-sources > .wr-picklist{flex:1 0 100%;background:var(--wr-wash);border:1px solid var(--wr-line);border-radius:10px;padding:8px 10px;margin-top:2px}
 .wr-ai{flex:0 0 auto;min-width:0}
 .wr-ai[data-open=true]{flex:1 0 100%;display:flex;flex-direction:column;gap:8px;background:var(--wr-wash);border:1px solid var(--wr-line);border-radius:10px;padding:10px 12px;margin-top:2px}
 .wr-ai-hint{font-size:11px;color:var(--wr-ink-mute);min-width:0}
@@ -2544,6 +2555,90 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 
     /** The `rows` attribute: one row to start, never more than six. */
     const textareaRows = (text) => Math.min(TEXTAREA_MAX_ROWS, Math.max(1, textareaRowsOf(text)))
+
+    /** How many records the 「挂来源」picker offers at most. */
+    const PICKER_LIMIT = 40
+
+    /**
+     * Is there a live text selection? On a touch screen a long press selects a
+     * word before the click lands, and opening the editor would wipe that
+     * selection — so the editor only opens when nothing is selected.
+     */
+    const hasTextSelection = () => {
+      try {
+        const selection = typeof window !== 'undefined' && window.getSelection ? window.getSelection() : null
+        return Boolean(selection && String(selection.toString() || '') !== '')
+      } catch (error) {
+        return false
+      }
+    }
+
+    /** Caret offset under a click, so the editor opens where the reader pointed. */
+    const caretOffsetFromPoint = (element, point) => {
+      if (!element) return 0
+      const text = String(element.textContent || '')
+      const x = point && typeof point.x === 'number' ? point.x : 0
+      const y = point && typeof point.y === 'number' ? point.y : 0
+      if (x === 0 && y === 0) return text.length
+      try {
+        const doc = element.ownerDocument || (typeof document !== 'undefined' ? document : null)
+        if (!doc) return text.length
+        let node = null
+        let offset = 0
+        if (typeof doc.caretRangeFromPoint === 'function') {
+          const range = doc.caretRangeFromPoint(x, y)
+          if (range) {
+            node = range.startContainer
+            offset = range.startOffset
+          }
+        } else if (typeof doc.caretPositionFromPoint === 'function') {
+          const position = doc.caretPositionFromPoint(x, y)
+          if (position) {
+            node = position.offsetNode
+            offset = position.offset
+          }
+        }
+        if (!node || !element.contains(node)) return text.length
+        const prefix = doc.createRange()
+        prefix.selectNodeContents(element)
+        prefix.setEnd(node, offset)
+        return String(prefix.toString() || '').length
+      } catch (error) {
+        return text.length
+      }
+    }
+
+    /**
+     * The records a paragraph may cite: this book's highlights, thoughts and
+     * the replies the reader kept. Materials used to feed this list, but that
+     * shelf is gone — so the list is built from what the reader actually has.
+     * With no book in scope every book is fair game, newest first.
+     */
+    function sourcePoolOf(data, craft, bookId) {
+      const wanted = String(bookId || '')
+      const source = data || {}
+      const rows = []
+      const push = (kind, item, chapter, text, at, book) => {
+        if (!item || item.id === undefined || item.id === null) return
+        if (wanted !== '' && String(book || '') !== wanted) return
+        const body = clip(String(text || '').replace(/\s+/g, ' ').trim(), 72)
+        if (body === '') return
+        rows.push({
+          sourceId: `${kind}:${String(item.id)}`,
+          kind,
+          chapter: String(chapter || ''),
+          text: body,
+          at: Number(at) || 0,
+        })
+      }
+      const notes = Array.isArray(source.notes) ? source.notes : []
+      notes.forEach((note) => push('note', note, note.chapterTitle, note.text, note.createTime, note.bookId))
+      const thoughts = Array.isArray(source.thoughts) ? source.thoughts : []
+      thoughts.forEach((thought) => push('thought', thought, thought.chapterName, thought.content, thought.createTime, thought.bookId))
+      const kept = craft && Array.isArray(craft.responses) ? craft.responses : []
+      kept.forEach((response) => push('response', response, '', response.text, response.adoptedAt || response.createdAt, response.bookId))
+      return rows.sort((left, right) => right.at - left.at).slice(0, PICKER_LIMIT)
+    }
 
     /** What the record cards need from the study (book list, craft snapshot, jumps). */
     const relateBridge = { data: {}, craft: null, lookup: null, openSource: null }
@@ -4396,16 +4491,146 @@ function threadPairLabel(id, recordById) {
       )
     }
 
-    function ParagraphRow(props) {
-      const paragraph = props.paragraph || {}
-      const [editing, setEditing] = useState(false)
-      const [text, setText] = useState(String(paragraph.text || ''))
+/**
+     * Attach real sources to an existing paragraph. The composer below can pick
+     * sources for a new paragraph, but a paragraph written before this existed
+     * (or one whose sources went stale) had no way back in — the AI helper was
+     * greyed out with nothing the reader could do about it.
+     */
+    function ParagraphSources(props) {
+      const [open, setOpen] = useState(false)
+      const [picked, setPicked] = useState([])
       const [busy, setBusy] = useState(false)
       const [error, setError] = useState('')
-      const save = () => {
+      const paragraph = props.paragraph || {}
+      const pool = Array.isArray(props.pool) ? props.pool : []
+      const existing = Array.isArray(paragraph.sourceIds) ? paragraph.sourceIds.map(String) : []
+      const toggle = (sourceId) => {
+        setPicked((prev) => (prev.indexOf(sourceId) >= 0 ? prev.filter((id) => id !== sourceId) : prev.concat([sourceId])))
+      }
+      const close = () => {
+        setPicked([])
+        setError('')
+        setOpen(false)
+      }
+      const attach = () => {
+        const extra = picked.filter((id) => existing.indexOf(id) < 0)
+        if (extra.length === 0) {
+          close()
+          return
+        }
         setBusy(true)
         setError('')
-        Promise.resolve(props.onSave(text))
+        Promise.resolve(props.onAttach(existing.concat(extra)))
+          .then(() => {
+            setBusy(false)
+            close()
+          })
+          .catch((thrown) => {
+            setBusy(false)
+            setError(thrown && thrown.message ? thrown.message : String(thrown))
+          })
+      }
+      return h(
+        'span',
+        { className: 'wr-paragraph-sources' },
+        h(
+          'button',
+          {
+            className: 'wr-btn wr-btn-ghost',
+            type: 'button',
+            'data-on': open ? 'true' : 'false',
+            'aria-expanded': open ? 'true' : 'false',
+            disabled: busy || pool.length === 0,
+            title: pool.length === 0 ? t('work.pickEmpty') : t('work.attach'),
+            onClick: () => (open ? close() : setOpen(true)),
+          },
+          t('work.attach'),
+        ),
+        open
+          ? h(
+              'span',
+              { className: 'wr-picklist' },
+              h('span', { className: 'wr-muted' }, t('work.pickTitle')),
+              pool.map((row) =>
+                h(
+                  'button',
+                  {
+                    key: row.sourceId,
+                    className: 'wr-pickrow',
+                    type: 'button',
+                    'data-on': picked.indexOf(row.sourceId) >= 0 ? 'true' : 'false',
+                    onClick: () => toggle(row.sourceId),
+                  },
+                  h('span', { className: 'wr-pickrow-mark' }, picked.indexOf(row.sourceId) >= 0 ? '✓' : ''),
+                  h('span', { className: 'wr-tag' }, t(`src.${row.kind}`)),
+                  h('span', { className: 'wr-muted' }, row.chapter),
+                  h('span', null, row.text),
+                ),
+              ),
+              h(
+                'span',
+                { className: 'wr-form-row' },
+                h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: attach }, t('action.save')),
+                h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: close }, t('action.cancel')),
+              ),
+              error === '' ? null : h('span', { className: 'wr-adopt-error' }, error),
+            )
+          : null,
+      )
+    }
+
+    /**
+     * One paragraph of a draft. Clicking the text opens it for editing where the
+     * reader pointed; Esc puts the old sentence back, clicking away or
+     * Cmd/Ctrl+Enter keeps the new one, and the two buttons are there because a
+     * keyboard user has nowhere to click away to.
+     */
+    function ParagraphRow(props) {
+      const paragraph = props.paragraph || {}
+      const original = String(paragraph.text || '')
+      const [editing, setEditing] = useState(false)
+      const [text, setText] = useState(original)
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const areaRef = useRef(null)
+      const caretRef = useRef(-1)
+      const skipBlurRef = useRef(false)
+      const open = (event) => {
+        if (hasTextSelection()) return
+        if (event && event.currentTarget) {
+          caretRef.current = caretOffsetFromPoint(event.currentTarget, { x: event.clientX, y: event.clientY })
+        }
+        setText(original)
+        setError('')
+        setEditing(true)
+      }
+      useEffect(() => {
+        if (!editing) return
+        const area = areaRef.current
+        if (!area || typeof area.focus !== 'function') return
+        area.focus()
+        const value = String(area.value === undefined ? text : area.value)
+        const at = caretRef.current >= 0 ? Math.min(caretRef.current, value.length) : value.length
+        if (typeof area.setSelectionRange === 'function') {
+          try {
+            area.setSelectionRange(at, at)
+          } catch (thrown) {
+            // A detached textarea cannot take a selection; focusing is enough.
+          }
+        }
+      }, [editing])
+      const cancel = () => {
+        skipBlurRef.current = false
+        setText(original)
+        setError('')
+        setEditing(false)
+      }
+      const save = () => {
+        const next = text.trim() === '' ? original : text.trim()
+        setBusy(true)
+        setError('')
+        Promise.resolve(props.onSave(next))
           .then(() => {
             setBusy(false)
             setEditing(false)
@@ -4415,29 +4640,100 @@ function threadPairLabel(id, recordById) {
             setError(thrown && thrown.message ? thrown.message : String(thrown))
           })
       }
+      const onKeyDown = (event) => {
+        if (!event) return
+        if (event.key === 'Escape') {
+          if (typeof event.preventDefault === 'function') event.preventDefault()
+          cancel()
+          return
+        }
+        if (event.key === 'Enter' && (event.ctrlKey === true || event.metaKey === true)) {
+          if (typeof event.preventDefault === 'function') event.preventDefault()
+          save()
+        }
+      }
+      const onBlur = () => {
+        if (skipBlurRef.current) {
+          skipBlurRef.current = false
+          return
+        }
+        if (text.trim() === original.trim()) {
+          setEditing(false)
+          return
+        }
+        save()
+      }
       return h(
         'div',
-        { className: 'wr-paragraph' },
+        { className: 'wr-paragraph', 'data-editing': editing ? 'true' : 'false' },
         h('span', { className: 'wr-paragraph-index' }, t('work.paragraph', { index: String(props.index + 1) })),
         h(
           'div',
           { className: 'wr-paragraph-main' },
           editing
             ? h('textarea', {
-                className: 'wr-line-input',
-                rows: 3,
+                ref: areaRef,
+                className: 'wr-line-input wr-paragraph-input',
+                rows: textareaRows(text),
                 value: text,
+                placeholder: t('work.paragraphPlaceholder'),
                 onChange: (event) => setText(event ? String(event.target.value || '') : ''),
+                onKeyDown,
+                onBlur,
               })
-            : h('p', { className: 'wr-item-text' }, String(paragraph.text || '')),
+            : h(
+                'p',
+                {
+                  className: 'wr-item-text',
+                  'data-editable': 'true',
+                  title: t('work.editHint'),
+                  onClick: open,
+                },
+                original,
+              ),
           h(
             'div',
             { className: 'wr-item-meta' },
             paragraph.ai ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
             h(SourceTags, { sourceIds: paragraph.sourceIds, lookup: props.lookup, onOpenSource: props.onOpenSource }),
             editing
-              ? h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', disabled: busy, onClick: save }, t('action.save'))
-              : h('button', { className: 'wr-btn wr-btn-ghost', type: 'button', onClick: () => setEditing(true) }, t('action.edit')),
+              ? h(
+                  'span',
+                  { className: 'wr-form-row' },
+                  h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: save }, t('action.save')),
+                  h(
+                    'button',
+                    {
+                      className: 'wr-btn wr-btn-ghost',
+                      type: 'button',
+                      disabled: busy,
+                      onMouseDown: () => {
+                        skipBlurRef.current = true
+                      },
+                      onClick: cancel,
+                    },
+                    t('action.cancel'),
+                  ),
+                )
+              : h(
+                  'button',
+                  {
+                    className: 'wr-btn wr-btn-ghost',
+                    type: 'button',
+                    onClick: () => {
+                      caretRef.current = -1
+                      setText(original)
+                      setError('')
+                      setEditing(true)
+                    },
+                  },
+                  t('action.edit'),
+                ),
+            h(ParagraphSources, {
+              paragraph,
+              pool: props.sourcePool,
+              onAttach: (sourceIds) => props.onAttachSources(sourceIds),
+            }),
             h(ParagraphAI, {
               work: props.work,
               paragraph,
@@ -4518,7 +4814,6 @@ function threadPairLabel(id, recordById) {
 
     function WorkBoard(props) {
       const craft = props.craft || EMPTY_CRAFT
-      const materials = Array.isArray(craft.materials) ? craft.materials : []
       // F2: with a book in scope only that book's drafts belong on screen. A
       // work has no bookIds field on purpose — its books are whatever its
       // paragraphs cite, so the filter walks that chain.
@@ -4545,6 +4840,22 @@ function threadPairLabel(id, recordById) {
       const [path, setPath] = useState('')
       const work = works.find((item) => item.id === activeId) || works[0] || null
       const paragraphs = work && Array.isArray(work.paragraphs) ? work.paragraphs : []
+      // Which book's records may be cited here: the book in scope, or the one
+      // book this draft already quotes. With neither, every book is offered —
+      // the composer is the only way in, so an empty list would be a dead end.
+      const composerBookId = (() => {
+        if (scoped !== '') return scoped
+        const books = []
+        paragraphs.forEach((paragraph) => {
+          const ids = Array.isArray(paragraph.sourceIds) ? paragraph.sourceIds : []
+          ids.forEach((sourceId) => {
+            const bookId = bookIdOf ? bookIdOf(sourceId) : ''
+            if (bookId && books.indexOf(bookId) < 0) books.push(bookId)
+          })
+        })
+        return books.length === 1 ? books[0] : ''
+      })()
+      const sourcePool = sourcePoolOf(props.data, craft, composerBookId)
       const call = (op, payload) => {
         setBusy(true)
         setError('')
@@ -4573,7 +4884,7 @@ function threadPairLabel(id, recordById) {
           setError(t('work.needParagraph'))
           return
         }
-        const sourceIds = picked.map((id) => `material:${id}`)
+        const sourceIds = picked.slice()
         call('work.paragraph.add', { id: work.id, text: draft.trim(), sourceIds })
           .then(() => {
             setDraft('')
@@ -4696,6 +5007,14 @@ function threadPairLabel(id, recordById) {
                             titleOf: (bookId) => bookTitleOf(bookId, props.data, craft),
                             focusId: props.focusId,
                             onOpenSource: props.onOpenSource,
+                            sourcePool,
+                            onAttachSources: (sourceIds) =>
+                              call('work.paragraph.update', {
+                                id: work.id,
+                                paragraphId: paragraph.id,
+                                text: paragraph.text,
+                                sourceIds,
+                              }),
                             onSave: (text) => call('work.paragraph.update', { id: work.id, paragraphId: paragraph.id, text: text.trim() }),
                             // F-23: an AI paragraph lands right after the one it
                             // continues, marked ai + the id of the turn that wrote it.
@@ -4723,28 +5042,32 @@ function threadPairLabel(id, recordById) {
                         placeholder: t('work.paragraphPlaceholder'),
                         onChange: (event) => setDraft(event ? String(event.target.value || '') : ''),
                       }),
-                      materials.length === 0
-                        ? null
+                      sourcePool.length === 0
+                        ? h('span', { className: 'wr-muted' }, t('work.pickEmpty'))
                         : h(
                             'div',
                             null,
-                            h('span', { className: 'wr-muted' }, t('work.attach')),
+                            h('span', { className: 'wr-muted' }, t('work.pickSource')),
                             h(
                               'div',
                               { className: 'wr-picklist' },
-                              materials.map((material) =>
+                              sourcePool.map((row) =>
                                 h(
                                   'button',
                                   {
                                     className: 'wr-pickrow',
-                                    key: material.id,
+                                    key: row.sourceId,
                                     type: 'button',
-                                    'data-on': picked.includes(material.id) ? 'true' : 'false',
+                                    'data-on': picked.includes(row.sourceId) ? 'true' : 'false',
                                     onClick: () =>
-                                      setPicked((prev) => (prev.includes(material.id) ? prev.filter((id) => id !== material.id) : prev.concat([material.id]))),
+                                      setPicked((prev) =>
+                                        prev.includes(row.sourceId) ? prev.filter((id) => id !== row.sourceId) : prev.concat([row.sourceId]),
+                                      ),
                                   },
-                                  h('span', { className: 'wr-pickrow-mark' }, picked.includes(material.id) ? '✓' : ''),
-                                  h('span', null, `[${t(materialTypeKey(material.type))}] ${clip(String(material.text || ''), 64)}`),
+                                  h('span', { className: 'wr-pickrow-mark' }, picked.includes(row.sourceId) ? '✓' : ''),
+                                  h('span', { className: 'wr-tag' }, t(`src.${row.kind}`)),
+                                  row.chapter === '' ? null : h('span', { className: 'wr-muted' }, row.chapter),
+                                  h('span', null, row.text),
                                 ),
                               ),
                             ),
@@ -6525,6 +6848,11 @@ function threadPairLabel(id, recordById) {
         TEXTAREA_MAX_ROWS,
         ParagraphRow,
         ParagraphAI,
+        ParagraphSources,
+        sourcePoolOf,
+        hasTextSelection,
+        caretOffsetFromPoint,
+        PICKER_LIMIT,
         buildParagraphPack,
         paragraphSourceEntry,
         packKindLabel,

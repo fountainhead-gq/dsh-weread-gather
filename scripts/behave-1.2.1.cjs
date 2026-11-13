@@ -1759,6 +1759,229 @@ async function main() {
     eq('浮层输入框空态是一行', relateInput && relateInput.props.rows, 1)
   }
 
+// --- 12.5 A 方案：段落点开就能改、出处从这本书的记录里挂 ----------------------
+  {
+    // 点正文进编辑态：有选区（触屏长按选字）时不进。
+    const editTarget = { textContent: '秩序感先给画面，再给判断。', contains: () => true, ownerDocument: null }
+    const openProps = {
+      paragraph: Object.assign({}, workA.paragraphs[0], { text: '秩序感先给画面，再给判断。', sourceIds: [] }),
+      index: 0,
+      work: workA,
+      lookup,
+      titleOf: () => '诗经',
+      sourcePool: [],
+      onSave: () => Promise.resolve(),
+      onAttachSources: () => Promise.resolve(),
+      onDelete() {},
+      onAdopt: () => Promise.resolve(),
+    }
+    const openRow = renderComp('row-open', smoke.ParagraphRow, openProps, [false, '', false, ''])
+    const body = (openRow.elements || []).find((el) => String(el.props.className || '') === 'wr-item-text')
+    check('段落正文标成可编辑', Boolean(body) && body.props['data-editable'] === 'true')
+    check('正文的 title 说明「点一下就能改」', Boolean(body) && String(body.props.title || '') === 'work.editHint', body && body.props.title)
+    check('正文点了有 onClick', Boolean(body) && typeof body.props.onClick === 'function')
+    if (body) {
+      const before = setterLog.length
+      body.props.onClick({ currentTarget: editTarget, clientX: 0, clientY: 0 })
+      const opened = setterLog
+        .slice(before)
+        .some((entry) => entry.updater === true || (typeof entry.updater === 'function' && entry.updater(false) === true))
+      check('点一下正文就进编辑态', opened, JSON.stringify(setterLog.slice(before).map((entry) => typeof entry.updater)))
+    }
+    eq('未进编辑态时不渲染输入框', (openRow.elements || []).filter((el) => el.tag === 'textarea').length, 0)
+
+    // 触屏长按选字：client 只在 window 里判断选区，这里临时把 window 给沙箱。
+    sandbox.window = { getSelection: () => ({ toString: () => '选中的这几个字' }), innerHeight: 900 }
+    if (body) {
+      const before = setterLog.length
+      body.props.onClick({ currentTarget: editTarget, clientX: 0, clientY: 0 })
+      eq('有选区时（长按选字）不进编辑态', setterLog.length, before)
+    }
+    check('hasTextSelection 认得出有选区', smoke.hasTextSelection() === true)
+    delete sandbox.window
+    check('没有 window 时不误判成有选区', smoke.hasTextSelection() === false)
+
+    // 编辑态：Esc 还原、Ctrl+Enter 保存、失焦保存、两颗按钮都在、失败不丢字。
+    const saved = []
+    const editProps = Object.assign({}, openProps, {
+      paragraph: Object.assign({}, workA.paragraphs[0], { text: '原来的句子。' }),
+      onSave: (text) => {
+        saved.push(text)
+        return Promise.resolve()
+      },
+    })
+    const editRow = renderComp('row-edit', smoke.ParagraphRow, editProps, [true, '改过的句子。', false, ''])
+    const area = (editRow.elements || []).find((el) => el.tag === 'textarea')
+    check('编辑态有输入框', Boolean(area))
+    eq('输入框带着正在改的文字', area && area.props.value, '改过的句子。')
+    check('输入框可编辑', Boolean(area) && typeof area.props.onChange === 'function')
+    check('输入框有失焦保存', Boolean(area) && typeof area.props.onBlur === 'function')
+    check('输入框有键盘处理', Boolean(area) && typeof area.props.onKeyDown === 'function')
+    const buttons = (editRow.elements || []).filter((el) => el.tag === 'button')
+    const saveButton = buttons.find((el) => String(el.props.children || '') === 'action.save')
+    const cancelButton = buttons.find((el) => String(el.props.children || '') === 'action.cancel')
+    check('编辑态有「保存」按钮', Boolean(saveButton) && typeof saveButton.props.onClick === 'function')
+    check('编辑态有「取消」按钮', Boolean(cancelButton) && typeof cancelButton.props.onClick === 'function')
+    check('编辑态不再显示「编辑」按钮', !buttons.some((el) => String(el.props.children || '') === 'action.edit'))
+    if (area) {
+      let prevented = 0
+      area.props.onKeyDown({ key: 'Escape', preventDefault: () => { prevented += 1 } })
+      eq('Esc 会拦下浏览器默认行为', prevented, 1)
+      area.props.onKeyDown({ key: 'Enter', ctrlKey: true, preventDefault() {} })
+      eq('Ctrl+Enter 保存一次', saved.length, 1)
+      eq('保存的是改过的句子', saved[0], '改过的句子。')
+      if (typeof area.props.onBlur === 'function') area.props.onBlur()
+      eq('失焦也保存', saved.length, 2)
+    }
+    if (cancelButton) {
+      const before = saved.length
+      if (typeof cancelButton.props.onMouseDown === 'function') cancelButton.props.onMouseDown()
+      cancelButton.props.onClick()
+      eq('点「取消」不保存', saved.length, before)
+    }
+
+    const failingRow = renderComp(
+      'row-edit-failed',
+      smoke.ParagraphRow,
+      Object.assign({}, editProps, { onSave: () => Promise.reject(new Error('provider rate limited (429)')) }),
+      [true, '改过的句子，保存失败了。', false, 'provider rate limited (429)'],
+    )
+    has('保存失败时显示真实原因', failingRow.text, 'provider rate limited (429)')
+    const failedArea = (failingRow.elements || []).find((el) => el.tag === 'textarea')
+    eq('保存失败后用户改的字没丢', failedArea && failedArea.props.value, '改过的句子，保存失败了。')
+
+    const confirmedRow = renderComp(
+      'row-confirmed',
+      smoke.ParagraphRow,
+      Object.assign({}, editProps, { work: { id: 'w_conf', title: '已确认', status: 'confirmed' } }),
+      [false, '', false, ''],
+    )
+    const confirmedBody = (confirmedRow.elements || []).find((el) => String(el.props.className || '') === 'wr-item-text')
+    check('已确认作品的段落也能点开改', Boolean(confirmedBody) && typeof confirmedBody.props.onClick === 'function')
+
+    // 挂出处：composer 列这本书的划线/想法/回应，选中后写进 sourceIds。
+    const writes = []
+    const boardProps = {
+      craft,
+      data: dataPayload,
+      scopeBookId: BOOK_A.bookId,
+      bookIdOf: byBook,
+      onOpenSource() {},
+      onGoShelf() {},
+      write: (op, payload) => {
+        writes.push({ op, payload })
+        return Promise.resolve({})
+      },
+    }
+    const board = renderComp('board-composer', smoke.WorkBoard, boardProps, [workA.id, '', false, '这一段引用一条划线。', [], false, '', '', ''])
+    const pickRows = (board.elements || []).filter((el) => String(el.props.className || '') === 'wr-pickrow')
+    check('composer 里有可挂的记录', pickRows.length > 0, pickRows.length)
+    const kinds = new Set(pickRows.map((el) => String(el.props.key || '').split(':')[0]))
+    check('可挂的记录只有划线/想法/回应三类', [...kinds].every((kind) => ['note', 'thought', 'response'].includes(kind)), [...kinds].join(','))
+    has('composer 说明写的是「挂上这本书里的记录」', board.text, 'work.pickSource')
+    const firstPick = pickRows.find((el) => String(el.props.key || '').startsWith('note:'))
+    if (firstPick) {
+      const before = setterLog.length
+      firstPick.props.onClick()
+      eq('点一条记录会把它选上（一条 setState）', setterLog.length, before + 1)
+    }
+    // 选中状态在渲染闭包里，所以另渲染一次把 picked 播进去，再点「加这一段」。
+    const pickedSourceId = firstPick ? String(firstPick.props.key) : `note:${NOTE_A1.id}`
+    const boardPicked = renderComp('board-composer-picked', smoke.WorkBoard, boardProps, [workA.id, '', false, '这一段引用一条划线。', [pickedSourceId], false, '', '', ''])
+    const addButton = (boardPicked.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'work.addParagraph')
+    check('「加这一段」按钮在', Boolean(addButton))
+    if (addButton) addButton.props.onClick()
+    await new Promise((resolve) => setTimeout(resolve, 120))
+    const added = writes.find((item) => item.op === 'work.paragraph.add')
+    check(
+      '「加这一段」把选中的记录写进 sourceIds',
+      Boolean(added) && Array.isArray(added.payload.sourceIds) && added.payload.sourceIds.length === 1,
+      added && JSON.stringify(added.payload.sourceIds),
+    )
+    check('挂的出处是 note: 而不是 material:', Boolean(added) && String(added.payload.sourceIds[0]).startsWith('note:'), added && added.payload.sourceIds[0])
+
+    // 挂上出处之后「AI 补写这一段」就能点，pack 里也取得到这条出处。
+    const noteForRow = dataPayload.notes.find((note) => note.bookId === BOOK_A.bookId) || NOTE_A1
+    const sourcedRow = renderComp(
+      'row-sourced',
+      smoke.ParagraphRow,
+      Object.assign({}, editProps, {
+        paragraph: Object.assign({}, workA.paragraphs[0], { text: '这一段挂了出处。', sourceIds: [`note:${noteForRow.id}`] }),
+      }),
+      [false, '', false, ''],
+    )
+    const sourcedTrigger = (sourcedRow.elements || []).find((el) => String(el.props.className || '').indexOf('wr-ai-trigger') >= 0)
+    check('挂了出处后「AI 补写」不再置灰', Boolean(sourcedTrigger) && sourcedTrigger.props.disabled !== true)
+    const noteBody = smoke.clip(String(noteForRow.text || '').replace(/\s+/g, ' ').trim(), 200)
+    const sourcedPack = smoke.buildParagraphPack({ sourceIds: [`note:${noteForRow.id}`], lookup, titleOf: () => '诗经' })
+    check('补写的 pack 里取得到这条出处', sourcedPack.includes(noteBody), sourcedPack.slice(0, 120))
+
+    // 三处错误引导：不再把人指向已经撤掉的素材/选题。
+    const zhDict = (localeDictionaries && localeDictionaries.zh) || {}
+    const enDict = (localeDictionaries && localeDictionaries.en) || {}
+    const zhCreate = String(zhDict['journey.create.hint'] || '')
+    const enCreate = String(enDict['journey.create.hint'] || '')
+    check('CREATE 段的说明不再提素材/选题', !zhCreate.includes('素材') && !enCreate.includes('material'), zhCreate)
+    const zhNext = String(zhDict['work.empty.next'] || '')
+    check('初稿空态指向新建初稿、不再让人选选题', zhNext.includes('新建') && !zhNext.includes('选题'), zhNext)
+    const zhNeed = String(zhDict['work.aiNeedSource'] || '')
+    check('AI 补写的说明改成「先挂一条来源」', zhNeed.includes('挂一条来源') && !zhNeed.includes('素材'), zhNeed)
+    check('孤儿键 work.empty.action 已删除', !('work.empty.action' in zhDict) && !('work.empty.action' in enDict))
+    check('front-matter 说明不再提 bookIds', !String(zhDict['work.frontMatter'] || '').includes('bookIds'), zhDict['work.frontMatter'])
+
+    // 单段「挂来源」：老段落也能补出处，挂的是 note:/thought:，不是 material:。
+    const attached = []
+    const sourcesRow = renderComp(
+      'row-sources',
+      smoke.ParagraphSources,
+      {
+        paragraph: Object.assign({}, workA.paragraphs[0], { text: '老段落。', sourceIds: [`note:${NOTE_A1.id}`] }),
+        pool: [
+          { sourceId: `note:${NOTE_A1.id}`, kind: 'note', chapter: '开场白', text: '关关雎鸠。', at: 2 },
+          { sourceId: `thought:${THOUGHT_A}`, kind: 'thought', chapter: '开场白', text: '先把自己放进去。', at: 1 },
+        ],
+        onAttach: (sourceIds) => {
+          attached.push(sourceIds)
+          return Promise.resolve()
+        },
+      },
+      [true, [], false, ''],
+    )
+    const sourceRows = (sourcesRow.elements || []).filter((el) => String(el.props.className || '') === 'wr-pickrow')
+    eq('单段挂来源列出可挂的记录', sourceRows.length, 2)
+    const thoughtRow = sourceRows.find((el) => String(el.props.key || '').startsWith('thought:'))
+    if (thoughtRow) thoughtRow.props.onClick()
+    const attachSave = renderComp(
+      'row-sources-picked',
+      smoke.ParagraphSources,
+      {
+        paragraph: Object.assign({}, workA.paragraphs[0], { text: '老段落。', sourceIds: [`note:${NOTE_A1.id}`] }),
+        pool: [{ sourceId: `thought:${THOUGHT_A}`, kind: 'thought', chapter: '开场白', text: '先把自己放进去。', at: 1 }],
+        onAttach: (sourceIds) => {
+          attached.push(sourceIds)
+          return Promise.resolve()
+        },
+      },
+      [true, [`thought:${THOUGHT_A}`], false, ''],
+    )
+    const attachSaveButton = (attachSave.elements || []).find((el) => el.tag === 'button' && String(el.props.children || '') === 'action.save')
+    if (attachSaveButton) attachSaveButton.props.onClick()
+    await new Promise((resolve) => setTimeout(resolve, 120))
+    const attachPayload = attached[0]
+    check(
+      '单段挂来源把新出处处并进原有 sourceIds',
+      Array.isArray(attachPayload) && attachPayload.length === 2 && attachPayload.includes(`thought:${THOUGHT_A}`),
+      JSON.stringify(attachPayload),
+    )
+    check('单段挂来源仍然不写 material:', Array.isArray(attachPayload) && attachPayload.every((id) => !String(id).startsWith('material:')))
+
+    // sourcePoolOf：素材退场后不再出现在出处清单里。
+    const pool = smoke.sourcePoolOf(dataPayload, craft, BOOK_A.bookId)
+    check('出处清单不为空', pool.length > 0, pool.length)
+    check('出处清单里没有 material:', pool.every((row) => !String(row.sourceId).startsWith('material:')))
+    check('出处清单只含这本书的记录', pool.every((row) => ['note', 'thought', 'response'].includes(row.kind)))
+  }
+
   // --- 13. 防回潮 ------------------------------------------------------------
   const sources = ['client.js', 'index.js', 'locale/zh.json', 'locale/en.json'].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n')
   const banned = ['打卡', '排行榜', '徽章', '进度环', '连续天数']
