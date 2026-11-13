@@ -1895,7 +1895,68 @@ async function main() {
     eq('浮层输入框空态是一行', relateInput && relateInput.props.rows, 1)
   }
 
-// --- 12.5 A 方案：段落点开就能改、出处从这本书的记录里挂 ----------------------
+// --- 12.6 对话卡高度、按钮分排、入口靠右、同章划线收起 ----------------------
+  {
+    // 高度：卡片只给上限，正文区没有写死高度；短回答矮、长回答停在上限。
+    const cardCss = cssBlock('wr-relate-card')
+    const bodyCss = cssBlock('wr-relate-body')
+    check('卡片只给上限、不写死高度', cardCss.indexOf('max-height') >= 0 && !/(^|;)\s*height:/.test(cardCss), cardCss.slice(0, 120))
+    check('正文区没有写死高度', bodyCss !== '' && !/(^|;)\s*height:/.test(bodyCss) && bodyCss.indexOf('max-height') < 0, bodyCss.slice(0, 120))
+    const shortBox = smoke.relateCardBox({ contentHeight: 180, viewportHeight: 900 })
+    const longBox = smoke.relateCardBox({ contentHeight: 4000, viewportHeight: 900 })
+    check('短回答不撑满：高度跟着内容走', shortBox.height === 180 && shortBox.capped === false, JSON.stringify(shortBox))
+    check('长回答停在上限并内部滚动', longBox.height === longBox.cap && longBox.capped === true, JSON.stringify(longBox))
+    const shortDraw = renderComp('t42-short', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', open: true, onToggle() {} }, ['', false, '', '短回答。', '', {}, '', '', false])
+    const emptyDraw = renderComp('t42-empty', smoke.RelateCard, { entry: NOTE_A1, kind: 'note', open: true, onToggle() {} }, ['', false, '', '', '', {}, '', '', false])
+    const shortCard = (shortDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-card')
+    check('渲染出的卡片不带固定 height', Boolean(shortCard) && shortCard.props.style && shortCard.props.style.height === undefined, JSON.stringify(shortCard && shortCard.props.style))
+    const bodyEl = (shortDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-body')
+    check('正文区是滚动容器', Boolean(bodyEl) && typeof bodyEl.props.onScroll === 'function')
+
+    // 分排：输入区一列，按钮另一排，间距 8px，发送在按钮排里。
+    const composeCss = cssBlock('wr-relate-compose')
+    const actionsCss = cssBlock('wr-relate-actions')
+    const footCss = cssBlock('wr-relate-foot')
+    check('输入区与按钮分成两排', composeCss.indexOf('flex-direction:column') >= 0 && composeCss.indexOf('gap:8px') >= 0, composeCss.slice(0, 120))
+    check('按钮行自身间距 8px', actionsCss.indexOf('gap:8px') >= 0, actionsCss.slice(0, 120))
+    check('按钮行有独立留白', footCss.indexOf('padding-top:8px') >= 0, footCss.slice(0, 120))
+    const keepOf = (draw) => (draw.elements || []).filter((el) => el.tag === 'button' && String(el.props.children || '') === 'relate.keepThought')
+    eq('没有可采纳内容时不显示「记成想法」', keepOf(emptyDraw).length, 0)
+    eq('有内容时「记成想法」出现且只有一个', keepOf(shortDraw).length, 1)
+    const spacer = (shortDraw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-spacer')
+    check('按钮行里发送与次动作被撑开', Boolean(spacer))
+
+    // 入口靠右：笔记/想法卡片上的「放回书里看」在右侧那一组里。
+    const noteDraw = renderComp('t42-note-tail', smoke.NoteRow, { note: NOTE_A1 }, [false])
+    const thoughtRow = dataPayload.thoughts.find((item) => item.bookId === BOOK_A.bookId) || dataPayload.thoughts[0]
+    const thinkDraw = renderComp('t42-thought-tail', smoke.ThoughtRow, { thought: thoughtRow, wall: false, context: [] }, [false, false, false])
+    for (const [label, draw] of [['笔记', noteDraw], ['想法', thinkDraw]]) {
+      const bars = (draw.elements || []).filter((el) => String(el.props.className || '').split(/\s+/).indexOf('wr-relate') !== -1)
+      const go = (draw.elements || []).find((el) => String(el.props.className || '') === 'wr-relate-go')
+      check(`${label}卡上的入口在右侧那一组`, bars.length === 1 && bars[0].props['data-in-tail'] === 'true' && Boolean(go), bars.length ? bars[0].props['data-in-tail'] : 'none')
+    }
+    check('右侧那一组的入口去掉了上边距', fs.readFileSync(path.join(root, 'client.js'), 'utf8').indexOf('.wr-quote-tail .wr-relate{margin-top:0}') >= 0)
+  }
+
+  // 同章划线：默认收起；展开是有界的小面板，条数只在入口、引文不带日期。
+  {
+    const ctx = dataPayload.notes.filter((item) => item.bookId === BOOK_A.bookId).slice(0, 3)
+    const closed = renderComp('t42-ctx-closed', smoke.ThoughtRow, { thought: dataPayload.thoughts[0], wall: false, context: ctx }, [false, false, false])
+    const opened = renderComp('t42-ctx-open', smoke.ThoughtRow, { thought: dataPayload.thoughts[0], wall: false, context: ctx }, [false, true, false])
+    const panelsClosed = (closed.elements || []).filter((el) => String(el.props.className || '') === 'wr-thread-pop')
+    eq('默认收起：没有面板', panelsClosed.length, 0)
+    eq('默认收起：条数只在入口出现一次', (closed.text.match(/thought\.contextToggle/g) || []).length, 1)
+    eq('展开后有且只有一块面板', (opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-thread-pop').length, 1)
+    const closes = (opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-thread-pop-close')
+    check('面板有可点的关闭按钮', closes.length === 1 && closes[0].tag === 'button' && typeof closes[0].props.onClick === 'function')
+    eq('展开后入口消失（条数不重复）', (opened.text.match(/thought\.contextToggle/g) || []).length, 0)
+    eq('引文不再重复日期', (opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-thread-date').length, 0)
+    eq('引文按条渲染', (opened.elements || []).filter((el) => String(el.props.className || '') === 'wr-thread-quote').length, ctx.length)
+    const popCss = cssBlock('wr-thread-pop')
+    const popBodyCss = cssBlock('wr-thread-pop-body')
+    check('面板有上限高度并裁掉溢出', popCss.indexOf('max-height:240px') >= 0 && popCss.indexOf('overflow:hidden') >= 0, popCss.slice(0, 120))
+    check('面板内部可滚动', popBodyCss.indexOf('overflow-y:auto') >= 0, popBodyCss.slice(0, 120))
+  }// --- 12.5 A 方案：段落点开就能改、出处从这本书的记录里挂 ----------------------
   {
     // 点正文进编辑态：有选区（触屏长按选字）时不进。
     const editTarget = { textContent: '秩序感先给画面，再给判断。', contains: () => true, ownerDocument: null }

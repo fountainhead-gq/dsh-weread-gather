@@ -726,6 +726,45 @@ if (shortDraw && shortDraw.text.includes('thought.expand')) thoughtGuards.push('
 if (byLabel0('thought-context-toggle') && !byLabel0('thought-context-toggle').text.includes('thought.contextToggle')) thoughtGuards.push('thought-context-toggle: 缺同章上下文按钮')
 if (byLabel0('thought-context-open') && !byLabel0('thought-context-open').text.includes('thought.contextTitle')) thoughtGuards.push('thought-context-open: 展开后缺上下文标题')
 
+// 同章划线：默认收起，展开是一块有界的小面板，条数只在入口出现一次、引文不带日期。
+const byClass = (draw, name) => (draw && draw.elements ? draw.elements : []).filter((el) => String(el.props.className || '').split(/\s+/).indexOf(name) !== -1)
+const toggleDraw = byLabel0('thought-context-toggle')
+const openDraw = byLabel0('thought-context-open')
+if (toggleDraw) {
+  const triggers = (toggleDraw.text.match(/thought\.contextToggle/g) || []).length
+  if (triggers !== 1) thoughtGuards.push(`thought-context-toggle: 入口条数出现 ${triggers} 次（应为 1）`)
+  if (toggleDraw.text.includes('thought.contextTitle')) thoughtGuards.push('thought-context-toggle: 默认就展开了')
+  if (byClass(toggleDraw, 'wr-thread-pop').length !== 0) thoughtGuards.push('thought-context-toggle: 默认收起时不该有面板')
+}
+if (openDraw) {
+  const pops = byClass(openDraw, 'wr-thread-pop')
+  if (pops.length !== 1) thoughtGuards.push(`thought-context-open: 面板数量是 ${pops.length}`)
+  const closes = byClass(openDraw, 'wr-thread-pop-close')
+  if (closes.length !== 1) thoughtGuards.push('thought-context-open: 没有唯一的关闭按钮')
+  else if (closes[0].tag !== 'button' || typeof closes[0].props.onClick !== 'function') thoughtGuards.push('thought-context-open: 关闭按钮不可点')
+  if (openDraw.text.includes('thought.contextToggle')) thoughtGuards.push('thought-context-open: 展开后入口还在（条数会重复）')
+  if (byClass(openDraw, 'wr-thread-date').length !== 0) thoughtGuards.push('thought-context-open: 引文还带日期（与卡片脚重复）')
+  if (openDraw.text.includes('> 同章划线')) thoughtGuards.push('thought-context-open: 还在用 > 引文堆叠')
+  const quotes = byClass(openDraw, 'wr-thread-quote')
+  if (quotes.length !== contextNotes.length) thoughtGuards.push(`thought-context-open: 引文 ${quotes.length} 条（应为 ${contextNotes.length}）`)
+}
+const popCss = (() => {
+  const at = code.indexOf('.wr-thread-pop{')
+  return at < 0 ? '' : code.slice(at, code.indexOf('}', at))
+})()
+if (popCss === '') thoughtGuards.push('CSS: 找不到 .wr-thread-pop 规则')
+else {
+  if (popCss.indexOf('max-height:240px') < 0) thoughtGuards.push('CSS: 同章划线的面板没有上限高度')
+  if (popCss.indexOf('overflow:hidden') < 0) thoughtGuards.push('CSS: 同章划线的面板没有裁掉溢出')
+}
+const popBodyCss = (() => {
+  const at = code.indexOf('.wr-thread-pop-body{')
+  return at < 0 ? '' : code.slice(at, code.indexOf('}', at))
+})()
+if (popBodyCss === '') thoughtGuards.push('CSS: 找不到 .wr-thread-pop-body 规则')
+else if (popBodyCss.indexOf('overflow-y:auto') < 0) thoughtGuards.push('CSS: 同章划线的面板不能内部滚动')
+if (code.indexOf('.wr-thread-date') >= 0) thoughtGuards.push('CSS: 旧的引文日期样式还在')
+
 // 来源包：字段齐、原文带引用、想法带同章上下文、缺书名不瞎猜、长文被截断。
 const packGuards = []
 if (typeof smoke.buildSourcePack !== 'function') packGuards.push('client module 未暴露 buildSourcePack')
@@ -984,6 +1023,7 @@ const relateAnswer = [
 const savedCraftBridge = smoke.craftBridge.craft
 smoke.craftBridge.craft = smokeCraft()
 renderStandalone('relate-empty', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', '', '', {}, '', ''])
+renderStandalone('note-row-tail', smoke.NoteRow, { note: relateEntry }, [false])
 renderStandalone('relate-sending', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['想先问一句', true, '', '', '', {}, '', ''])
 if (process.env.RELATE_DEBUG) console.error('[debug] parse', JSON.stringify((smoke.parseRelateAnswer(relateAnswer, relateCandidates) || {}).rows ? (smoke.parseRelateAnswer(relateAnswer, relateCandidates).rows.length) : -1), JSON.stringify(relateAnswer.slice(0, 120)))
 renderStandalone('relate-result', smoke.RelateCard, { entry: relateEntry, kind: 'note', onToggle() {} }, ['', false, '', relateAnswer, '', {}, '', ''])
@@ -1364,6 +1404,53 @@ else if (composeCss.indexOf('flex:none') < 0) relateGuards.push('CSS: 输入区�
 if (code.indexOf('askPosition') >= 0) relateGuards.push('CSS: 还在按视口坐标摆卡片（askPosition 未删）')
 if (code.indexOf('wr-ask{') >= 0) relateGuards.push('CSS: 旧的 .wr-ask 样式还在')
 if (code.indexOf("request('/chat/models')") >= 0) relateGuards.push('预检: 客户端还在请求 /chat/models')
+
+// 高度随内容：卡片只给上限、不给高度；正文区没有写死的高度，由内容决定。
+if (cardCss !== '' && /(^|;)\s*height:/.test(cardCss)) relateGuards.push('CSS: 卡片写死了高度（应该只给 max-height）')
+if (bodyCss !== '' && /(^|;)\s*height:/.test(bodyCss)) relateGuards.push('CSS: 正文区写死了高度')
+if (bodyCss !== '' && bodyCss.indexOf('max-height') >= 0) relateGuards.push('CSS: 正文区写了 max-height（应该由卡片上限约束）')
+const emptyCard = byLabel0('relate-empty')
+if (emptyCard) {
+  const cards = (emptyCard.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-card')
+  if (cards.length !== 1) relateGuards.push('relate-empty: 找不到卡片')
+  else if ((cards[0].props.style || {}).height !== undefined) relateGuards.push('relate-empty: 卡片带了固定 height')
+}
+
+// 输入区与按钮分两排：compose 是纵向列，按钮行有自己的留白与间距。
+if (composeCss !== '' && composeCss.indexOf('flex-direction:column') < 0) relateGuards.push('CSS: 输入区与按钮没有分层（compose 不是纵向列）')
+if (composeCss !== '' && composeCss.indexOf('gap:8px') < 0) relateGuards.push('CSS: 输入区内部间距不足 8px')
+const actionsCss = relateCss('wr-relate-actions')
+if (actionsCss === '') relateGuards.push('CSS: 找不到 .wr-relate-actions 规则')
+else if (actionsCss.indexOf('gap:8px') < 0) relateGuards.push('CSS: 按钮行间距不足 8px')
+const footCss = relateCss('wr-relate-foot')
+if (footCss === '' ) relateGuards.push('CSS: 找不到 .wr-relate-foot 规则')
+else if (footCss.indexOf('padding-top:8px') < 0) relateGuards.push('CSS: 按钮行没有独立留白')
+
+// 「记成想法」只在真的有可采纳内容时出现。
+const keepButton = (draw) => (draw && draw.elements ? draw.elements : []).filter((el) => String(el.props.className || '').indexOf('wr-btn-quiet') !== -1 && String((el.props.children || '')).indexOf('relate.keepThought') !== -1)
+if (emptyCard && keepButton(emptyCard).length !== 0) relateGuards.push('relate-empty: 没有可采纳内容时仍显示「记成想法」')
+const resultCard = byLabel0('relate-result')
+if (resultCard && keepButton(resultCard).length !== 1) relateGuards.push('relate-result: 有内容时「记成想法」应该出现且只有一个')
+const sendCount = (draw) => (draw && draw.elements ? draw.elements : []).filter((el) => String(el.props.className || '') === 'wr-relate-send').length
+if (emptyCard && sendCount(emptyCard) !== 1) relateGuards.push('relate-empty: 发送键数量不是 1')
+if (resultCard && sendCount(resultCard) !== 1) relateGuards.push('relate-result: 发送键数量不是 1')
+
+// 「放回书里看」在记录卡的右侧那一组，不再占正文下方一行。
+const tailDraw = byLabel0('note-row-tail')
+if (!tailDraw) relateGuards.push('note-row-tail: 未渲染')
+else {
+  const bars = (tailDraw.elements || []).filter((el) => String(el.props.className || '').split(/\s+/).indexOf('wr-relate') !== -1)
+  if (bars.length !== 1) relateGuards.push(`note-row-tail: 入口容器数量是 ${bars.length}`)
+  else if (bars[0].props['data-in-tail'] !== 'true') relateGuards.push('note-row-tail: 「放回书里看」不在右侧那一组')
+  const guides = (tailDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-relate-go')
+  if (guides.length !== 1) relateGuards.push('note-row-tail: 找不到「放回书里看」按钮')
+}
+if (code.indexOf('.wr-quote-tail .wr-relate{margin-top:0}') < 0) relateGuards.push('CSS: 右侧那一组里的入口没有去掉上边距')
+const thoughtRowDraw = byLabel0('relate-thought-row')
+if (thoughtRowDraw) {
+  const bars = (thoughtRowDraw.elements || []).filter((el) => String(el.props.className || '').split(/\s+/).indexOf('wr-relate') !== -1)
+  if (bars.length === 0 || bars[0].props['data-in-tail'] !== 'true') relateGuards.push('relate-thought-row: 想法卡的入口不在右侧那一组')
+}
 
 // 请求体照设计稿 §4 组：自然话 + 带编号的候选 + mode:'relate'。
 if (typeof smoke.buildRelateAsk === 'function' && relateCandidates.length > 0) {

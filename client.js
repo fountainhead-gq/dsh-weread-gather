@@ -1184,22 +1184,32 @@ window.__ModuleLoader__.load({
 .wr-more:hover{text-decoration:underline}
 .wr-thread-toggle{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;line-height:1.5;padding:8px 0 0;cursor:pointer}
 .wr-thread-toggle:hover{color:var(--wr-ink)}
-.wr-thread{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--wr-surface);border:1px solid var(--wr-divider)}
-.wr-thread-title{font-size:11px;color:var(--wr-ink-mute);letter-spacing:.03em;margin-bottom:4px}
-.wr-thread-item{font-size:12.5px;line-height:1.7;padding:6px 0;border-top:1px dashed var(--wr-divider)}
-.wr-thread-item:first-of-type{border-top:0;padding-top:0}
-.wr-thread-date{display:block;font-size:10.5px;color:var(--wr-ink-mute);margin-top:2px}
+/* Chapter context opens as a small popover panel instead of a stack of quotes:
+   bounded height, its own scroll area, one close button, no repeated date. */
+.wr-thread-pop{display:flex;flex-direction:column;margin-top:8px;border:1px solid var(--wr-divider);border-radius:10px;background:var(--wr-surface);max-height:240px;overflow:hidden}
+.wr-thread-pop-head{display:flex;align-items:center;gap:8px;flex:none;padding:7px 8px 6px 11px;border-bottom:1px solid var(--wr-divider)}
+.wr-thread-pop-title{margin:0;font-size:11px;color:var(--wr-ink-mute);letter-spacing:.03em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-thread-pop-close{appearance:none;margin-left:auto;flex:none;width:20px;height:20px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:14px;line-height:1;cursor:pointer}
+.wr-thread-pop-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
+.wr-thread-pop-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:2px 11px 8px}
+.wr-thread-item{padding:6px 0;border-top:1px dashed var(--wr-divider)}
+.wr-thread-item:first-child{border-top:0;padding-top:4px}
+.wr-thread-quote{margin:0;font-size:12px;line-height:1.6;color:var(--wr-ink-soft)}
+.wr-thread-chapter{display:block;margin-top:2px;font-size:10.5px;color:var(--wr-ink-mute)}
 .wr-relate{margin-top:8px;opacity:0;transition:opacity .14s ease}
 .wr-quote:hover .wr-relate,.wr-thought:hover .wr-relate,.wr-relate:focus-within,.wr-relate[data-open=true]{opacity:1}
 @media (hover:none){.wr-relate{opacity:1}}
 .wr-relate-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wr-quote-tail .wr-relate,.wr-thought .wr-quote-tail .wr-relate{margin-top:0}
 .wr-relate-go{appearance:none;border:1px solid var(--wr-line);background:var(--wr-paper-soft);color:var(--wr-ink-soft);font:inherit;font-size:11px;line-height:1;padding:5px 10px;border-radius:999px;cursor:pointer;transition:border-color .14s ease,color .14s ease,background .14s ease}
 .wr-relate-go:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
 .wr-relate-go:disabled{opacity:.45;cursor:default}
 .wr-relate-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--wr-scrim)}
 .wr-relate-card{position:relative;display:flex;flex-direction:column;width:min(600px,calc(100vw - 32px));max-width:600px;max-height:min(84vh,760px);padding:12px 14px;border:1px solid var(--wr-line);border-radius:14px;background:var(--wr-paper-soft);box-shadow:0 14px 44px color-mix(in srgb, var(--wr-ink) 20%, transparent);overflow:hidden}
+/* No fixed height here on purpose: short answer → short sheet, long answer →
+   the card stops at its cap and this area scrolls. */
 .wr-relate-body{display:flex;flex:1 1 auto;flex-direction:column;gap:10px;min-height:0;overflow-y:auto;padding-right:2px}
-.wr-relate-compose{display:flex;flex:none;align-items:flex-end;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid var(--wr-line)}
+.wr-relate-compose{display:flex;flex:none;flex-direction:column;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid var(--wr-line)}
 .wr-relate-jump{appearance:none;flex:none;border:1px dashed var(--wr-line);background:var(--wr-paper);color:var(--wr-ink-soft);font:inherit;font-size:10.5px;line-height:1;padding:5px 9px;border-radius:999px;cursor:pointer}
 .wr-relate-jump:hover{border-color:var(--wr-moss);color:var(--wr-ink)}
 .wr-relate-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -1208,7 +1218,7 @@ window.__ModuleLoader__.load({
 .wr-relate-close{appearance:none;margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--wr-ink-soft);font-size:15px;line-height:1;cursor:pointer}
 .wr-relate-close:hover{background:var(--wr-wash);color:var(--wr-ink)}
 .wr-relate-summary{font-size:11px;color:var(--wr-ink-mute);line-height:1.5}
-.wr-relate-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:8px 11px;min-height:44px;max-height:120px;resize:none;overflow-y:auto;border-radius:11px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
+.wr-relate-input{flex:none;width:100%;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:7px 11px;min-height:34px;max-height:104px;resize:none;overflow-y:auto;border-radius:11px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
 .wr-relate-input:focus{outline:none;border-color:var(--wr-moss);box-shadow:0 0 0 3px color-mix(in srgb, var(--wr-moss) 14%, transparent)}
 .wr-relate-send{appearance:none;flex:none;border:1px solid var(--wr-moss);background:var(--wr-moss);color:var(--wr-on-accent);font:inherit;font-size:11.5px;line-height:1;padding:8px 13px;border-radius:999px;cursor:pointer}
 .wr-relate-send:disabled{opacity:.45;cursor:default}
@@ -1234,8 +1244,10 @@ window.__ModuleLoader__.load({
 .wr-relate-ask{appearance:none;text-align:left;border:1px dashed var(--wr-line);background:transparent;color:var(--wr-ink-soft);font:inherit;font-size:11.5px;line-height:1.5;padding:5px 10px;border-radius:10px;cursor:pointer}
 .wr-relate-ask:hover{border-color:var(--wr-moss);color:var(--wr-ink);background:var(--wr-wash)}
 .wr-relate-error{margin:0;font-size:11px;line-height:1.5;color:var(--dsw-alias-state-error)}
-.wr-relate-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wr-relate-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
+.wr-relate-foot{display:flex;flex:none;flex-direction:column;align-items:stretch;gap:8px;padding-top:8px}
+.wr-relate-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wr-relate-spacer{flex:1 1 auto}
+.wr-relate-actions .wr-relate-send{margin-right:8px}
 .wr-relate-notice{margin:0;font-size:11px;line-height:1.5;color:var(--wr-ink-soft)}
 .wr-relate-offline{margin:0;font-size:11.5px;line-height:1.6;color:var(--wr-ink-mute)}
 .wr-line-input{flex:1;min-width:0;font:inherit;font-size:12.5px;line-height:1.6;padding:8px 12px;min-height:38px;max-height:150px;resize:none;overflow-y:auto;border-radius:12px;border:1px solid var(--wr-line);background:var(--wr-paper);color:var(--wr-ink)}
@@ -2552,6 +2564,13 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
     /** The `rows` attribute: one row to start, never more than six. */
     const textareaRows = (text) => Math.min(TEXTAREA_MAX_ROWS, Math.max(1, textareaRowsOf(text)))
 
+    // The relate sheet's input is a one-liner that grows a little, not a box:
+    // it starts at one row and stops at four, so the sheet stays compact.
+    const RELATE_INPUT_MAX_ROWS = 4
+
+    /** The relate input's `rows`: 1..4 depending on what is typed. */
+    const relateInputRows = (text) => Math.min(RELATE_INPUT_MAX_ROWS, textareaRows(text))
+
     /** How many records the 「挂来源」picker offers at most. */
     const PICKER_LIMIT = 40
 
@@ -2865,6 +2884,8 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const tooFew = candidates.length === 0
       const noBook = bookId === ''
       const parsed = parseRelateAnswer(answer, candidates)
+      // Only an answer with something in it can become a thought.
+      const canKeep = answer !== '' && (parsed.prose !== '' || parsed.rows.length > 0)
 
       const stop = (event) => {
         if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
@@ -3256,7 +3277,8 @@ if (!open) return null
                   ),
                 ),
           ),
-          // The compose row stays pinned to the bottom edge of the card.
+          // One row for the input, one row for the actions: the send button leads
+          // that row and the follow-ups sit on the right, never on the textarea.
           noBook || tooFew
             ? null
             : h(
@@ -3279,7 +3301,7 @@ if (!open) return null
                 h('textarea', {
                   className: 'wr-relate-input',
                   ref: inputRef,
-                  rows: textareaRows(draft),
+                  rows: relateInputRows(draft),
                   value: draft,
                   placeholder: t('relate.placeholder'),
                   disabled: busy,
@@ -3290,19 +3312,6 @@ if (!open) return null
                     run(draft)
                   },
                 }),
-                h(
-                  'button',
-                  {
-                    className: 'wr-relate-send',
-                    type: 'button',
-                    disabled: busy,
-                    onClick: (event) => {
-                      stop(event)
-                      run(draft)
-                    },
-                  },
-                  busy ? t('relate.thinking') : t('relate.send'),
-                ),
               ),
           h(
             'div',
@@ -3314,21 +3323,40 @@ if (!open) return null
             h(
               'div',
               { className: 'wr-relate-actions' },
-              h(
-                'button',
-                {
-                  // Secondary weight on purpose: keeping a thought and closing the
-                  // card are follow-ups, not the send action they sit next to.
-                  className: 'wr-btn wr-btn-ghost wr-btn-quiet',
-                  type: 'button',
-                  disabled: rowBusy !== '' || answer === '',
-                  onClick: (event) => {
-                    stop(event)
-                    keepThought()
-                  },
-                },
-                t('relate.keepThought'),
-              ),
+              noBook || tooFew
+                ? null
+                : h(
+                    'button',
+                    {
+                      className: 'wr-relate-send',
+                      type: 'button',
+                      disabled: busy,
+                      onClick: (event) => {
+                        stop(event)
+                        run(draft)
+                      },
+                    },
+                    busy ? t('relate.thinking') : t('relate.send'),
+                  ),
+              h('span', { className: 'wr-relate-spacer' }),
+              // Nothing to keep means nothing to show: a dead grey button is noise.
+              canKeep
+                ? h(
+                    'button',
+                    {
+                      // Secondary weight on purpose: keeping a thought and closing
+                      // the card are follow-ups, not the send action.
+                      className: 'wr-btn wr-btn-ghost wr-btn-quiet',
+                      type: 'button',
+                      disabled: rowBusy !== '',
+                      onClick: (event) => {
+                        stop(event)
+                        keepThought()
+                      },
+                    },
+                    t('relate.keepThought'),
+                  )
+                : null,
               h(
                 'button',
                 {
@@ -3357,7 +3385,9 @@ if (!open) return null
       }
       return h(
         'div',
-        { className: 'wr-relate', 'data-open': open ? 'true' : 'false' },
+        // data-in-tail: the entry is rendered inside the card's right-hand group
+        // (see the call sites), so tests can tell it apart from the old layout.
+        { className: 'wr-relate', 'data-open': open ? 'true' : 'false', 'data-in-tail': props.inTail ? 'true' : 'false' },
         h(
           'div',
           { className: 'wr-relate-row' },
@@ -3400,7 +3430,6 @@ if (!open) return null
         { className: 'wr-quote', 'data-focus': props.focus ? 'true' : 'false', 'data-clickable': open ? 'true' : 'false', 'data-picked': props.selected ? 'true' : 'false', title: open ? t('action.openBook') : undefined, onClick: open || undefined },
         pick,
         h(MarkedText, { className: 'wr-quote-text', text: note.text, needle: props.needle }),
-        h(RelateBar, { entry: note, kind: 'note', open: relate, onToggle: setRelate }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -3409,6 +3438,7 @@ if (!open) return null
           h(
             'div',
             { className: 'wr-quote-tail' },
+            h(RelateBar, { entry: note, kind: 'note', open: relate, onToggle: setRelate, inTail: true }),
             h('span', null, fmtDate(note.createTime)),
             h(CopyButton, { text: note.text }),
           ),
@@ -3453,7 +3483,6 @@ if (!open) return null
               expanded ? t('thought.collapse') : t('thought.expand', { count: String(content.length - THOUGHT_CLAMP_CHARS) }),
             )
           : null,
-        h(RelateBar, { entry: thought, kind: 'thought', open: relate, onToggle: setRelate }),
         h(
           'div',
           { className: 'wr-quote-foot' },
@@ -3462,6 +3491,7 @@ if (!open) return null
           h(
             'div',
             { className: 'wr-quote-tail' },
+            h(RelateBar, { entry: thought, kind: 'thought', open: relate, onToggle: setRelate, inTail: true }),
             thought.star >= 0 ? h('span', { className: 'wr-stars' }, '★'.repeat(Math.min(5, Math.max(0, thought.star)))) : null,
             h('span', null, fmtDate(thought.createTime)),
             h(CopyButton, { text: content }),
@@ -3474,15 +3504,36 @@ if (!open) return null
           : threadOpen
             ? h(
                 'div',
-                { className: 'wr-thread' },
-                h('div', { className: 'wr-thread-title' }, t('thought.contextTitle')),
-                slice.map((note) =>
+                { className: 'wr-thread-pop' },
+                h(
+                  'div',
+                  { className: 'wr-thread-pop-head' },
+                  h('span', { className: 'wr-thread-pop-title' }, t('thought.contextTitle')),
                   h(
-                    'div',
-                    { className: 'wr-thread-item', key: note.id },
-                    `> ${String(note.text || '').slice(0, 300)}`,
-                    h('span', { className: 'wr-thread-date' }, fmtDate(note.createTime)),
-                  )),
+                    'button',
+                    {
+                      className: 'wr-thread-pop-close',
+                      type: 'button',
+                      'aria-label': t('action.dismiss'),
+                      onClick: (event) => {
+                        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                        setThreadOpen(false)
+                      },
+                    },
+                    '×',
+                  ),
+                ),
+                h(
+                  'div',
+                  { className: 'wr-thread-pop-body' },
+                  slice.map((note) =>
+                    h(
+                      'div',
+                      { className: 'wr-thread-item', key: note.id },
+                      h('p', { className: 'wr-thread-quote' }, String(note.text || '').slice(0, 300)),
+                      note.chapterTitle ? h('span', { className: 'wr-thread-chapter' }, `《${note.chapterTitle}》`) : null,
+                    )),
+                ),
               )
             : h(
                 'button',
@@ -6857,6 +6908,7 @@ function threadPairLabel(id, recordById) {
         buildSourcePack,
         RelateBar,
         RelateCard,
+        NoteRow,
         relateCandidates,
         buildRelateAsk,
         parseRelateAnswer,
