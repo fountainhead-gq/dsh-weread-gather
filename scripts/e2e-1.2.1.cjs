@@ -262,6 +262,25 @@ async function main() {
   has('/chat 系统提示来自宿主', seen && seen.system, '书房')
   eq('/chat maxTokens=1200', seen && seen.maxTokens, 1200)
 
+  // 「梳理这本书」本来就没有用户提问：threads 模式必须接受空问题。
+  const callsBeforeThreads = llmState.calls.length
+  const threads = await post('/chat', { pack: '【书房来源包】《诗经》 全书按章记录', question: '', mode: 'threads' })
+  eq('threads 空问题 200', threads.status, 200)
+  has('threads 空问题仍走 SSE', threads.headers['content-type'], 'text/event-stream')
+  const threadsFrames = frames(threads.text)
+  check('threads 空问题有 open 帧', threadsFrames.some((item) => item.type === 'open'), JSON.stringify(threadsFrames.slice(0, 2)))
+  check('threads 空问题以 done 收尾', threadsFrames[threadsFrames.length - 1] && threadsFrames[threadsFrames.length - 1].type === 'done')
+  const threadsSeen = llmState.calls.length > callsBeforeThreads ? llmState.calls[llmState.calls.length - 1] : null
+  const threadsPrompt = threadsSeen && threadsSeen.messages && threadsSeen.messages[0] ? String(threadsSeen.messages[0].content[0].text) : ''
+  check('threads 提示词不留空的「现在的问题」', threadsPrompt !== '' && !threadsPrompt.includes('【现在的问题】'), JSON.stringify(threadsPrompt.slice(-60)))
+  check('threads 提示词不出现空的「我：」标签', !/(^|\n)我：\s*(\n|$)/.test(threadsPrompt), JSON.stringify(threadsPrompt.slice(-60)))
+  has('threads 提示词仍带来源包', threadsPrompt, '【书房来源包】')
+  has('threads 系统提示来自宿主', threadsSeen && threadsSeen.system, 'JSON')
+  check('threads 提示词结尾不留空行', threadsPrompt === threadsPrompt.replace(/\n+$/, ''), JSON.stringify(threadsPrompt.slice(-12)))
+  // 只放开 threads：默认模式与 relate 模式对空问题的要求不变。
+  eq('默认模式空问题仍是 400', (await post('/chat', { pack: 'p', question: '' })).status, 400)
+  eq('relate 模式空问题仍是 400', (await post('/chat', { pack: 'p', question: '', mode: 'relate' })).status, 400)
+
   // --- 4. 429：明确报错、不写坏数据 -----------------------------------------
   const revisionBeforeRate = (await get('/craft')).json.revision
   llmState.mode = 'rate'

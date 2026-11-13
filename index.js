@@ -2766,9 +2766,12 @@ function buildChatPrompt(input) {
     }
     lines.push('')
   }
-  lines.push('【现在的问题】')
-  lines.push(question)
-  return lines.join('\n')
+  if (question !== '') {
+    lines.push('【现在的问题】')
+    lines.push(question)
+  }
+  const body = lines.join('\n').replace(/\n+$/, '')
+  return body
 }
 
 function makeRoutes(host, ctx) {
@@ -2947,16 +2950,19 @@ function makeRoutes(host, ctx) {
           fail(res, 400, '没有找到可用的模型')
           return true
         }
-        const question = String(body.question || '').trim()
-        if (question === '') {
-          fail(res, 400, '问题不能为空')
-          return true
-        }
         // `mode` only picks a system prompt. Absent (or empty) keeps the original
         // wording; a value we do not know is refused rather than silently ignored.
         const mode = typeof body.mode === 'string' ? body.mode.trim() : ''
         if (mode !== '' && !Object.prototype.hasOwnProperty.call(CHAT_MODES, mode)) {
           fail(res, 400, `mode 只能是 ${Object.keys(CHAT_MODES).join(' / ')}`)
+          return true
+        }
+        const question = String(body.question || '').trim()
+        // A turn normally answers something the reader asked. `threads` does not:
+        // the request is "read these records and tell me what belongs together",
+        // so there is nothing to type and an empty question is the normal case.
+        if (question === '' && mode !== 'threads') {
+          fail(res, 400, '问题不能为空')
           return true
         }
         const system = mode === '' ? CHAT_SYSTEM : CHAT_MODES[mode]

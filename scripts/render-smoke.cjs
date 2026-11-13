@@ -681,6 +681,23 @@ renderStandalone(
 )
 renderStandalone('threads-error', smoke.BookThreads, threadsProps(threadsCraft()), [false, 'provider rate limited (429)', '', [], false, false, false])
 renderStandalone('threads-capped', smoke.BookThreads, threadsProps(threadsCraft()), [false, '', 'thread.capped(3)', [], false, false, false])
+
+// 初稿页的「挂记录」列表与「建这篇」输入框：这两处只有打开表单/展开列表才出现，
+// 所以单独挂载一次 WorkBoard（播种顺序：activeId, title, creating, draft, picked, busy, error, markdown, path）。
+const pickerBook = anyBook || { bookId: 'weread:book/1', title: '书名', author: '作者' }
+const pickerCraft = smokeCraft()
+const pickerBoardProps = {
+  craft: pickerCraft,
+  data: payload,
+  scopeBookId: pickerBook.bookId,
+  bookIdOf: () => pickerBook.bookId,
+  focusWorkId: '',
+  write: () => Promise.resolve({}),
+  onOpenSource: () => {},
+  onGoShelf: () => {},
+  onRetry: () => {},
+}
+renderStandalone('work-new-form', smoke.WorkBoard, pickerBoardProps, [pickerCraft.works[0].id, '新的一篇', true, '', [], false, '', '', ''])
 renderStandalone(
   'threads-suggest',
   smoke.BookThreads,
@@ -1796,6 +1813,43 @@ function checkJourneys(guards, byLabel, bookDraw) {
     if (worksDraw.text.indexOf('work.confirmed') >= 0) journeyGuards.push('works: 还渲染了「已确认」标签')
     const confirmButton = (worksDraw.elements || []).some((el) => el.tag === 'button' && (el.props.children || '') === 'work.confirm')
     if (confirmButton) journeyGuards.push('works: 「确认初稿」按钮仍在')
+    // 挂记录列表：一项 = 勾选 + 类型 + 一行小字「《书名》 · 章节」+ 一行 ≤40 字摘要。
+    const pickRows = (worksDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-pickrow')
+    if (pickRows.length === 0) journeyGuards.push('works: 挂记录的列表没了')
+    for (const row of pickRows) {
+      const kids = row.props.children || []
+      const classes = kids.map((child) => String((child && child.props && child.props.className) || ''))
+      if (classes.length !== 3 || classes[0] !== 'wr-pickrow-mark' || classes[1] !== 'wr-tag' || classes[2] !== 'wr-pickrow-main') {
+        journeyGuards.push(`works: 挂记录一行还是老结构（${classes.join(',')}）`)
+        break
+      }
+      const main = kids[2].props.children || []
+      const where = String((main[0] && main[0].props && main[0].props.children) || '')
+      const summary = String((main[1] && main[1].props && main[1].props.children) || '')
+      if (!where.startsWith('《')) {
+        journeyGuards.push(`works: 挂记录首行不是书名（${where}）`)
+        break
+      }
+      if (Array.from(summary).length > 40) {
+        journeyGuards.push(`works: 摘要 ${Array.from(summary).length} 字，超过 40 字`)
+        break
+      }
+    }
+    const pickCss = (code.match(/\.wr-pickrow\{[^}]*\}/) || [''])[0]
+    if (!pickCss.includes('min-height:38px')) journeyGuards.push('works: 挂记录行高没有统一（缺 min-height）')
+    if (!code.includes('.wr-pickrow-text{')) journeyGuards.push('works: 摘要没有单行省略样式')
+    const listCss = (code.match(/\.wr-picklist\{[^}]*\}/) || [''])[0]
+    if (!listCss.includes('max-height:')) journeyGuards.push('works: 挂记录列表没有最大高度')
+    if (!listCss.includes('overflow-y:auto')) journeyGuards.push('works: 挂记录列表不能内部滚动')
+    if (!code.includes('.wr-pickrow[data-on=true] .wr-pickrow-mark')) journeyGuards.push('works: 选中态没有明确标记')
+  }
+  const newForm = byLabel('work-new-form')
+  if (!newForm) {
+    journeyGuards.push('work-new-form: 未渲染')
+  } else {
+    const input = (newForm.elements || []).find((el) => el.tag === 'input' && String(el.props.className || '') === 'wr-input')
+    if (!input) journeyGuards.push('work-new-form: 新建初稿的输入框不在')
+    else if (typeof input.props.onKeyDown !== 'function') journeyGuards.push('work-new-form: 输入框没有键盘处理，回车建不了稿')
   }
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
   // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。

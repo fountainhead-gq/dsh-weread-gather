@@ -1590,6 +1590,9 @@ async function main() {
       chatBody = {}
     }
     threadCheck('请求体带 mode=threads', chatBody.mode === 'threads')
+    // threads 是「让你梳理这些记录」，本来就没有用户提问：发空问题才是对的，
+    // 客户端不能为了绕过校验塞一句假问题。
+    threadCheck('请求体不发假问题（question 为空）', String(chatBody.question === undefined ? '' : chatBody.question) === '')
     threadCheck('请求体把全书记录按章带上了编号', String(chatBody.pack || '').includes('note:' + NOTE_A1.id))
     threadCheck('请求体带上了已确认的对照编号', String(chatBody.pack || '').includes(relOne.id))
     const saved = threadWrites.filter((item) => item.op === 'threads.save').pop()
@@ -2083,6 +2086,29 @@ async function main() {
     const kinds = new Set(pickRows.map((el) => String(el.props.key || '').split(':')[0]))
     check('可挂的记录只有划线/想法/回应三类', [...kinds].every((kind) => ['note', 'thought', 'response'].includes(kind)), [...kinds].join(','))
     has('composer 说明写的是「挂上这本书里的记录」', board.text, 'work.pickSource')
+    // 列表项只回答「这是哪条记录」：一行小字「《书名》 · 章节」+ 一行摘要。
+    const rowShapes = pickRows.map((el) => (el.props.children || []).map((child) => String((child && child.props && child.props.className) || '')))
+    check(
+      '每条记录都是「勾选 + 类型 + 书名/摘要两行」一个结构',
+      rowShapes.length > 0 &&
+        rowShapes.every((shape) => shape.length === 3 && shape[0] === 'wr-pickrow-mark' && shape[1] === 'wr-tag' && shape[2] === 'wr-pickrow-main'),
+      JSON.stringify(rowShapes.slice(0, 2)),
+    )
+    const mains = pickRows.map((el) => (el.props.children || [])[2]).filter(Boolean)
+    const whereLines = mains.map((main) => String(((main.props.children || [])[0] || {}).props.children || ''))
+    const summaryLines = mains.map((main) => String(((main.props.children || [])[1] || {}).props.children || ''))
+    check('首行是《书名》', whereLines.length > 0 && whereLines.every((line) => line.startsWith('《')), JSON.stringify(whereLines.slice(0, 2)))
+    check('首行带章节位置', whereLines.some((line) => line.includes(' · ')), JSON.stringify(whereLines.slice(0, 2)))
+    check('摘要不超过 40 字', summaryLines.every((line) => Array.from(line).length <= 40), JSON.stringify(summaryLines.slice(0, 2)))
+    const pickCss = fs.readFileSync(path.join(root, 'client.js'), 'utf8')
+    const pickBlock = (pickCss.match(/\.wr-pickrow\{[^}]*\}/) || [''])[0]
+    const listBlock = (pickCss.match(/\.wr-picklist\{[^}]*\}/) || [''])[0]
+    has('列表项用等高网格排版', pickBlock, 'min-height:38px')
+    has('列表项摘要单行省略', pickCss, '.wr-pickrow-text{')
+    has('列表区有最大高度', listBlock, 'max-height:')
+    has('列表区自己滚动', listBlock, 'overflow-y:auto')
+    const pickedRow = pickRows.find((el) => String(el.props['data-on'] || '') === 'true')
+    check('已选中的记录有明确标记（勾选格填色）', pickCss.includes('.wr-pickrow[data-on=true] .wr-pickrow-mark'), pickedRow ? '已有选中行' : '当前未选中')
     const firstPick = pickRows.find((el) => String(el.props.key || '').startsWith('note:'))
     if (firstPick) {
       const before = setterLog.length
@@ -2103,6 +2129,35 @@ async function main() {
       added && JSON.stringify(added.payload.sourceIds),
     )
     check('挂的出处是 note: 而不是 material:', Boolean(added) && String(added.payload.sourceIds[0]).startsWith('note:'), added && added.payload.sourceIds[0])
+
+    // 「建这篇」：回车走和按钮完全相同的那条路（同一个 createWork）。
+    writes.length = 0
+    const newForm = renderComp('work-new-form', smoke.WorkBoard, boardProps, [workA.id, '新的一篇', true, '', [], false, '', '', ''])
+    const titleInput = (newForm.elements || []).find((el) => el.tag === 'input' && String(el.props.className || '') === 'wr-input')
+    check('新建初稿的输入框在', Boolean(titleInput) && typeof titleInput.props.onKeyDown === 'function')
+    let prevented = 0
+    const pressEnter = (extra) => {
+      // 输入框没有键盘处理时也要给出可读的失败，而不是把整个自检打崩。
+      if (!titleInput || typeof titleInput.props.onKeyDown !== 'function') return false
+      titleInput.props.onKeyDown(Object.assign({ key: 'Enter', shiftKey: false, preventDefault() { prevented += 1 } }, extra || {}))
+      return true
+    }
+    pressEnter()
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    const createdByEnter = writes.filter((item) => item.op === 'work.add')
+    eq('回车建了一篇初稿', createdByEnter.length, 1)
+    eq('回车带的标题就是输入框里的字', createdByEnter[0] && createdByEnter[0].payload.title, '新的一篇')
+    eq('回车拦掉了默认提交', prevented, 1)
+    pressEnter({ shiftKey: true })
+    pressEnter({ key: 'Escape' })
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    eq('Shift+Enter 与 Esc 不建稿', writes.filter((item) => item.op === 'work.add').length, 1)
+    const emptyForm = renderComp('work-new-form-empty', smoke.WorkBoard, boardProps, [workA.id, '', true, '', [], false, '', '', ''])
+    const emptyInput = (emptyForm.elements || []).find((el) => el.tag === 'input' && String(el.props.className || '') === 'wr-input')
+    if (emptyInput && typeof emptyInput.props.onKeyDown === 'function') emptyInput.props.onKeyDown({ key: 'Enter', shiftKey: false, preventDefault() {} })
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    eq('空内容回车不建稿', writes.filter((item) => item.op === 'work.add').length, 1)
+    check('空内容回车不报错', !emptyForm.text.includes('wr-adopt-error'))
 
     // 挂上出处之后「AI 补写这一段」就能点，pack 里也取得到这条出处。
     const noteForRow = dataPayload.notes.find((note) => note.bookId === BOOK_A.bookId) || NOTE_A1

@@ -1349,12 +1349,18 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 .wr-form{display:flex;flex-direction:column;gap:8px;background:var(--wr-surface);border:1px solid var(--wr-line);border-radius:14px;padding:13px 15px;margin-bottom:12px}
 .wr-form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .wr-form-row .wr-input{flex:1;min-width:180px}
-.wr-picklist{display:flex;flex-direction:column;gap:2px;max-height:184px;overflow:auto;border:1px solid var(--wr-line);border-radius:10px;padding:4px}
-.wr-pickrow{display:flex;align-items:flex-start;gap:8px;padding:5px 7px;border-radius:8px;font-size:12px;line-height:1.55;color:var(--wr-ink-soft);cursor:pointer;text-align:left;border:0;background:transparent;font:inherit;width:100%}
+.wr-picklist{display:flex;flex-direction:column;gap:2px;max-height:228px;overflow-y:auto;border:1px solid var(--wr-line);border-radius:10px;padding:4px}
+.wr-pickrow{display:grid;grid-template-columns:14px auto minmax(0,1fr);align-items:center;gap:8px;padding:6px 8px;min-height:38px;border-radius:8px;font-size:12px;line-height:1.4;color:var(--wr-ink-soft);cursor:pointer;text-align:left;border:0;background:transparent;font:inherit;width:100%}
 .wr-pickrow:hover{background:var(--wr-wash);color:var(--wr-ink)}
 .wr-pickrow[data-on=true]{background:var(--wr-wash);color:var(--wr-ink)}
-.wr-pickrow-mark{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--wr-line-2);display:grid;place-items:center;font-size:9px;line-height:1;margin-top:2px}
+.wr-pickrow:focus-visible{outline:2px solid var(--wr-moss);outline-offset:-1px}
+.wr-pickrow-mark{width:14px;height:14px;border-radius:4px;border:1px solid var(--wr-line-2);display:grid;place-items:center;font-size:9px;line-height:1;color:transparent}
 .wr-pickrow[data-on=true] .wr-pickrow-mark{background:var(--wr-moss);border-color:var(--wr-moss);color:var(--wr-on-accent)}
+.wr-pickrow .wr-tag{flex:none;font-size:10.5px;padding:1px 5px}
+.wr-pickrow-main{display:flex;flex-direction:column;gap:1px;min-width:0}
+.wr-pickrow-where{font-size:11px;line-height:1.4;color:var(--wr-ink-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-pickrow-text{font-size:12.5px;line-height:1.45;color:var(--wr-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-pickrow[data-on=true] .wr-pickrow-text{color:var(--wr-ink)}
 .wr-tl{display:flex;flex-direction:column;gap:22px}
 .wr-tl-month{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--wr-ink)}
 .wr-tl-month-count{font-weight:400;font-size:11.5px;color:var(--wr-ink-mute)}
@@ -2637,16 +2643,22 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const wanted = String(bookId || '')
       const source = data || {}
       const rows = []
+      const titles = new Map()
+      const books = Array.isArray(source.books) ? source.books : []
+      for (const book of books) titles.set(String(book.bookId || ''), String(book.title || ''))
       const push = (kind, item, chapter, text, at, book) => {
         if (!item || item.id === undefined || item.id === null) return
         if (wanted !== '' && String(book || '') !== wanted) return
-        const body = clip(String(text || '').replace(/\s+/g, ' ').trim(), 72)
+        // The picker shows which record this is, not the record: a summary short
+        // enough to read at a glance, and the book it came from on the line above.
+        const body = clip(String(text || '').replace(/\s+/g, ' ').trim(), 40)
         if (body === '') return
         rows.push({
           sourceId: `${kind}:${String(item.id)}`,
           kind,
           chapter: String(chapter || ''),
           text: body,
+          bookTitle: String((item && item.bookTitle) || titles.get(String(book || '')) || ''),
           at: Number(at) || 0,
         })
       }
@@ -2657,6 +2669,14 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
       const kept = craft && Array.isArray(craft.responses) ? craft.responses : []
       kept.forEach((response) => push('response', response, '', response.text, response.adoptedAt || response.createdAt, response.bookId))
       return rows.sort((left, right) => right.at - left.at).slice(0, PICKER_LIMIT)
+    }
+
+    /** 「《书名》 · 章节」: the line that says which record a picker row is. */
+    function pickWhereOf(row) {
+      const item = row || {}
+      const title = String(item.bookTitle || '') === '' ? t('grow.noBook') : `《${String(item.bookTitle)}》`
+      const chapter = String(item.chapter || '')
+      return chapter === '' ? title : `${title} · ${chapter}`
     }
 
     /** What the record cards need from the study (book list, craft snapshot, jumps). */
@@ -4646,8 +4666,12 @@ function threadPairLabel(id, recordById) {
                   },
                   h('span', { className: 'wr-pickrow-mark' }, picked.indexOf(row.sourceId) >= 0 ? '✓' : ''),
                   h('span', { className: 'wr-tag' }, t(`src.${row.kind}`)),
-                  h('span', { className: 'wr-muted' }, row.chapter),
-                  h('span', null, row.text),
+                  h(
+                    'span',
+                    { className: 'wr-pickrow-main' },
+                    h('span', { className: 'wr-pickrow-where' }, pickWhereOf(row)),
+                    h('span', { className: 'wr-pickrow-text' }, row.text),
+                  ),
                 ),
               ),
               h(
@@ -5026,6 +5050,20 @@ function threadPairLabel(id, recordById) {
                   value: title,
                   placeholder: t('work.titlePlaceholder'),
                   onChange: (event) => setTitle(event ? String(event.target.value || '') : ''),
+                  // Enter is the same call the button makes; Shift+Enter is left
+                  // alone and Esc only closes the form. An empty title is a no-op,
+                  // not an error — nothing was typed, nothing to complain about.
+                  onKeyDown: (event) => {
+                    if (!event || event.isComposing) return
+                    if (event.key === 'Escape') {
+                      setCreating(false)
+                      return
+                    }
+                    if (event.key !== 'Enter' || event.shiftKey) return
+                    if (typeof event.preventDefault === 'function') event.preventDefault()
+                    if (title.trim() === '') return
+                    createWork()
+                  },
                 }),
                 h('button', { className: 'wr-btn wr-btn-primary', type: 'button', disabled: busy, onClick: createWork }, t('work.create')),
                 h('button', { className: 'wr-btn', type: 'button', disabled: busy, onClick: () => setCreating(false) }, t('action.cancel')),
@@ -5160,8 +5198,12 @@ function threadPairLabel(id, recordById) {
                                   },
                                   h('span', { className: 'wr-pickrow-mark' }, picked.includes(row.sourceId) ? '✓' : ''),
                                   h('span', { className: 'wr-tag' }, t(`src.${row.kind}`)),
-                                  row.chapter === '' ? null : h('span', { className: 'wr-muted' }, row.chapter),
-                                  h('span', null, row.text),
+                                  h(
+                                    'span',
+                                    { className: 'wr-pickrow-main' },
+                                    h('span', { className: 'wr-pickrow-where' }, pickWhereOf(row)),
+                                    h('span', { className: 'wr-pickrow-text' }, row.text),
+                                  ),
                                 ),
                               ),
                             ),
