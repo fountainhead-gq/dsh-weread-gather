@@ -365,8 +365,8 @@ function smokeCraft() {
       containsAI: true,
       model: 'gpt-4o-mini',
       promptVersion: 'think-v1',
-      adoptedAt: stamp,
-      createdAt: stamp,
+      adoptedAt: stamp - 600,
+      createdAt: stamp - 600,
     }],
     materials: [{
       id: materialId,
@@ -465,7 +465,7 @@ function timelineFixture() {
     hasCraft: true,
     revision: 3,
     updatedAt: at('2026-03-06T00:00:00Z'),
-    counts: { responses: 1, materials: 0, topics: 0, works: 2 },
+    counts: { responses: 3, materials: 0, topics: 0, works: 2 },
     responses: [{
       id: 'r_t1',
       bookId: bookA.bookId,
@@ -479,6 +479,32 @@ function timelineFixture() {
       promptVersion: 'think-v1',
       adoptedAt: at('2026-03-06T21:40:00Z'),
       createdAt: at('2026-03-06T21:40:00Z'),
+    }, {
+      id: 'r_t2',
+      bookId: bookB.bookId,
+      bookTitle: bookB.title,
+      author: bookB.author,
+      sourceIds: [],
+      text: '另一本书里采纳的回应。',
+      origin: 'think',
+      containsAI: true,
+      model: 'gpt-4o-mini',
+      promptVersion: 'think-v1',
+      adoptedAt: at('2026-01-20T10:00:00Z'),
+      createdAt: at('2026-01-20T10:00:00Z'),
+    }, {
+      id: 'r_t3',
+      bookId: '',
+      bookTitle: '',
+      author: '',
+      sourceIds: [],
+      text: '没有书归属的一句回应。',
+      origin: 'think',
+      containsAI: false,
+      model: '',
+      promptVersion: 'think-v1',
+      adoptedAt: at('2026-02-02T10:00:00Z'),
+      createdAt: at('2026-02-02T10:00:00Z'),
     }],
     materials: [],
     topics: [],
@@ -592,6 +618,13 @@ renderPanel('craft-scoped', seeds({ view: 'works', scopeBookId: anyBook.bookId }
 // F2：换一本书进 CREATE，别的书的稿子不能跟过来。用一本夹具里不存在的书做
 // 反证——按 scope 过滤后必须落到空态，而不是把 A 书的稿子留在屏幕上。
 renderPanel('works-scoped-other', seeds({ view: 'works', scopeBookId: 'weread:book/999999999' }))
+// 一篇 vs 多篇：只有一篇时不摆选择器（否则标题在 chip 与卡片头各出现一次）。
+const oneWork = smokeCraft()
+oneWork.works = oneWork.works.slice(0, 1)
+renderPanel('works-single', seeds({ view: 'works', craft: oneWork }))
+const manyWorks = smokeCraft()
+manyWorks.works = manyWorks.works.concat([Object.assign({}, manyWorks.works[0], { id: 'w_smoke2', title: '第二篇初稿', updatedAt: manyWorks.works[0].updatedAt + 60 })])
+renderPanel('works-many', seeds({ view: 'works', craft: manyWorks }))
 // B1/B4：时间线的事件行要能回到书；跨书选题降级；按书筛只留这本书的事件。
 renderPanel('timeline-scoped', seeds({ view: 'timeline', scopeBookId: anyBook.bookId }))
 renderPanel('timeline-scoped-other', seeds({ view: 'timeline', scopeBookId: 'weread:book/999999999' }))
@@ -1767,9 +1800,9 @@ function checkJourneys(guards, byLabel, bookDraw) {
   if (byLabel('annual') && !byLabel('annual').text.includes('grow.annual.title')) journeyGuards.push('annual: 缺年度回顾标题')
   // 空库：每段都是一句下一步 + 一个按钮，不能只剩一个「暂无数据」。
   const emptyExpect = {
-    'craft-empty': ['work.empty.title', 'work.empty.next', 'work.empty.action'],
+    'craft-empty': ['work.empty.title', 'work.empty.next'],
     'craft-empty-think': ['thinkView.empty.title', 'thinkView.empty.next', 'thinkView.empty.action'],
-    'craft-empty-works': ['work.empty.title', 'work.empty.next', 'work.empty.action'],
+    'craft-empty-works': ['work.empty.title', 'work.empty.next'],
     'craft-empty-grow': ['grow.empty.title', 'grow.empty.next'],
   }
   for (const [label, needles] of Object.entries(emptyExpect)) {
@@ -1795,7 +1828,7 @@ else {
   // 覆盖行的每个数字都来自宿主 coverage，不是前端自己数的。
   if (!threadsDraw.text.includes('thread.coverage')) journeyGuards.push('book-threads: 缺覆盖行')
   if (!threadsDraw.text.includes('读诗时我总先要一个画面')) journeyGuards.push('book-threads: 线索标题没渲染')
-  if (!threadsDraw.text.includes('thread.lastAt')) journeyGuards.push('book-threads: 缺生成时间')
+  if (threadsDraw.text.includes('thread.lastAt')) journeyGuards.push('book-threads: 脉络区还写了一次更新时间（页脚已经有）')
   const records = (threadsDraw.elements || []).filter((item) => item.tag === 'button' && String(item.props.className || '').split(/\s+/).indexOf('wr-thread-record') !== -1)
   if (records.length === 0) journeyGuards.push('book-threads: 证据没有可点回原文的入口')
   if (!records.every((item) => typeof item.props.onClick === 'function')) journeyGuards.push('book-threads: 有证据点不回去')
@@ -1858,7 +1891,6 @@ else {
   // B4：把一本书放进 GROW，时间线只留这本书的事件；别的书进来必须是空态。
   const scopedTimeline = tlItems('timeline-scoped')
   if (scopedTimeline.length === 0) journeyGuards.push('timeline-scoped: 这本书的事件一条都没留下')
-  if (scopedTimeline.length >= timelineItems.length) journeyGuards.push(`timeline-scoped: 按书过滤后行数没有变少（${scopedTimeline.length}/${timelineItems.length}）`)
   const scopedBookTitle = String((anyBook && anyBook.title) || '')
   const whereOf = (el) => {
     const kids = (el.props.children || []).filter((kid) => kid && typeof kid === 'object')
@@ -1992,7 +2024,7 @@ if (typeof smoke.GrowTimeline === 'function') {
   const elements = (draw && draw.elements) || []
   const itemOf = (el) => String(el.props.className || '').split(' ').includes('wr-tl-item')
   const items = elements.filter(itemOf)
-  if (items.length !== 6) timelineGuards.push(`timeline-rows: 事件行 ${items.length}（应为 6）`)
+  if (items.length !== 5) timelineGuards.push(`timeline-rows: 事件行 ${items.length}（应为 5）`)
   // 一条 = 三行：时间+动作 / 正文 / 书名·章节。
   for (const item of items) {
     const kids = (item.props.children || []).filter((kid) => kid && typeof kid === 'object')
@@ -2007,6 +2039,11 @@ if (typeof smoke.GrowTimeline === 'function') {
   // 月份标题一行就说完：月份 + 该月条数；不再有「共 N 条」。
   const months = elements.filter((el) => String(el.props.className || '') === 'wr-tl-month')
   if (months.length !== 3) timelineGuards.push(`timeline-rows: 月份分组 ${months.length}（应为 3）`)
+  // 三页收敛：时间线只放「思考（回应）」与「创作（作品）」。
+  const kinds = new Set(items.map((el) => String(el.props['data-kind'] || '')))
+  for (const stray of kinds) {
+    if (stray !== 'response' && stray !== 'work') timelineGuards.push(`timeline-rows: 时间线混进了 ${stray} 这类事件`)
+  }
   if (months[0]) {
     const kids = (months[0].props.children || []).filter((kid) => kid && typeof kid === 'object')
     const texts = kids.map(nodeText)
@@ -2018,9 +2055,12 @@ if (typeof smoke.GrowTimeline === 'function') {
   if (draw && draw.text.includes('grow.cross')) timelineGuards.push('timeline-rows: 还在显示「跨书」')
   if (draw && draw.text.indexOf('grow.noBook') < 0) timelineGuards.push('timeline-rows: 没有书归属的记录没写「未关联书」')
   if (draw && draw.text.indexOf('grow.multiBooks') < 0) timelineGuards.push('timeline-rows: 跨两本书的稿子没写「等 N 本」')
-  // 三种动作都要出现过（「确认初稿」这一类已随状态退场）。
-  for (const key of ['grow.event.thought', 'grow.event.response', 'grow.event.work'])
+  // 两种动作都要出现过（想法随三页收敛退出时间线，「确认初稿」已随状态退场）。
+  for (const key of ['grow.event.response', 'grow.event.work'])
     if (draw && draw.text.indexOf(key) < 0) timelineGuards.push(`timeline-rows: 缺动作 ${key}`)
+  if (draw && draw.text.indexOf('grow.event.thought') >= 0) timelineGuards.push('timeline-rows: 想法还在时间线里')
+  // 夹具里有想法，但时间线一条都不该渲染 —— 过滤在装配处，不靠 CSS 藏。
+  if (draw && draw.text.indexOf('三月的想法') >= 0) timelineGuards.push('timeline-rows: 想法正文出现在时间线里')
   if (draw && draw.text.indexOf('grow.event.workConfirmed') >= 0) timelineGuards.push('timeline-rows: 还在显示「确认初稿」这类动作')
   // 点一行 = 回到它该去的地方：想法/回应带 sourceId，作品带 workId。
   const click = (kind, needle) => {
@@ -2031,12 +2071,25 @@ if (typeof smoke.GrowTimeline === 'function') {
     }
     row.props.onClick({ stopPropagation() {} })
   }
-  click('thought')
-  click('response')
+  click('response', '采纳的一句回应')
   click('work', '跨两本书')
-  if (opened[0] !== 'thought:th_t1') timelineGuards.push(`timeline-rows: 想法行没回到原记录（${opened[0]}）`)
-  if (opened[1] !== 'response:r_t1') timelineGuards.push(`timeline-rows: 回应行没回到原记录（${opened[1]}）`)
-  if (opened[2] !== 'work:w_t2') timelineGuards.push(`timeline-rows: 作品行没带 focusWorkId（${opened[2]}）`)
+  if (opened[0] !== 'response:r_t1') timelineGuards.push(`timeline-rows: 回应行没回到原记录（${opened[0]}）`)
+  if (opened[1] !== 'work:w_t2') timelineGuards.push(`timeline-rows: 作品行没带 focusWorkId（${opened[1]}）`)
+  // 按书筛要真的少几行（真实数据里可能恰好全属于同一本，用夹具做对照）。
+  const scopedProps = Object.assign({}, timelineProps, { scopeBookId: 'weread:book/T1' })
+  renderStandalone('timeline-rows-scoped', smoke.GrowTimeline, scopedProps, [0])
+  const scoped = byLabel0('timeline-rows-scoped')
+  const scopedItems = scoped ? (scoped.elements || []).filter(itemOf) : []
+  if (scopedItems.length !== 3) timelineGuards.push(`timeline-rows-scoped: 按书筛后留下 ${scopedItems.length} 行（应为 3）`)
+  if (!scoped) timelineGuards.push('timeline-rows-scoped: 未渲染')
+  else {
+    if (scoped.text.includes('另一本')) timelineGuards.push('timeline-rows-scoped: 混进了别的书的记录')
+    if (!scoped.text.includes('时间线之书')) timelineGuards.push('timeline-rows-scoped: 留下来的行没写这本滤过的书')
+  }
+  const emptyProps = Object.assign({}, timelineProps, { scopeBookId: 'weread:book/TX' })
+  renderStandalone('timeline-rows-other', smoke.GrowTimeline, emptyProps, [0])
+  const other = byLabel0('timeline-rows-other')
+  if (other && !other.text.includes('grow.empty.title')) timelineGuards.push('timeline-rows-other: 别的书的事件串进来了')
 } else {
   timelineGuards.push('client module 未暴露 GrowTimeline')
 }
@@ -2115,6 +2168,76 @@ checkJourneys(guards, byLabel, bookDraw)
 for (const item of journeyGuards) guards.push(item)
 for (const item of paragraphGuards) guards.push(item)
 for (const item of paletteGuards) guards.push(item)
+// 三页收敛：每页一个标题行、一个更新时间；按钮与标题分色；初稿卡片不重复。
+const pageGuards = []
+const styleOf = (name) => {
+  const at = code.indexOf(`.${name}{`)
+  if (at < 0) return ''
+  const end = code.indexOf('}', at)
+  return end > at ? code.slice(at, end) : ''
+}
+const stampOf = (seconds) => {
+  const date = new Date(Number(seconds) * 1000)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+for (const [label, view] of [['responses', 'responses'], ['works', 'works'], ['timeline', 'timeline'], ['annual', 'annual']]) {
+  const draw = byLabel(label)
+  if (!draw) { pageGuards.push(`${label}: 未渲染`); continue }
+  const titles = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-page-title')
+  if (titles.length !== 1) pageGuards.push(`${label}: 页面标题有 ${titles.length} 个（应恰好 1 个）`)
+  const hands = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-page-head')
+  if (hands.length !== 1) pageGuards.push(`${label}: 标题行有 ${hands.length} 个`)
+  // 单项页面不再有第二行导航。
+  if (view === 'responses' || view === 'works') {
+    const subs = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-subnav')
+    if (subs.length !== 0) pageGuards.push(`${label}: 只有一项的二级栏还在`)
+  }
+  // 同一屏只有一处「创作更新」时间。
+  const stamp = stampOf(smokeCraft().updatedAt)
+  const hits = draw.text.split(stamp).length - 1
+  if (hits !== 1) pageGuards.push(`${label}: 创作更新时间出现 ${hits} 次（应 1 次）`)
+}
+// 按钮色 vs 标题色：主按钮走品牌色，稿子标题走正文墨色，两个 token 不同。
+const primaryCss = styleOf('wr-btn-primary')
+const titleCss = styleOf('wr-draft-title')
+if (primaryCss.indexOf('var(--dsw-alias-brand-primary)') < 0) pageGuards.push('CSS: 主按钮不是品牌色')
+if (titleCss.indexOf('color:var(--wr-ink)') < 0) pageGuards.push('CSS: 稿子标题没有用正文墨色')
+// 删除入口：宽度与最小点击区。
+const menuCss = styleOf('wr-menu-btn')
+if (menuCss.indexOf('min-width:64px') < 0) pageGuards.push('CSS: 删除入口没有宽度下限')
+const dangerCss = styleOf('wr-menu-danger')
+if (dangerCss.indexOf('min-height:44px') < 0) pageGuards.push('CSS: 删除项没有 44px 点击区')
+// 说明文字不许被右边缘截断。
+const hintCss = styleOf('wr-page-hint')
+if (hintCss.indexOf('ellipsis') >= 0 || hintCss.indexOf('nowrap') >= 0) pageGuards.push('CSS: 右上说明还会被截断')
+// 只有一篇时不再重复标题（chip + 卡片头），多篇时才有 chips。
+const single = byLabel('works-single')
+if (single) {
+  const chips = (single.elements || []).filter((el) => String(el.props.className || '') === 'wr-chips')
+  if (chips.length !== 0) pageGuards.push('works-single: 只有一篇时还渲染选择器（标题会重复）')
+  const title = smoke.worksFixtureTitle ? smoke.worksFixtureTitle : ''
+  void title
+} else pageGuards.push('works-single: 未渲染')
+const many = byLabel('works-many')
+if (many) {
+  const chips = (many.elements || []).filter((el) => String(el.props.className || '') === 'wr-chips')
+  if (chips.length !== 1) pageGuards.push('works-many: 多篇时没有选择器')
+} else pageGuards.push('works-many: 未渲染')
+if (byLabel('works-single')) {
+  const head = byLabel('works-single')
+  const heads = (head.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-head-title')
+  if (heads.length === 1) {
+    const texts = (heads[0].props.children || []).filter((kid) => kid && typeof kid === 'object').map(nodeText)
+    const titleText = String(texts[0] || '')
+    const bodyText = head.text
+    const repeats = titleText === '' ? 0 : bodyText.split(titleText).length - 1
+    if (repeats > 1) pageGuards.push(`works-single: 标题出现了 ${repeats} 次（摘要又在重复标题）`)
+    const metas = (head.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-meta')
+    if (metas.length !== 1) pageGuards.push('works-single: 卡片头没有段落数')
+  } else pageGuards.push('works-single: 卡片头异常')
+}
+for (const item of pageGuards) guards.push(item)
 console.log('[guards] %s', guards.length === 0 ? 'ok' : guards.join(' | '))
 
 const failed = drawCalls.filter((item) => !item.ok)

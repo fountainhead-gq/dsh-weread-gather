@@ -320,6 +320,7 @@ window.__ModuleLoader__.load({
       'work.titlePlaceholder': '初稿标题',
       'work.create': '建这篇',
       'work.count': '共 {count} 篇',
+      'work.paragraphCount': '{count} 段',
       'work.paragraph': '第 {index} 段',
       'work.paragraphPlaceholder': '用自己的话写这一段',
       'work.attach': '挂来源',
@@ -368,7 +369,6 @@ window.__ModuleLoader__.load({
       'thread.rebuild': '重新梳理',
       'thread.building': '正在读你的记录…',
       'thread.slow': '记录多的时候会慢一点',
-      'thread.lastAt': '上次 {time}',
       'thread.more': '还有 {count} 条',
       'thread.less': '收起',
       'thread.why': '为什么值得回看',
@@ -415,7 +415,6 @@ window.__ModuleLoader__.load({
       'thinkView.ai': 'AI 参与',
       // 时间线只构造 response / work 两类事件；素材与选题退场后不再有事件，
       // 对应的 grow.event.* 键也一起删，避免留下取不到的半套文案。
-      'grow.event.thought': '写了想法',
       'grow.event.response': '采纳了回应',
       'grow.event.work': '新建初稿',
         'grow.empty.title': '还没有可回顾的事',
@@ -734,6 +733,7 @@ window.__ModuleLoader__.load({
       'work.titlePlaceholder': 'Draft title',
       'work.create': 'Create',
       'work.count': '{count} drafts',
+      'work.paragraphCount': '{count} paragraphs',
       'work.paragraph': 'Paragraph {index}',
       'work.paragraphPlaceholder': 'Write this paragraph in your own words',
       'work.attach': 'Attach sources',
@@ -782,7 +782,6 @@ window.__ModuleLoader__.load({
       'thread.rebuild': 'Read it again',
       'thread.building': 'Reading your records…',
       'thread.slow': 'Slower when there are many records',
-      'thread.lastAt': 'Last run {time}',
       'thread.more': '{count} more',
       'thread.less': 'Collapse',
       'thread.why': 'Why it is worth going back',
@@ -827,7 +826,6 @@ window.__ModuleLoader__.load({
       'thinkView.adoptedAt': 'Kept',
       'thinkView.backBook': 'Back to {title}',
       'thinkView.ai': 'AI-assisted',
-      'grow.event.thought': 'Wrote a thought',
       'grow.event.response': 'Kept an answer',
       'grow.event.work': 'Started a draft',
         'grow.empty.title': 'Nothing to look back on yet',
@@ -1312,6 +1310,10 @@ window.__ModuleLoader__.load({
 .wr-journey-tab[data-active=true] .wr-journey-count{background:color-mix(in srgb, var(--wr-on-accent) 24%, transparent);opacity:.92}
 .wr-subnav{flex:none;display:flex;align-items:center;gap:12px;padding:9px 26px;border-bottom:1px solid var(--wr-line);background:color-mix(in srgb, var(--wr-paper) 72%, transparent);flex-wrap:wrap}
 .wr-subnav-hint{font-size:11.5px;color:var(--wr-ink-mute);margin-left:auto;letter-spacing:.02em}
+.wr-page-head{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;margin:0 0 16px;min-width:0}
+.wr-page-title{margin:0;font-size:19px;line-height:1.3;font-weight:700;letter-spacing:.01em;color:var(--wr-ink)}
+.wr-page-hint{flex:1 1 240px;min-width:0;font-size:12px;line-height:1.65;color:var(--wr-ink-mute);text-align:right;white-space:normal;overflow-wrap:anywhere}
+.wr-page-count{flex:none;font-size:11.5px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums}
 @media (max-width:640px){.wr-journey-tab{padding:6px 9px;font-size:12px}.wr-journey-count{display:none}.wr-subnav{padding:8px 16px}}
 .wr-chain{margin-top:18px;background:var(--wr-paper-soft);border:1px solid var(--wr-line);border-radius:16px;padding:14px 16px}
 .wr-chain-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px}
@@ -1385,10 +1387,12 @@ button.wr-src:not(:disabled):hover{border-color:var(--wr-sage);color:var(--wr-mo
 /* 初稿页：整篇删除收进「⋯」菜单，默认折叠，避免和「加这一段」挤在同一排误点。 */
 .wr-draft-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .wr-draft-head-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;flex:1}
+.wr-draft-title{color:var(--wr-ink);font-weight:700}
+.wr-draft-meta{font-size:11.5px;color:var(--wr-ink-mute);font-variant-numeric:tabular-nums}
 .wr-menu{position:relative;display:inline-flex;flex:none}
-.wr-menu-btn{width:28px;padding:0;font-size:14px;line-height:1}
+.wr-menu-btn{min-width:64px;height:32px;padding:0 10px;font-size:14px;line-height:1}
 .wr-menu-panel{position:absolute;right:0;top:calc(100% + 6px);z-index:10;min-width:210px;display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--wr-line);border-radius:10px;background:var(--wr-paper-soft);box-shadow:0 10px 26px color-mix(in srgb, var(--wr-ink) 16%, transparent)}
-.wr-menu-danger{appearance:none;text-align:left;font:inherit;font-size:11.5px;line-height:1.5;padding:6px 9px;border-radius:8px;border:1px dashed var(--wr-clay);background:transparent;color:var(--wr-clay);cursor:pointer}
+.wr-menu-danger{appearance:none;display:flex;align-items:center;min-height:44px;text-align:left;font:inherit;font-size:11.5px;line-height:1.5;padding:6px 9px;border-radius:8px;border:1px dashed var(--wr-clay);background:transparent;color:var(--wr-clay);cursor:pointer}
 .wr-menu-danger[data-armed=true]{border-style:solid;background:color-mix(in srgb, var(--wr-clay) 14%, transparent);font-weight:600}
 .wr-menu-cancel{appearance:none;text-align:left;font:inherit;font-size:11px;padding:4px 9px;border:0;background:transparent;color:var(--wr-ink-soft);cursor:pointer}
 /* 次级按钮：比主操作小一号、浅底，用在浮层底部这类「顺手一下」的动作上。 */
@@ -3728,10 +3732,41 @@ if (!open) return null
       )
     }
 
+    /** A craft page's own title line: the page name, then one plain sentence. */
+    function PageHead(props) {
+      const count = String(props.countText || '')
+      const scope = String(props.scopeTitle || '')
+      return h(
+        'div',
+        { className: 'wr-page-head' },
+        h('h2', { className: 'wr-page-title' }, t(props.titleKey)),
+        // The book scope used to ride in the second navigation row; single-destination
+        // pages have no such row, so it rides here and still clears with one click.
+        scope === ''
+          ? null
+          : h(
+              'button',
+              {
+                className: 'wr-chip',
+                type: 'button',
+                'data-active': 'true',
+                onClick: props.onClearScope,
+                title: scope,
+              },
+              t('thinkView.backBook', { title: clip(scope, 14) }),
+            ),
+        String(props.hintKey || '') === '' ? null : h('span', { className: 'wr-page-hint' }, t(props.hintKey)),
+        count === '' ? null : h('span', { className: 'wr-page-count' }, count),
+      )
+    }
+
     function SubNav(props) {
       const stage = VIEW_STAGE[props.view] || 'read'
       const views = STAGE_VIEWS[stage] || STAGE_VIEWS.read
       const scope = String(props.scopeTitle || '')
+      // One destination is not a navigation row: THINK has only the replies and
+      // CREATE only the drafts, so their titles live in the page head instead.
+      if (views.length <= 1) return null
       return h(
         'div',
         { className: 'wr-subnav' },
@@ -3759,6 +3794,8 @@ if (!open) return null
               { className: 'wr-chip', type: 'button', 'data-active': 'true', onClick: props.onClearScope, title: scope },
               t('thinkView.backBook', { title: clip(scope, 14) }),
             ),
+        // Stages with several destinations carry their one-liner here; the title
+        // line of a single-destination page would otherwise repeat it.
         h('span', { className: 'wr-subnav-hint' }, t(`journey.${stage}.hint`)),
       )
     }
@@ -4278,13 +4315,11 @@ if (!open) return null
               )
             : null,
         ),
-        snapshot
-          ? h(
-              'div',
-              { className: 'wr-threads-meta' },
-              h('span', { className: 'wr-muted' }, t('thread.lastAt', { time: fmtDateTime(snapshot.updatedAt) })),
-              stale > 0 ? h('span', { className: 'wr-threads-stale' }, t('thread.stale', { count: stale })) : null,
-            )
+        // The page footer already prints when writing data was refreshed; a second
+        // formatted timestamp here only repeats it. The stale hint stays — it counts
+        // new records, it does not restate a clock.
+        snapshot && stale > 0
+          ? h('div', { className: 'wr-threads-meta' }, h('span', { className: 'wr-threads-stale' }, t('thread.stale', { count: stale })))
           : null,
         busy ? h('div', { className: 'wr-threads-loading' }, h('span', { className: 'wr-spinner' }), h('span', null, t('thread.building')), h('span', { className: 'wr-muted' }, t('thread.slow'))) : null,
         error
@@ -4978,7 +5013,7 @@ function threadPairLabel(id, recordById) {
         h(
           'div',
           { className: 'wr-toolbar' },
-          h('span', { className: 'wr-muted' }, t('work.count', { count: String(works.length) })),
+          h('div', { className: 'wr-toolbar-fill' }),
           h('button', { className: 'wr-btn wr-btn-primary', type: 'button', onClick: () => setCreating(!creating) }, t('work.new')),
         ),
         creating
@@ -4998,31 +5033,37 @@ function threadPairLabel(id, recordById) {
             )
           : null,
         works.length === 0
-          ? h(CraftEmpty, { titleKey: 'work.empty.title', nextKey: 'work.empty.next', actionKey: 'work.empty.actionShelf', onAction: props.onGoShelf })
+          // The empty screen states the next step in words; a second button here
+          // only competes with the one that matters.
+          ? h(CraftEmpty, { titleKey: 'work.empty.title', nextKey: 'work.empty.next' })
           : h(
               'div',
               null,
-              h(
-                'div',
-                { className: 'wr-chips' },
-                works.map((item) =>
-                  h(
-                    'button',
-                    {
-                      className: 'wr-chip',
-                      key: item.id,
-                      type: 'button',
-                      'data-active': work && work.id === item.id ? 'true' : 'false',
-                      onClick: () => {
-                        setActiveId(item.id)
-                        setMarkdown('')
-                        setPath('')
-                      },
-                    },
-                    clip(String(item.title || '—'), 20),
-                  ),
-                ),
-              ),
+              // With a single draft the picker would print the same title twice
+              // (chip + card head), so it appears only once there is a choice.
+              works.length > 1
+                ? h(
+                    'div',
+                    { className: 'wr-chips' },
+                    works.map((item) =>
+                      h(
+                        'button',
+                        {
+                          className: 'wr-chip',
+                          key: item.id,
+                          type: 'button',
+                          'data-active': work && work.id === item.id ? 'true' : 'false',
+                          onClick: () => {
+                            setActiveId(item.id)
+                            setMarkdown('')
+                            setPath('')
+                          },
+                        },
+                        clip(String(item.title || '—'), 20),
+                      ),
+                    ),
+                  )
+                : null,
               work === null
                 ? null
                 : h(
@@ -5034,7 +5075,8 @@ function threadPairLabel(id, recordById) {
                       h(
                         'div',
                         { className: 'wr-draft-head-title' },
-                        h('strong', null, String(work.title || t('work.new'))),
+                        h('strong', { className: 'wr-draft-title' }, String(work.title || t('work.new'))),
+                        h('span', { className: 'wr-draft-meta' }, t('work.paragraphCount', { count: String(paragraphs.length) })),
                         work.containsAI ? h('span', { className: 'wr-tag', 'data-tone': 'ai' }, t('work.aiTag')) : null,
                       ),
                       // Deleting the whole draft stays behind this menu, away from
@@ -5206,22 +5248,9 @@ function threadPairLabel(id, recordById) {
       }
       // 1.2.2 §5.1: materials and topics left the interface, so their events are no
       // longer shown. The records themselves stay in craft.json untouched.
+      // 1.2.4: 时间线只放「思考」与「创作」——想法与划线属于阅读，
+      // 它们留在书页的记录列表里，这里不再重复一遍。
       const events = []
-      for (const item of Array.isArray(props.data && props.data.thoughts) ? props.data.thoughts : []) {
-        const bookId = String(item.bookId || '')
-        events.push({
-          key: `thought:${item.id}`,
-          kind: 'thought',
-          actionKey: 'grow.event.thought',
-          at: item.createTime,
-          text: item.content,
-          chapter: item.chapterName,
-          bookIds: bookId === '' ? [] : [bookId],
-          open: () => {
-            if (typeof props.onOpenSource === 'function') props.onOpenSource(`thought:${item.id}`)
-          },
-        })
-      }
       for (const item of Array.isArray(craft.responses) ? craft.responses : []) {
         const bookId = String(item.bookId || '')
         events.push({
@@ -6664,6 +6693,28 @@ function threadPairLabel(id, recordById) {
       relateBridge.craft = craft
       relateBridge.lookup = lookup
       relateBridge.openSource = openSource
+      // THINK / CREATE / GROW each open with one title line: what this page is,
+      // and one plain sentence about what it holds. No second navigation row and no
+      // per-page timestamp (the footer carries both clocks, labelled).
+      const PAGE_HEAD = {
+        responses: ['nav.responses', 'journey.think.hint', ''],
+        works: ['nav.works', 'journey.create.hint', t('work.count', { count: String((craft.works || []).length) })],
+        timeline: ['nav.timeline', '', ''],
+        annual: ['nav.annual', '', ''],
+      }
+      const pageHead = () => {
+        const spec = PAGE_HEAD[view]
+        if (!spec) return null
+        return h(PageHead, {
+          titleKey: spec[0],
+          hintKey: spec[1],
+          countText: spec[2],
+          scopeTitle,
+          onClearScope: () => {
+            setScopeBookId('')
+          },
+        })
+      }
       const craftView = () => {
         if (view === 'responses') return h(ResponseList, craftProps)
         if (view === 'works') return h(WorkBoard, craftProps)
@@ -6799,6 +6850,7 @@ function threadPairLabel(id, recordById) {
             data && data.warnings && data.warnings.length > 0 && synced
               ? h('div', { className: 'wr-banner' }, h('span', null, `部分数据同步失败：${data.warnings.slice(0, 2).join('；')}`))
               : null,
+            pageHead(),
             body,
             // Two clocks, kept apart on purpose: reading data and writing data
             // are refreshed by different actions and can be stale independently.
@@ -6898,6 +6950,7 @@ function threadPairLabel(id, recordById) {
       // Test-only handles: the render smoke test mounts these directly, because
       // the export panel normally only appears after a click. Nothing else reads it.
       __smoke: {
+        PageHead,
         ExportPanel,
         MarkedText,
         PickButton,

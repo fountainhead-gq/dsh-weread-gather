@@ -820,7 +820,7 @@ async function main() {
   const tlRows = tlItems(timeline)
   check('B1 时间线事件行都是可点 button', tlRows.length >= 2 && tlRows.every((el) => el.tag === 'button'), tlRows.length)
   const kinds = new Set(tlRows.map((el) => el.props['data-kind']))
-  eq('时间线的事件只有想法/回应/作品三类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'thought', 'work']))
+  eq('时间线的事件只有回应/作品两类', JSON.stringify([...kinds].sort()), JSON.stringify(['response', 'work']))
   const workRows = tlRows.filter((el) => el.props['data-kind'] === 'work')
   check('B1 时间线里有作品事件', workRows.length > 0)
   has('B1 事件行显示书名', timeline.text, String(BOOK_A.title).slice(0, 6))
@@ -1737,25 +1737,27 @@ async function main() {
       const kids = node.props ? node.props.children : undefined
       return kids === undefined ? '' : plain(kids)
     }
-    eq('时间线六条记录都在', tlNodes.length, 6)
+    eq('时间线只剩思考与创作（三条）', tlNodes.length, 3)
+    eq('时间线没有想法这一类事件', tlNodes.filter((el) => el.props['data-kind'] === 'thought').length, 0)
     const tlShapes = tlNodes.map((el) => (el.props.children || []).filter((kid) => kid && typeof kid === 'object').map((kid) => String(kid.props.className || '')).join(','))
     check('每条记录都是三行（时间+动作 / 正文 / 书名·章节）', tlShapes.every((shape) => shape === 'wr-tl-meta,wr-tl-body,wr-tl-where'), tlShapes[0])
     const metae = tlNodes.map((el) => (el.props.children || [])[0])
     check('第一行是时:分', metae.every((meta) => /^\d{1,2}:\d{2}$/.test(plain((meta.props.children || [])[0]))), plain((metae[0].props.children || [])[0]))
     const actions = new Set(metae.map((meta) => plain((meta.props.children || [])[1])))
-    check('第一行还有动作（写了想法/采纳了回应/新建初稿）', actions.size === 3 && [...actions].every((name) => name.indexOf('grow.event.') === 0), [...actions].join(','))
+    check('第一行还有动作（采纳了回应/新建初稿）', actions.size === 2 && [...actions].every((name) => name.indexOf('grow.event.') === 0), [...actions].join(','))
+    check('时间线里不再写「写了想法」这类阅读动作', !tlDraw.text.includes('grow.event.thought'))
     check('不再出现「确认初稿」这类动作', !tlDraw.text.includes('grow.event.workConfirmed'))
-    check('第三行没有书归属时写明「未关联书」', tlDraw.text.includes('grow.noBook'))
+    check('第三行写明书名', tlDraw.text.includes('时间线之书'))
     check('第三行跨两本书时写「等 N 本」', tlDraw.text.includes('grow.multiBooks'))
-    const thoughtRow = tlNodes.find((el) => el.props['data-kind'] === 'thought')
-    const thoughtWhere = thoughtRow ? plain((thoughtRow.props.children || [])[2]) : ''
-    check('第三行带章节（书名 · 章节）', thoughtWhere.includes(' · ') && thoughtWhere.includes('第一卷'), thoughtWhere)
+    const responseRow = tlNodes.find((el) => el.props['data-kind'] === 'response')
+    const responseWhere = responseRow ? plain((responseRow.props.children || [])[2]) : ''
+    check('第三行写书名', responseWhere.includes('时间线之书'), responseWhere)
     const months = (tlDraw.elements || []).filter((el) => String(el.props.className || '') === 'wr-tl-month')
-    eq('按月分成三组', months.length, 3)
+    eq('按月分成两组', months.length, 2)
     check('月份标题带该月条数', tlDraw.text.includes('grow.monthCountInline'))
     const monthTexts = months.map((el) => plain(el))
     const monthOrder = monthTexts.map((item) => String(item.split(',')[1] || '').slice(0, 2))
-    check('组内组间都是时间倒序（三月在前）', monthTexts.length === 3 && monthOrder.join(',') === '03,02,01', JSON.stringify(monthOrder))
+    check('组内组间都是时间倒序（三月在前）', monthTexts.length === 2 && monthOrder.join(',') === '03,02', JSON.stringify(monthOrder))
     check('不再有「共 N 条」', !tlDraw.text.includes('grow.total'))
     check('不再有「跨书」这种后台标签', !tlDraw.text.includes('grow.cross'))
     const clickRow = (kind, needle) => {
@@ -1763,12 +1765,10 @@ async function main() {
       if (row) row.props.onClick({ stopPropagation() {} })
       return Boolean(row)
     }
-    check('想法行可点', clickRow('thought'))
     check('回应行可点', clickRow('response'))
     check('作品行可点', clickRow('work', '跨两本书'))
-    eq('想法行回到原记录', trail[0], 'thought:th_t1')
-    eq('回应行回到原记录', trail[1], 'response:r_t1')
-    eq('作品行带 focusWorkId 打开那一篇', trail[2], 'work:w_t2')
+    eq('回应行回到原记录', trail[0], 'response:r_t1')
+    eq('作品行带 focusWorkId 打开那一篇', trail[1], 'work:w_t2')
 
     const headTitle = (draw) => {
       const head = ((draw && draw.elements) || []).find((el) => String(el.props.className || '') === 'wr-draft-head-title')
@@ -2193,6 +2193,79 @@ async function main() {
   check('防回潮：代码与文案里没有阅读挑战字样', hits.length === 0, hits.join(','))
   check('防回潮：包尾不再说「想法是我写的」', !sources.includes('想法是我写的'))
   has('防回潮：包尾改成了按角色说明归属', sources, '是我这一侧的记录，引用时请分清归属')
+
+  // --- 12.7 三页收敛：一个标题行、一个更新时间、按钮与标题分色 ----------------
+  {
+    const cssOf = (name) => {
+      const source = fs.readFileSync(path.join(root, 'client.js'), 'utf8')
+      const at = source.indexOf(`.${name}{`)
+      if (at < 0) return ''
+      const end = source.indexOf('}', at)
+      return end > at ? source.slice(at, end) : ''
+    }
+    const stampOf = (seconds) => {
+      const date = new Date(Number(seconds) * 1000)
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+    }
+    const craftNow = host.craftView()
+    for (const [label, view] of [['t43-think', 'responses'], ['t43-create', 'works'], ['t43-timeline', 'timeline'], ['t43-annual', 'annual']]) {
+      const draw = get(label, { view })
+      const titles = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-page-title')
+      eq(`${view} 页只有一个标题行`, titles.length, 1)
+      const hands = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-page-head')
+      eq(`${view} 页标题行只有一处`, hands.length, 1)
+      if (view === 'responses' || view === 'works') {
+        const subs = (draw.elements || []).filter((el) => String(el.props.className || '') === 'wr-subnav')
+        eq(`${view} 只有一项时的二级栏不再渲染`, subs.length, 0)
+      }
+      /* 每页各自的更新时间：页脚两段各一次，页内不再重复。 */
+      eq(`${view} 页只出现一次创作更新时间`, draw.text.split('synced.craftAt(').length - 1, 1)
+      eq(`${view} 页只出现一次微读更新时间`, draw.text.split('synced.at(').length - 1, 1)
+    }
+    const primary = cssOf('wr-btn-primary')
+    const draftTitle = cssOf('wr-draft-title')
+    has('主按钮用品牌色', primary, 'var(--dsw-alias-brand-primary)')
+    has('稿子标题用正文墨色', draftTitle, 'color:var(--wr-ink)')
+    check('主按钮与稿子标题不是同一个颜色 token', primary.indexOf('var(--wr-ink)') < 0, primary)
+    has('删除入口有宽度下限', cssOf('wr-menu-btn'), 'min-width:64px')
+    has('删除项有 44px 点击区', cssOf('wr-menu-danger'), 'min-height:44px')
+    const hint = cssOf('wr-page-hint')
+    check('右上说明不再被截断', hint.indexOf('ellipsis') < 0 && hint.indexOf('nowrap') < 0, hint)
+    // 只有一篇时选择器不出现（否则标题在 chip 与卡片头各出现一次）。
+    const oneWork = Object.assign({}, craftNow, { works: (craftNow.works || []).slice(0, 1) })
+    const single = get('t43-works-single', { view: 'works', craft: oneWork })
+    eq('只有一篇时不摆选择器', (single.elements || []).filter((el) => String(el.props.className || '') === 'wr-chips').length, 0)
+    const flat = (node) => {
+      if (node === null || node === undefined || node === false) return ''
+      if (typeof node === 'string' || typeof node === 'number') return String(node)
+      if (Array.isArray(node)) return node.map(flat).join('')
+      if (node.type === '__fragment__') return flat(node.props && node.props.children)
+      if (typeof node.type === 'function') return flat(node.type(node.props || {}))
+      return flat(node.props ? node.props.children : undefined)
+    }
+    const headTitles = (single.elements || []).filter((el) => String(el.props.className || '') === 'wr-draft-head-title')
+    if (headTitles.length === 1) {
+      const heading = flat(headTitles[0].props.children && headTitles[0].props.children[0])
+      const repeats = heading === '' ? 0 : single.text.split(heading).length - 1
+      check('片段标题与摘要是两段不同的字', repeats <= 1, `${heading} 出现 ${repeats} 次`)
+    } else check('卡片头只有一个', false, String(headTitles.length))
+    // 空态只有一个主按钮，没有「去书架」。
+    const emptyWorks = get('t43-works-empty', { view: 'works', craft: smoke.EMPTY_CRAFT })
+    check('创作页空态不再给「去书架」按钮', !emptyWorks.text.includes('work.empty.actionShelf'))
+    const emptyLabels = (emptyWorks.elements || [])
+      .filter((el) => el.tag === 'button' && String(el.props.className || '').indexOf('wr-btn') >= 0)
+      .map((el) => flat(el.props.children))
+      // 顶栏的同步与设置不属于页面动作。
+      .filter((name) => name !== 'action.sync' && name !== '⚙')
+    eq('创作页空态只有「新建初稿」这一个动作', emptyLabels.filter((name) => name === 'work.new').length, 1)
+    check('创作页空态没有别的动作按钮', emptyLabels.every((name) => name === 'work.new'), emptyLabels.join(','))
+    // 时间线只有思考（回应）与创作（作品）：想法与划线仍在书页。
+    const timeline = get('t43-timeline-kinds', { view: 'timeline' })
+    check('时间线不再写「写了想法」', !timeline.text.includes('grow.event.thought'))
+    const bookPage = get('t43-book-records', { view: 'book', bookId: BOOK_A.bookId })
+    check('书页记录不受时间线过滤影响', bookPage.text.includes('nav.notes') && bookPage.text.includes('nav.thoughts'))
+  }
 
   // --- 汇总 ------------------------------------------------------------------
   const failed = results.filter((item) => !item.ok)
